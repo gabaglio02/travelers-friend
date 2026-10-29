@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Traveler's Friend</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+  <meta name="theme-color" content="#0b0b0b">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -33,9 +36,16 @@
         <input type="number" id="people" min="1" max="20" value="1">
       </label>
       <div class="field age-field">
-        <span>Classificação</span>
-        <button type="button" class="picker-btn" id="ageBtn" aria-haspopup="listbox"></button>
-        <ul class="age-menu" id="ageMenu" role="listbox" hidden></ul>
+        <span class="label-help">Idade mínima
+          <button type="button" class="info" aria-describedby="ageHelp" aria-label="O que é idade mínima?">!</button>
+          <span class="tip" role="tooltip" id="ageHelp">Coloque a idade da pessoa mais nova que vai participar da viagem.
+            Assim o site esconde shows, festas e lugares com classificação acima dessa idade.</span>
+        </span>
+        <label class="age-input picker-btn" for="youngestAge">
+          <span id="ageBadge"></span>
+          <input type="number" id="youngestAge" min="0" max="120" step="1" inputmode="numeric" aria-label="Idade da pessoa mais nova (anos)">
+          <span class="unit">anos</span>
+        </label>
       </div>
       <button type="submit" class="btn search-btn" id="searchBtn">Buscar</button>
     </form>

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect x="2" y="2" width="60" height="60" rx="9" fill="#ffe14d" stroke="#0b0b0b" stroke-width="4"/>
+  <text x="32" y="43" text-anchor="middle" font-family="'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace" font-size="29" font-weight="700" fill="#0b0b0b" letter-spacing="-1">TF</text>
+</svg>

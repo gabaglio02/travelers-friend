@@ -26,13 +26,15 @@
   };
 
   // Classificação indicativa (padrão ClassInd).
+  //  desc  → como descrevemos a classificação de um lugar
+  //  faixa → como a pessoa escolhe a idade da pessoa mais nova do grupo (campo "Idade mínima")
   const AGE_OPTIONS = [
-    { v: 0, label: "Livre", desc: "Livre para todos os públicos" },
-    { v: 10, label: "10 anos", desc: "Não recomendado para menores de 10" },
-    { v: 12, label: "12 anos", desc: "Não recomendado para menores de 12" },
-    { v: 14, label: "14 anos", desc: "Não recomendado para menores de 14" },
-    { v: 16, label: "16 anos", desc: "Não recomendado para menores de 16" },
-    { v: 18, label: "18 anos", desc: "Não recomendado para menores de 18" }
+    { v: 0, label: "Livre", desc: "Livre para todos os públicos", faixa: "Menos de 10 anos", faixaDesc: "Mostra só o que é livre para todos" },
+    { v: 10, label: "10 anos", desc: "Não recomendado para menores de 10", faixa: "10 ou 11 anos", faixaDesc: "Mostra até a classificação 10" },
+    { v: 12, label: "12 anos", desc: "Não recomendado para menores de 12", faixa: "12 ou 13 anos", faixaDesc: "Mostra até a classificação 12" },
+    { v: 14, label: "14 anos", desc: "Não recomendado para menores de 14", faixa: "14 ou 15 anos", faixaDesc: "Mostra até a classificação 14" },
+    { v: 16, label: "16 anos", desc: "Não recomendado para menores de 16", faixa: "16 ou 17 anos", faixaDesc: "Mostra até a classificação 16" },
+    { v: 18, label: "18 anos", desc: "Não recomendado para menores de 18", faixa: "18 anos ou mais", faixaDesc: "Mostra tudo, inclusive baladas e bares 18+" }
   ];
 
   const MONTHS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
@@ -82,6 +84,7 @@
   }
 
   const ageMin = (idade) => idade === "Livre" ? 0 : parseInt(idade, 10) || 0;
+  function bracketFor(age) { return AGE_OPTIONS.reduce((acc, o) => (o.v <= age ? o.v : acc), 0); }
   const ciIcon = (v, cls = "") => `<span class="ci ci-${v} ${cls}" title="${esc(AGE_OPTIONS.find((o) => o.v === v)?.desc || "")}">${v === 0 ? "L" : v}</span>`;
   const ageBadge = (idade) => ciIcon(ageMin(idade));
   // Lugares da região metropolitana mostram o município; os da capital, o bairro.
@@ -205,7 +208,9 @@
     delete state.stay;
   }
   // Ajusta a classificação para uma das faixas da ClassInd.
-  state.youngest = AGE_OPTIONS.reduce((acc, o) => (o.v <= state.youngest ? o.v : acc), 0);
+  // A pessoa digita a idade real da pessoa mais nova; "youngest" guarda a faixa da ClassInd correspondente.
+  if (state.youngestAge == null) state.youngestAge = state.youngest ?? 18;
+  state.youngest = bracketFor(state.youngestAge);
 
   const ui = { where: "", cats: new Set(), q: "", maxPrice: 1200, onlyFree: false, onlyAge: true, onlyDates: false, focusUid: null, view: "explore" };
 
@@ -385,7 +390,7 @@
       if (!happensOn(p, iso)) warnings.push("Não acontece neste dia. Datas: " + datesLabel(p, true) + ".");
       if (isClosed(p, iso)) warnings.push("Fechado às " + WEEKDAYS_FULL[parseISO(iso).getDay()] + "s.");
       if (p.horario && !p.inicio && endT > closeMin(p)) warnings.push("Fecha às " + p.horario.fecha + ".");
-      if (state.youngest < ageMin(p.idade)) warnings.push("Classificação " + p.idade + " — acima da idade do grupo.");
+      if (state.youngest < ageMin(p.idade)) warnings.push("Classificação " + p.idade + " — acima da idade da pessoa mais nova do grupo.");
       if (item.at && p.inicio && item.at !== p.inicio) warnings.push("O horário oficial de início é " + p.inicio + ".");
       if (item.at && p.horario && !p.inicio && fixed < toMin(p.horario.abre)) warnings.push("Abre às " + p.horario.abre + ".");
       const row = { item, place: p, leg, fromStay: !!startStay && prev === startStay ? startStay.nome : "", wait, start: startT, end: endT, price: priceOn(p, iso), warnings, adjusted };
@@ -951,7 +956,6 @@
     dp.start = state.start; dp.end = state.end; dp.hover = null;
     const s = parseISO(state.start);
     dp.month = new Date(s.getFullYear(), s.getMonth(), 1);
-    closeAgeMenu();
     $("#datePicker").hidden = false;
     renderDatePicker();
   }
@@ -1018,14 +1022,13 @@
   }
 
   // ---------- Classificação indicativa ----------
-  function renderAgeBtn() {
+  function renderAge() {
     const o = AGE_OPTIONS.find((x) => x.v === state.youngest);
-    $("#ageBtn").innerHTML = `${ciIcon(o.v)} ${o.label}<span class="arrow">▼</span>`;
-    $("#ageMenu").innerHTML = AGE_OPTIONS.map((x) => `
-      <li><button type="button" class="age-opt ${x.v === state.youngest ? "on" : ""}" data-age="${x.v}" role="option">
-        ${ciIcon(x.v, "lg")}<span>${x.label}<small>${x.desc}</small></span></button></li>`).join("");
+    if (document.activeElement !== $("#youngestAge")) $("#youngestAge").value = state.youngestAge;
+    $("#ageBadge").innerHTML = ciIcon(o.v);
+    $("#ageBadge").title = o.faixaDesc;
   }
-  function closeAgeMenu() { $("#ageMenu").hidden = true; }
+
 
   // ---------- Configuração das refeições ----------
   function renderMealsCfg() {
@@ -1184,10 +1187,17 @@
     });
     $(".brand").addEventListener("click", () => { document.body.classList.add("landing"); window.scrollTo(0, 0); });
     $("#dateBtn").addEventListener("click", () => ($("#datePicker").hidden ? openDatePicker() : closeDatePicker()));
-    $("#ageBtn").addEventListener("click", () => { closeDatePicker(); $("#ageMenu").hidden = !$("#ageMenu").hidden; });
+    $("#youngestAge").addEventListener("input", (e) => {
+      const n = parseInt(e.target.value, 10);
+      if (!Number.isFinite(n)) return; // campo apagado enquanto digita
+      state.youngestAge = Math.max(0, Math.min(120, n));
+      state.youngest = bracketFor(state.youngestAge);
+      save(); renderAge(); renderAll();
+    });
+    $("#youngestAge").addEventListener("change", () => renderAge()); // ao sair do campo, mostra o valor válido
     $("#setup").addEventListener("submit", (e) => {
       e.preventDefault();
-      closeDatePicker(); closeAgeMenu();
+      closeDatePicker();
       document.body.classList.remove("landing");
       window.scrollTo(0, 0);
       renderAll();
@@ -1252,14 +1262,15 @@
     document.addEventListener("click", (e) => {
       const t = e.target;
       let el;
+      // Ícone "!" de ajuda: no celular não há hover, então o toque abre/fecha a explicação.
+      document.querySelectorAll(".tip.show").forEach((tip) => { if (!t.closest(".label-help") || tip !== t.closest(".label-help").querySelector(".tip")) tip.classList.remove("show"); });
+      if ((el = t.closest(".info"))) { el.nextElementSibling.classList.toggle("show"); return; }
       // Fecha os seletores ao clicar fora deles.
       if (!t.closest(".date-field")) closeDatePicker();
-      if (!t.closest(".age-field")) closeAgeMenu();
       if ((el = t.closest("[data-dpday]"))) { pickDate(el.dataset.dpday); return; }
       if ((el = t.closest("[data-dpnav]"))) { dp.month = new Date(dp.month.getFullYear(), dp.month.getMonth() + +el.dataset.dpnav, 1); renderDatePicker(); return; }
       if (t.closest("[data-dpclear]")) { dp.start = dp.end = null; renderDatePicker(); return; }
       if (t.closest("[data-dpok]")) { applyDates(); return; }
-      if ((el = t.closest("[data-age]"))) { state.youngest = +el.dataset.age; save(); renderAgeBtn(); closeAgeMenu(); renderAll(); return; }
       if ((el = t.closest("[data-legmode]"))) {
         const item = dayData(state.activeDay).items.find((x) => x.uid === el.dataset.legmode);
         if (item) { if (el.dataset.mode) item.mode = el.dataset.mode; else delete item.mode; save(); renderAll(); }
@@ -1363,13 +1374,13 @@
       if (!el || !dp.start || dp.end || dp.hover === el.dataset.dpday) return;
       dp.hover = el.dataset.dpday; renderDatePicker();
     });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeDatePicker(); closeAgeMenu(); } });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDatePicker(); });
   }
 
   // ---------- Início ----------
   renderCitySelect();
   renderDateBtn();
-  renderAgeBtn();
+  renderAge();
   renderMealsCfg();
   renderStay();
   renderChips();
