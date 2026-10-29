@@ -1,0 +1,17 @@
+# Banco da agenda gerado pelo servidor (recriado sozinho)
+/data/
+
+# Configurações locais do editor/ferramentas
+.claude/
+.vscode/
+.idea/
+
+# Dependências e segredos (se um dia existirem)
+node_modules/
+.env
+.env.*
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini

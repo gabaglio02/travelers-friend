@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Traveler's Friend</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="landing">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">TF</span>
+      <span class="brand-name">Traveler's Friend</span>
+    </div>
+    <p class="tagline">O que fazer, quanto custa e como chegar — sua viagem inteira em um só lugar.</p>
+
+    <form class="trip-setup" id="setup" autocomplete="off">
+      <label class="field">
+        <span>Cidade</span>
+        <select id="city"></select>
+      </label>
+      <div class="field date-field">
+        <span>Ida e volta</span>
+        <button type="button" class="picker-btn" id="dateBtn"></button>
+        <div class="dp" id="datePicker" hidden></div>
+      </div>
+      <label class="field small">
+        <span>Pessoas</span>
+        <input type="number" id="people" min="1" max="20" value="1">
+      </label>
+      <div class="field age-field">
+        <span>Classificação</span>
+        <button type="button" class="picker-btn" id="ageBtn" aria-haspopup="listbox"></button>
+        <ul class="age-menu" id="ageMenu" role="listbox" hidden></ul>
+      </div>
+      <button type="submit" class="btn search-btn" id="searchBtn">Buscar</button>
+    </form>
+
+    <p class="landing-foot">Pontos turísticos · museus · shows · teatros · festivais · trilhas · kart · estádios · bares e baladas<br>
+      <span>Por enquanto só São Paulo e Grande SP — novas cidades em breve.</span></p>
+  </header>
+
+  <nav class="mobile-tabs" id="mobileTabs">
+    <button data-view="explore" class="active">Explorar</button>
+    <button data-view="plan">Roteiro</button>
+    <button data-view="costs">Custos</button>
+  </nav>
+
+  <main class="layout">
+    <!-- ============ EXPLORAR ============ -->
+    <section class="panel explore" id="view-explore">
+      <div class="panel-head">
+        <h2>Explorar <span id="cityName"></span></h2>
+        <span class="count" id="resultCount"></span>
+      </div>
+
+      <p class="small-text muted" id="agendaInfo" style="margin:-6px 0 10px"></p>
+      <div class="filters">
+        <input type="search" id="search" placeholder="Buscar museu, show, artista, bairro...">
+        <div class="chips" id="catChips"></div>
+        <div class="where" id="whereTabs">
+          <button class="on" data-where="">Tudo</button>
+          <button data-where="capital">Capital</button>
+          <button data-where="grande">Grande SP</button>
+        </div>
+        <div class="filter-row">
+          <label class="field inline">
+            <span>Até R$</span>
+            <input type="range" id="maxPrice" min="0" max="1200" step="10" value="1200">
+            <output id="maxPriceOut" class="mono">1200</output>
+          </label>
+        </div>
+        <div class="filter-row">
+          <label class="check"><input type="checkbox" id="onlyFree"> Só grátis</label>
+          <label class="check"><input type="checkbox" id="onlyNight"> 🌙 Só à noite</label>
+          <label class="check"><input type="checkbox" id="onlyAge" checked> Adequado à idade do grupo</label>
+          <label class="check"><input type="checkbox" id="onlyDates"> Eventos só nas datas da viagem</label>
+        </div>
+      </div>
+
+      <ul class="cards" id="list"></ul>
+    </section>
+
+    <!-- ============ ROTEIRO ============ -->
+    <section class="panel plan" id="view-plan">
+      <div class="panel-head">
+        <h2>Roteiro</h2>
+        <button class="btn ghost small" id="clearDay">Limpar dia</button>
+      </div>
+
+      <div class="days" id="dayTabs"></div>
+
+      <div class="day-meta">
+        <label class="field inline">
+          <span>Começar às</span>
+          <input type="time" id="dayStart" value="09:00">
+        </label>
+        <span class="mono muted" id="dayEnd"></span>
+      </div>
+
+      <details class="meals-cfg stay-box" id="stayBox">
+        <summary>🏨 Hospedagem neste dia: <span id="stayLabel">não definida</span></summary>
+        <ul class="stay-list" id="stayList"></ul>
+        <label class="day-stay" id="dayStayRow" hidden>
+          <span id="dayStayLabel"></span>
+          <select id="dayStay"></select>
+        </label>
+        <form id="stayForm" class="stay-form">
+          <input type="search" id="stayQuery" placeholder="Adicionar hospedagem: endereço, hotel ou bairro">
+          <button type="submit" class="btn small">Buscar</button>
+          <button type="button" class="btn ghost small" id="stayPick">📍 Marcar no mapa</button>
+        </form>
+        <ul class="stay-results" id="stayResults"></ul>
+        <p class="small-text muted">Cada dia começa saindo da hospedagem da noite anterior e termina na hospedagem do dia,
+          então no dia da troca o roteiro já leva você para a nova. A busca de endereço usa o OpenStreetMap.</p>
+      </details>
+
+      <details class="meals-cfg" id="mealsCfg">
+        <summary>🍽 Refeições <span class="muted small-text">— horário e tempo padrão para todos os dias</span></summary>
+        <div id="mealsRows"></div>
+        <p class="small-text muted">Se você adicionar um lugar que serve comida no horário de uma refeição, ela sai do roteiro.
+          Se não, o site ajusta o horário da refeição ou do lugar, o que mexer menos no dia. Para mudar só um dia, edite a refeição no próprio roteiro.</p>
+      </details>
+
+      <div id="map" class="map"></div>
+
+      <ol class="timeline" id="timeline"></ol>
+
+      <div class="recs">
+        <div class="recs-head">
+          <h3 id="recsTitle">Recomendações</h3>
+          <span class="muted small-text">Toque em um item do roteiro para ver o que tem perto dele.</span>
+        </div>
+        <div class="recs-row" id="recs"></div>
+      </div>
+    </section>
+
+    <!-- ============ CUSTOS ============ -->
+    <section class="panel costs" id="view-costs">
+      <div class="panel-head">
+        <h2>Custos estimados</h2>
+      </div>
+
+      <div class="cost-inputs">
+        <div class="field">
+          <span>Hospedagens (valor por noite, total do grupo)</span>
+          <div id="stayCosts" class="stay-costs"></div>
+          <button type="button" class="btn ghost small" id="stayAddPrice">+ Adicionar hospedagem com outro valor</button>
+        </div>
+        <label class="field">
+          <span>Valor padrão por noite (sem hospedagem definida)</span>
+          <input type="number" id="hotel" min="0" step="10" value="250">
+        </label>
+        <label class="field">
+          <span>Alimentação / dia (por pessoa)</span>
+          <input type="number" id="food" min="0" step="10" value="120">
+        </label>
+        <label class="field">
+          <span>Deslocamento preferido</span>
+          <select id="transport">
+            <option value="publico">Transporte público</option>
+            <option value="ativo">A pé / bicicleta quando der</option>
+            <option value="app">App / carro</option>
+          </select>
+        </label>
+      </div>
+
+      <table class="cost-table" id="costTable"></table>
+
+      <p class="disclaimer">
+        Valores aproximados para planejamento. Itens <b>a confirmar</b> têm data real, mas horário/preço
+        ainda podem mudar; itens <b>ilustrativo</b> são exemplos. Confirme sempre no site oficial.
+      </p>
+    </section>
+  </main>
+
+  <!-- Detalhes -->
+  <dialog id="detail" class="modal"></dialog>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/data/sp.js"></script>
+  <script src="js/data/sp-eventos.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
