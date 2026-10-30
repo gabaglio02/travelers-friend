@@ -3,7 +3,12 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+
+// Chaves do Supabase para testar no computador (arquivo fora do git). Ver README.
+try { process.loadEnvFile(path.join(__dirname, ".env.local")); } catch (_) { /* sem .env.local: roda sem contas */ }
+
 const agenda = require("./server/agenda");
+const configPublica = require("./server/config-publica");
 
 const ROOT = __dirname;
 const PORT = process.env.PORT || 5173;
@@ -17,10 +22,14 @@ const TYPES = {
   ".jpg": "image/jpeg"
 };
 // Pastas que não devem ser servidas como arquivo (código e dados do servidor).
-const PRIVADAS = ["/server/", "/data/", "/.claude/"];
+const PRIVADAS = ["/server/", "/data/", "/.claude/", "/supabase/", "/api/", "/.env", "/.git/"];
 
 http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
+  if (url.pathname === "/api/config") {
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    return res.end(JSON.stringify(configPublica()));
+  }
   if (url.pathname.startsWith("/api/")) {
     try { return await agenda.handle(url, res); }
     catch (err) {

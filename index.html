@@ -50,6 +50,8 @@
       <button type="submit" class="btn search-btn" id="searchBtn">Buscar</button>
     </form>
 
+    <button type="button" class="account-btn" id="accountBtn" aria-haspopup="dialog"></button>
+
     <p class="landing-foot">Pontos turísticos · museus · shows · teatros · festivais · trilhas · kart · estádios · bares e baladas<br>
       <span>Por enquanto só São Paulo e Grande SP — novas cidades em breve.</span></p>
   </header>
@@ -190,11 +192,14 @@
 
   <!-- Detalhes -->
   <dialog id="detail" class="modal"></dialog>
+  <!-- Conta, viagens salvas e fotos (js/conta.js) -->
+  <dialog id="accountDialog" class="modal" aria-label="Conta"></dialog>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="js/config.js"></script>
   <script src="js/data/sp.js"></script>
   <script src="js/data/sp-eventos.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/conta.js"></script>
 </body>
 </html>

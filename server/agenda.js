@@ -6,23 +6,25 @@
  * GET /api/status
  *
  * Funcionamento:
- *  - Os eventos ficam guardados em data/agenda-<cidade>.json.
+ *  - Os eventos ficam guardados pelo store.js (arquivo no computador ou Supabase na Vercel).
  *  - Cada busca olha quando aquelas datas foram atualizadas pela última vez:
  *      nunca  → coleta nas fontes antes de responder;
- *      velha  → responde na hora com o que tem e atualiza em segundo plano ("atualizando": true);
+ *      velha  → no servidor contínuo (serve.js), responde na hora e atualiza em segundo plano;
+ *               na Vercel (sem segundo plano), tenta atualizar por alguns segundos antes de responder;
  *      fresca → só responde.
- *  - Uma tarefa periódica mantém os próximos DIAS_A_FRENTE dias sempre atualizados.
+ *  - atualizarProximos() mantém os próximos DIAS_A_FRENTE dias atualizados
+ *    (setInterval no serve.js; Cron Job na Vercel).
  */
-const fs = require("fs");
 const path = require("path");
+const armazenamento = require("./store");
 
 const ROOT = path.join(__dirname, "..");
-const DATA_DIR = path.join(ROOT, "data");
-const CONFIG_FILE = path.join(__dirname, "config.json");
 const CIDADES = ["sp"];
 const MAX_DIAS_BUSCA = 120;
 const DIAS_A_FRENTE = 90;
 const TIMEOUT_FONTE_MS = 20000;
+const ESPERA_SERVERLESS_MS = 8000;
+const RECARREGAR_MS = 30000; // em funções serverless várias instâncias gravam; relê o store com frequência
 
 const FONTES = [
   require("./fontes/local"),
@@ -31,23 +33,22 @@ const FONTES = [
 ];
 
 function config() {
-  try { return JSON.parse(fs.readFileSync(CONFIG_FILE, "utf8")); } catch (_) { return {}; }
+  try { return require("./config.json"); } catch (_) { return {}; }
 }
 const ttlMs = () => (config().ttlHoras || 12) * 3600 * 1000;
 
-// ---------- Armazenamento ----------
-const stores = {};
-function storeFile(cidade) { return path.join(DATA_DIR, `agenda-${cidade}.json`); }
-function store(cidade) {
-  if (!stores[cidade]) {
-    try { stores[cidade] = JSON.parse(fs.readFileSync(storeFile(cidade), "utf8")); }
-    catch (_) { stores[cidade] = { eventos: {}, faixas: [], fontes: {} }; }
+// ---------- Armazenamento (com cópia em memória) ----------
+const memoria = {};
+async function store(cidade) {
+  const m = memoria[cidade];
+  if (!m || Date.now() - m.lidoEm > RECARREGAR_MS) {
+    memoria[cidade] = { dados: await armazenamento.carregar(cidade), lidoEm: Date.now() };
   }
-  return stores[cidade];
+  return memoria[cidade].dados;
 }
-function persist(cidade) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(storeFile(cidade), JSON.stringify(stores[cidade], null, 1));
+async function persist(cidade) {
+  await armazenamento.salvar(cidade, memoria[cidade].dados);
+  memoria[cidade].lidoEm = Date.now();
 }
 
 // ---------- Regras de data ----------
@@ -70,8 +71,8 @@ function valido(ev) {
 }
 
 // Última atualização que cobre todo o intervalo pedido (ou null).
-function atualizadoEm(cidade, de, ate) {
-  const f = store(cidade).faixas.filter((x) => x.de <= de && x.ate >= ate).sort((a, b) => b.em.localeCompare(a.em))[0];
+function atualizadoEm(s, de, ate) {
+  const f = s.faixas.filter((x) => x.de <= de && x.ate >= ate).sort((a, b) => b.em.localeCompare(a.em))[0];
   return f ? f.em : null;
 }
 
@@ -86,7 +87,7 @@ function atualizar(cidade, de, ate) {
   if (emAndamento.has(chave)) return emAndamento.get(chave);
   const job = (async () => {
     const cfg = config();
-    const s = store(cidade);
+    const s = await store(cidade);
     for (const fonte of FONTES) {
       if (!fonte.ativa(cfg)) continue;
       const inicio = Date.now();
@@ -111,7 +112,7 @@ function atualizar(cidade, de, ate) {
       if (fim && fim < corte) delete s.eventos[id];
     }
     s.faixas = s.faixas.filter((x) => x.ate >= hoje()).concat({ de, ate, em: new Date().toISOString() }).slice(-50);
-    persist(cidade);
+    await persist(cidade);
   })().finally(() => emAndamento.delete(chave));
   emAndamento.set(chave, job);
   return job;
@@ -127,9 +128,15 @@ function json(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-async function handle(url, res) {
+// opts.serverless: true na Vercel (não há como continuar trabalhando depois de responder).
+async function handle(url, res, opts = {}) {
   if (url.pathname === "/api/status") {
-    return json(res, 200, Object.fromEntries(CIDADES.map((c) => [c, { fontes: store(c).fontes, eventos: Object.keys(store(c).eventos).length, faixas: store(c).faixas.slice(-5) }])));
+    const out = { armazenamento: armazenamento.nome };
+    for (const c of CIDADES) {
+      const s = await store(c);
+      out[c] = { fontes: s.fontes, eventos: Object.keys(s.eventos).length, faixas: s.faixas.slice(-5) };
+    }
+    return json(res, 200, out);
   }
   if (url.pathname !== "/api/eventos") return json(res, 404, { erro: "rota não encontrada" });
 
@@ -139,24 +146,34 @@ async function handle(url, res) {
   if (!isISO(de) || !isISO(ate) || ate < de) return json(res, 400, { erro: "use de=AAAA-MM-DD&ate=AAAA-MM-DD" });
   if (diasEntre(de, ate) > MAX_DIAS_BUSCA) return json(res, 400, { erro: `intervalo máximo de ${MAX_DIAS_BUSCA} dias` });
 
-  let em = atualizadoEm(cidade, de, ate);
+  let em = atualizadoEm(await store(cidade), de, ate);
   let atualizando = false;
   if (!em) {
     await atualizar(cidade, de, ate);
-    em = atualizadoEm(cidade, de, ate);
   } else if (Date.now() - new Date(em).getTime() > ttlMs()) {
-    atualizando = true;
-    atualizar(cidade, de, ate).catch(() => {});
+    if (opts.serverless) {
+      // Espera um pouco; se a coleta demorar, responde com o que tem e a próxima busca pega o resultado.
+      try { await comTimeout(atualizar(cidade, de, ate), ESPERA_SERVERLESS_MS); } catch (_) { atualizando = true; }
+    } else {
+      atualizando = true;
+      atualizar(cidade, de, ate).catch(() => {});
+    }
   }
-  const eventos = Object.values(store(cidade).eventos).filter((ev) => cruza(ev, de, ate));
-  json(res, 200, { cidade, de, ate, atualizadoEm: em, atualizando, fontes: store(cidade).fontes, eventos });
+  const s = await store(cidade);
+  em = atualizadoEm(s, de, ate) || em;
+  const eventos = Object.values(s.eventos).filter((ev) => cruza(ev, de, ate));
+  json(res, 200, { cidade, de, ate, atualizadoEm: em, atualizando, fontes: s.fontes, eventos });
 }
 
-// Mantém os próximos meses atualizados mesmo sem ninguém buscar.
+// Atualiza os próximos meses de todas as cidades.
+function atualizarProximos() {
+  return Promise.all(CIDADES.map((c) => atualizar(c, hoje(), somaDias(hoje(), DIAS_A_FRENTE)).catch((err) => console.warn(err))));
+}
+
+// Servidor contínuo (serve.js): repete a atualização sozinho.
 function startScheduler() {
-  const rodar = () => CIDADES.forEach((c) => atualizar(c, hoje(), somaDias(hoje(), DIAS_A_FRENTE)).catch(() => {}));
-  rodar();
-  setInterval(rodar, ttlMs()).unref();
+  atualizarProximos();
+  setInterval(atualizarProximos, ttlMs()).unref();
 }
 
-module.exports = { handle, startScheduler };
+module.exports = { handle, atualizarProximos, startScheduler };

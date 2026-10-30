@@ -23,6 +23,11 @@ Abrindo o `index.html` direto no navegador o site também funciona, mas só com 
 - `server/agenda.js`: API `/api/eventos` com cache por datas
 - `server/fontes/`: de onde os eventos vêm (veja abaixo)
 - `server/config.json`: tempo de validade do cache e feeds
+- `server/store.js`: onde a agenda fica (arquivo `data/` ou Supabase)
+- `api/`: funções da Vercel (agenda, status, config, cron)
+- `js/conta.js`: contas, viagens salvas e fotos (Supabase)
+- `supabase/schema.sql`: tabelas e regras de segurança do Supabase
+- `privacidade.html`: política de privacidade (rascunho)
 - `data/`: banco da agenda gerado pelo servidor (pode apagar para recomeçar)
 
 ## Agenda online
@@ -57,10 +62,57 @@ Antes de ligar uma plataforma, confira se os termos de uso permitem exibir os ev
 
 ## Publicar
 
+### Vercel + Supabase (recomendado)
+
+O projeto já vem pronto para a Vercel: os arquivos do site são servidos como estáticos e a pasta `api/`
+vira funções (`/api/eventos`, `/api/status`, `/api/config` e `/api/cron`). Na Vercel a agenda fica guardada
+no Supabase (tabela `agenda_cache`) em vez da pasta `data/`.
+
+1. **Vercel:** *Add New → Project → Import* o repositório do GitHub. Sem framework, sem comando de build.
+   Use a conta pessoal (plano **Hobby**); não crie Team nem inicie o teste do Pro.
+2. **Supabase:** no projeto da Vercel, *Storage* (ou *Integrations*) → **Supabase** → escolha o plano **Free**.
+   A integração cria as variáveis `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` (o site aceita também os nomes `NEXT_PUBLIC_…`).
+3. **Banco:** no painel do Supabase, *SQL Editor* → cole e rode [`supabase/schema.sql`](supabase/schema.sql).
+4. **Login:** no Supabase, *Authentication → URL Configuration*: em **Site URL** coloque o endereço da Vercel
+   (ex.: `https://travelers-friend.vercel.app`) e adicione-o também em **Redirect URLs** (e `http://localhost:5173` para testar).
+5. **Cron (opcional):** crie a variável `CRON_SECRET` na Vercel com um texto aleatório; o `/api/cron` passa a aceitar só a Vercel.
+6. *Redeploy* na Vercel. Cada envio para a branch `main` publica o site de novo.
+
+Notas:
+- A chave **anon** é pública por natureza (vai para o navegador); quem protege os dados são as regras de Row Level Security do `schema.sql`.
+  A **service_role** só existe no servidor — nunca coloque no `js/config.js`.
+- O Supabase Free envia poucos e-mails por hora (confirmação de conta e recuperação de senha). Para lançar de verdade,
+  configure um SMTP próprio em *Authentication → Emails*.
+- Limites de fotos: 50 fotos ou 20 MB por conta (em `supabase/schema.sql` e `js/conta.js`).
+- Antes de publicar, revise e complete a [Política de Privacidade](privacidade.html) (está como rascunho).
+
+### Testar contas no computador
+
+Crie um arquivo `.env.local` na raiz (ele fica fora do git) com as chaves do projeto Supabase e rode `node serve.js`:
+
+```
+SUPABASE_URL=https://xxxx.supabase.co
+SUPABASE_ANON_KEY=...
+# opcional: guarda a agenda no Supabase também
+# SUPABASE_SERVICE_ROLE_KEY=...
+```
+
+### Outras hospedagens
+
 - **Site e API juntos:** qualquer hospedagem que rode Node (`node serve.js`, usando a variável `PORT`).
   A pasta `data/` precisa ser gravável e persistente.
 - **Site separado da API:** publique os arquivos estáticos onde preferir e, em `js/config.js`,
   coloque o endereço da API em `apiBase`. A API já responde com CORS liberado.
+
+## Contas, viagens e fotos
+
+Todo o código que fala com o Supabase está em `js/conta.js` (trocar de serviço = reescrever esse arquivo).
+Sem o Supabase configurado, o site funciona como antes e a viagem fica salva só no navegador.
+
+- Criar conta (nome, e-mail, senha), entrar, recuperar senha, sair e **excluir a conta** (apaga viagens e fotos).
+- Ao entrar pela primeira vez com uma viagem já montada no navegador, o site pergunta se quer salvá-la na conta.
+- Várias viagens por conta; cada alteração é salva sozinha (indicador "salvando… / salvo ✓" no botão da conta).
+- Fotos: reduzidas no navegador (1600 px + miniatura de 400 px), sem os dados de GPS, privadas por padrão.
 
 ## Adicionar uma cidade
 

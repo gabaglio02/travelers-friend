@@ -482,3 +482,44 @@ body:not(.landing) .tip { left: auto; right: 0; }
 #ageBadge { display: inline-flex; }
 /* Na tela inicial o campo de idade fica só com o número; o ícone volta no topo depois da busca. */
 body.landing #ageBadge { display: none; }
+
+/* ---------- Conta ---------- */
+.topbar { position: relative; }
+.account-btn {
+  display: inline-flex; align-items: center; gap: 6px; align-self: center;
+  border: 2px solid var(--paper); border-radius: var(--radius); background: transparent; color: var(--paper);
+  padding: 7px 12px; font: inherit; font-size: 14px; cursor: pointer; white-space: nowrap;
+}
+.account-btn:hover { background: var(--paper); color: var(--ink); }
+.account-btn.logged { background: var(--accent); color: var(--ink); border-color: var(--accent); }
+.account-btn small { font-family: var(--mono); font-size: 11px; opacity: .8; }
+body.landing .account-btn { position: absolute; top: 16px; right: 16px; }
+@media (max-width: 820px) {
+  body:not(.landing) .brand { order: -2; }
+  body:not(.landing) .account-btn { order: -1; margin-left: auto; }
+}
+
+.acc-form { display: flex; flex-direction: column; gap: 10px; }
+.acc-form .field { color: var(--ink); }
+.acc-form .field input, .acc-form .field select { width: 100%; }
+.acc-form .btn { align-self: flex-start; }
+.acc-form a { color: var(--ink); }
+.acc-msg { margin: 0; padding: 8px 10px; background: var(--accent); border-radius: var(--radius); font-size: 14px; }
+.acc-h { margin: 6px 0 0; }
+.acc-trips { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.acc-trips li { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; padding: 8px 10px; border: 1.5px solid var(--soft-line); border-radius: var(--radius); }
+.acc-trips li.on { border-color: var(--ink); background: var(--paper-2); }
+.acc-trip-name { font-weight: 500; }
+.acc-trip-actions { margin-left: auto; display: inline-flex; gap: 10px; align-items: center; }
+.acc-foot { justify-content: space-between; border-top: 1.5px solid var(--soft-line); padding-top: 12px; }
+.btn.danger { background: #b91c1c; border-color: #b91c1c; }
+.acc-quota { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.acc-quota .bar { height: 8px; border: 1.5px solid var(--ink); border-radius: 999px; overflow: hidden; }
+.acc-quota .bar i { display: block; height: 100%; background: var(--ink); }
+.acc-upload { border: 1.5px dashed var(--ink); border-radius: var(--radius); padding: 10px; }
+.acc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+.acc-grid figure { margin: 0; }
+.acc-thumb { padding: 0; border: 0; background: var(--paper-2); width: 100%; aspect-ratio: 1; cursor: pointer; border-radius: var(--radius); overflow: hidden; }
+.acc-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.acc-grid figcaption { font-size: 11px; margin-top: 2px; }
+.acc-full { max-width: 100%; max-height: 65vh; display: block; margin: 0 auto; border-radius: var(--radius); }

@@ -192,30 +192,40 @@
     };
   }
 
+  // Completa uma viagem salva com os campos que versões antigas do site não tinham.
+  function normalizeState(s) {
+    s = Object.assign(defaultState(), s);
+    // Horários padrão das refeições.
+    s.meals = Object.assign(defaultMeals(), s.meals || {});
+    s.stays = s.stays || [];
+    if (s.stay) {
+      s.stays.push({ id: "s1", ...s.stay, price: s.hotel });
+      s.stayDefault = s.stayDefault || "s1";
+      delete s.stay;
+    }
+    // A pessoa digita a idade real da pessoa mais nova; "youngest" guarda a faixa da ClassInd correspondente.
+    if (s.youngestAge == null) s.youngestAge = s.youngest ?? 18;
+    s.youngest = bracketFor(s.youngestAge);
+    return s;
+  }
+
   let state = defaultState();
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
     if (saved) state = Object.assign(state, saved);
   } catch (_) { /* storage indisponível */ }
-  // Viagem salva no passado → volta para as datas padrão.
+  // Viagem do navegador salva no passado → volta para as datas padrão.
+  // (Viagens da conta não passam por aqui: uma viagem antiga pode guardar fotos e lembranças.)
   if (state.start < toISO(new Date())) { const d = defaultState(); state.start = d.start; state.end = d.end; state.activeDay = d.activeDay; }
-  // Horários padrão das refeições (viagens salvas antes desta versão não tinham).
-  state.meals = Object.assign(defaultMeals(), state.meals || {});
-  state.stays = state.stays || [];
-  if (state.stay) {
-    state.stays.push({ id: "s1", ...state.stay, price: state.hotel });
-    state.stayDefault = state.stayDefault || "s1";
-    delete state.stay;
-  }
-  // Ajusta a classificação para uma das faixas da ClassInd.
-  // A pessoa digita a idade real da pessoa mais nova; "youngest" guarda a faixa da ClassInd correspondente.
-  if (state.youngestAge == null) state.youngestAge = state.youngest ?? 18;
-  state.youngest = bracketFor(state.youngestAge);
+  state = normalizeState(state);
 
   const ui = { where: "", cats: new Set(), q: "", maxPrice: 1200, onlyFree: false, onlyAge: true, onlyDates: false, focusUid: null, view: "explore" };
 
+  // Quem quiser saber de cada alteração (ex.: js/conta.js, que salva a viagem na conta).
+  const saveHooks = [];
   function save() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) { /* ignora */ }
+    saveHooks.forEach((fn) => { try { fn(state); } catch (err) { console.warn(err); } });
   }
 
   const city = () => window.TF_CITIES[state.city];
@@ -1376,6 +1386,27 @@
     });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDatePicker(); });
   }
+
+  // ---------- API para outros módulos (js/conta.js) ----------
+  function syncInputs() {
+    ["people", "hotel", "food", "transport"].forEach((k) => { const el = $("#" + k); if (el) el.value = state[k]; });
+  }
+  window.TF = {
+    getState: () => JSON.parse(JSON.stringify(state)),
+    // Troca a viagem aberta (ex.: ao escolher outra viagem da conta) e redesenha tudo.
+    loadState(dados, { silent = false } = {}) {
+      state = normalizeState(JSON.parse(JSON.stringify(dados || {})));
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) { /* ignora */ }
+      ui.focusUid = null;
+      syncInputs(); renderCitySelect(); renderDateBtn(); renderAge(); renderMealsCfg(); renderStay(); renderAll();
+      if (!silent) toast("Viagem carregada");
+    },
+    // Viagem "vazia"? (nada no roteiro e nenhuma hospedagem) — para decidir se vale importar para a conta.
+    hasContent: () => Object.values(state.days).some((d) => (d.items || []).length) || (state.stays || []).length > 0,
+    newState: () => defaultState(),
+    onSave: (fn) => saveHooks.push(fn),
+    toast, esc, fmtDay, fmtShort
+  };
 
   // ---------- Início ----------
   renderCitySelect();
