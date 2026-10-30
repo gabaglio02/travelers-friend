@@ -410,7 +410,13 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
 
   // ---------- Fatos de um lugar (cards, recomendações, detalhes) ----------
   // Foto livre do Wikimedia Commons (js/data/sp-fotos.js) ou null.
-  const fotoDe = (p) => (city().fotos || {})[p.id] || null;
+  // Ordem: foto própria → foto do local onde o evento acontece (fotosRef / fotosLocal) → nenhuma.
+  function fotoDe(p) {
+    const F = city().fotos || {};
+    if (F[p.id]) return F[p.id];
+    const ref = (city().fotosRef || {})[p.id] || (p.local && (city().fotosLocal || {})[p.local]);
+    return ref && F[ref] ? { ...F[ref], doLocal: true } : null;
+  }
   // Preço confirmado = entrada gratuita conhecida ou valor marcado como confirmado na base; o resto é estimativa.
   const precoConfirmado = (p) => !!p.precoConfirmado || (p.preco === 0 && !p.ilustrativo);
   // Data confirmada = evento com fonte e sem aviso de dúvida sobre o dia.
@@ -1004,7 +1010,7 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
           <h3>${esc(p.nome)}</h3>
         </div>
       </div>
-      ${foto ? `<p class="photo-credit">Foto: ${esc(foto.autor)} · <a href="${esc(foto.licencaUrl || foto.pagina)}" target="_blank" rel="noopener">${esc(foto.licenca)}</a> · <a href="${esc(foto.pagina)}" target="_blank" rel="noopener">Wikimedia Commons</a></p>` : ""}
+      ${foto ? `<p class="photo-credit">${foto.doLocal ? "Foto do local" : "Foto"}: ${esc(foto.autor)} · <a href="${esc(foto.licencaUrl || foto.pagina)}" target="_blank" rel="noopener">${esc(foto.licenca)}</a> · <a href="${esc(foto.pagina)}" target="_blank" rel="noopener">Wikimedia Commons</a></p>` : ""}
       <div class="modal-body">
         <p style="margin:0">${esc(p.descricao)}</p>
         <div class="facts">
@@ -1383,6 +1389,7 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
       if (window.TF_CITIES[e.target.value]) { state.city = e.target.value; save(); renderCitySelect(); renderAll(); }
     });
     $("#dayStart").addEventListener("change", (e) => {
+      if (document.activeElement === e.target) return; // aplica ao sair do campo (ver "Campos de horário")
       if (!state.activeDay || !e.target.value) return;
       dayData(state.activeDay).start = e.target.value; save(); renderAll();
     });
@@ -1516,7 +1523,19 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
       if ((el = t.closest("[data-open]"))) { openDetail(el.dataset.open); return; }
       if ((el = t.closest("#mobileTabs [data-view]"))) { ui.view = el.dataset.view; renderView(); }
     });
+    // Campos de horário: alguns navegadores disparam "change" no meio da digitação (ex.: só com a hora),
+    // e redesenhar o roteiro nessa hora recria o campo e atrapalha. O valor só é aplicado ao sair do
+    // campo (clique fora / Tab) ou com Enter.
+    document.addEventListener("focusin", (e) => {
+      if (e.target.type === "time") e.target.dataset.antes = e.target.value;
+    });
+    document.addEventListener("focusout", (e) => {
+      const el = e.target;
+      if (el.type !== "time" || el.value === el.dataset.antes) return;
+      setTimeout(() => el.dispatchEvent(new Event("change", { bubbles: true })), 0);
+    });
     document.addEventListener("change", (e) => {
+      if (e.target.type === "time" && document.activeElement === e.target) return;
       const ds = e.target.dataset || {};
       if (ds.mealcfg) {
         const c = state.meals[ds.mealcfg];
@@ -1555,7 +1574,7 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
       setDuration(u, v);
     });
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && e.target.dataset && (e.target.dataset.durinput || e.target.dataset.mealinput)) e.target.blur();
+      if (e.key === "Enter" && e.target.dataset && (e.target.dataset.durinput || e.target.dataset.mealinput || e.target.type === "time")) e.target.blur();
     });
     $("#detail").addEventListener("click", (e) => { if (e.target === $("#detail")) $("#detail").close(); });
     // Pré-visualiza o intervalo enquanto escolhe a volta.

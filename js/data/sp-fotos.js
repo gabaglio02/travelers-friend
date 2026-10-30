@@ -1,8 +1,11 @@
 /*
- * Fotos dos lugares — Wikimedia Commons, só licenças livres (CC / domínio público).
- * Gerado em 2026-10-30 a partir da foto principal do artigo na Wikipédia
- * (ou de busca no Commons, revisada à mão). Cada foto precisa mostrar autor e licença (ver "Foto:" nos detalhes).
- * Lugares sem foto livre usam a ilustração da categoria.
+ * Fotos — Wikimedia Commons, só licenças livres (CC / domínio público), escolhidas à mão e sem fotos de pessoas.
+ * Atualizado em 2026-10-30. Cada foto mostra autor e licença nos detalhes ("Foto:").
+ *
+ *  fotos       id do lugar (ou "v:<local>") → foto
+ *  fotosRef    id do lugar/evento → foto do local onde acontece (aparece como "Foto do local")
+ *  fotosLocal  campo "local" dos eventos de sp-eventos.js → foto do local
+ * Quem não tem foto livre usa a ilustração da categoria.
  */
 window.TF_CITIES.sp.fotos = {
   "25marco": {
@@ -131,6 +134,13 @@ window.TF_CITIES.sp.fotos = {
     "licenca": "CC BY-SA 4.0",
     "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
   },
+  "cemucam": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/11/Cemucam.JPG/500px-Cemucam.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=28730781",
+    "autor": "Victor Lopes",
+    "licenca": "CC BY-SA 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
   "copan": {
     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/Copan_ST.jpg/500px-Copan_ST.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
     "pagina": "https://commons.wikimedia.org/w/index.php?curid=6034464",
@@ -215,6 +225,13 @@ window.TF_CITIES.sp.fotos = {
     "licenca": "CC BY-SA 3.0",
     "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
   },
+  "liberdade": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0c/Pra%C3%A7a_da_Liberdade_%28S%C3%A3o_Paulo%29_2.jpg/500px-Pra%C3%A7a_da_Liberdade_%28S%C3%A3o_Paulo%29_2.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=127896344",
+    "autor": "Eugenio Hansen, OFS",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
   "mam": {
     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Museu_de_Arte_Moderna%2C_S%C3%A3o_Paulo_-_Fachada.jpg/500px-Museu_de_Arte_Moderna%2C_S%C3%A3o_Paulo_-_Fachada.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
     "pagina": "https://commons.wikimedia.org/w/index.php?curid=4393982",
@@ -243,6 +260,13 @@ window.TF_CITIES.sp.fotos = {
     "licenca": "CC BY-SA 3.0",
     "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
   },
+  "mlp": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/ba/Esta%C3%A7%C3%A3o_da_Luz_in_S%C3%A3o_Paulo.jpg/500px-Esta%C3%A7%C3%A3o_da_Luz_in_S%C3%A3o_Paulo.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=36810339",
+    "autor": "Wilfredor",
+    "licenca": "CC0",
+    "licencaUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+  },
   "morumbistour": {
     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/77/Est%C3%A1dio_do_Morumbi.jpg/500px-Est%C3%A1dio_do_Morumbi.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
     "pagina": "https://commons.wikimedia.org/w/index.php?curid=116933307",
@@ -256,6 +280,20 @@ window.TF_CITIES.sp.fotos = {
     "autor": "Dornicke",
     "licenca": "CC BY-SA 4.0",
     "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "nascentetiete": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/49/Nascente_do_rio_Tiet%C3%AA_1.jpg/500px-Nascente_do_rio_Tiet%C3%AA_1.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=184828",
+    "autor": "User:OS2Warp",
+    "licenca": "Public domain",
+    "licencaUrl": null
+  },
+  "olhodagua": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/65/Mairipor%C3%A3_%28vista_do_pico_de_olho_d%27%C3%A1gua%29.jpg/500px-Mairipor%C3%A3_%28vista_do_pico_de_olho_d%27%C3%A1gua%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=2306603",
+    "autor": "Marcelopalmas",
+    "licenca": "CC BY 2.0 br",
+    "licencaUrl": "https://creativecommons.org/licenses/by/2.0/br/deed.en"
   },
   "osesp": {
     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/de/Sala_S%C3%A3o_Paulo_e_Esta%C3%A7%C3%A3o_Julio_Prestes.jpg/500px-Sala_S%C3%A3o_Paulo_e_Esta%C3%A7%C3%A3o_Julio_Prestes.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
@@ -327,6 +365,13 @@ window.TF_CITIES.sp.fotos = {
     "licenca": "CC BY-SA 4.0",
     "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
   },
+  "sampasky": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4e/Edif%C3%ADcio_Mirante_do_Vale_-_panoramio.jpg/500px-Edif%C3%ADcio_Mirante_do_Vale_-_panoramio.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=52721341",
+    "autor": "enioprado",
+    "licenca": "CC BY-SA 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
   "se": {
     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ef/Catedral_da_S%C3%A9%2C_S%C3%A3o_Paulo%2C_Brasil.jpg/500px-Catedral_da_S%C3%A9%2C_S%C3%A3o_Paulo%2C_Brasil.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
     "pagina": "https://commons.wikimedia.org/w/index.php?curid=94701065",
@@ -355,6 +400,76 @@ window.TF_CITIES.sp.fotos = {
     "licenca": "CC BY-SA 4.0",
     "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
   },
+  "v:allianz": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cb/Allianz_Parque_-_Panoramica.jpg/500px-Allianz_Parque_-_Panoramica.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=38707665",
+    "autor": "Analu Westh",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "v:anhangabau": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2b/Novo_Vale_do_Anhangaba%C3%BA.jpg/500px-Novo_Vale_do_Anhangaba%C3%BA.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=105439265",
+    "autor": "Lucas Landin",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "v:augusta": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/35/Rua_Augusta%2C_Sao_Paulo_city.jpg/500px-Rua_Augusta%2C_Sao_Paulo_city.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=142172807",
+    "autor": "Wilfredor",
+    "licenca": "CC0",
+    "licencaUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+  },
+  "v:caninde": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/Estadio_Portuguesa1.jpg/500px-Estadio_Portuguesa1.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=3741098",
+    "autor": "Greenstrat at English Wikipedia",
+    "licenca": "Public domain",
+    "licencaUrl": null
+  },
+  "v:conjuntonacional": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c1/Facade_of_the_Conjunto_Nacional_cropped_version.jpg/500px-Facade_of_the_Conjunto_Nacional_cropped_version.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=35128571",
+    "autor": "Wilfredor",
+    "licenca": "CC0",
+    "licencaUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+  },
+  "v:embuguacu": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cb/Igreja_matriz_de_Embu-Gua%C3%A7u.jpg/500px-Igreja_matriz_de_Embu-Gua%C3%A7u.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=3721857",
+    "autor": "OS2Warp",
+    "licenca": "CC BY 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by/3.0"
+  },
+  "v:interlagos": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e6/Vista_a%C3%A9rea_del_Aut%C3%B3dromo_Jos%C3%A9_Carlos_Pace_01.jpg/500px-Vista_a%C3%A9rea_del_Aut%C3%B3dromo_Jos%C3%A9_Carlos_Pace_01.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=179342144",
+    "autor": "ProtoplasmaKid",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "v:sescpompeia": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d6/Sesc_Pompeia%2C_Lina_Bo_Bardi_%285877887349%29.jpg/500px-Sesc_Pompeia%2C_Lina_Bo_Bardi_%285877887349%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=53010106",
+    "autor": "Arte Fora do Museu",
+    "licenca": "CC BY 2.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by/2.0"
+  },
+  "v:teatrorenault": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4a/Teatro_Renault_S%C3%A3o_Paulo.jpg/500px-Teatro_Renault_S%C3%A3o_Paulo.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=48101971",
+    "autor": "Gallibd",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "v:vibra": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/07/Credicardhall-sao-paulo.JPG/500px-Credicardhall-sao-paulo.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=9373990",
+    "autor": "Onjacktallcuca",
+    "licenca": "Public domain",
+    "licencaUrl": null
+  },
   "vilamadalena": {
     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/Street_art_at_Vila_Madalena%2C_Sao_Paulo_12.jpg/500px-Street_art_at_Vila_Madalena%2C_Sao_Paulo_12.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
     "pagina": "https://commons.wikimedia.org/w/index.php?curid=148635551",
@@ -376,4 +491,44 @@ window.TF_CITIES.sp.fotos = {
     "licenca": "CC BY-SA 4.0",
     "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
   }
+};
+
+window.TF_CITIES.sp.fotosRef = {
+  "show-mariah": "v:allianz",
+  "show-seal": "v:allianz",
+  "show-ed": "v:allianz",
+  "show-slayer": "v:allianz",
+  "show-lionel": "v:allianz",
+  "nubanktour": "v:allianz",
+  "show-sesc": "v:sescpompeia",
+  "gp": "v:interlagos",
+  "kart-interlagos": "v:interlagos",
+  "jazz": "ibirapuera",
+  "bbr": "ibirapuera",
+  "virada": "v:anhangabau",
+  "musicon": "v:anhangabau",
+  "batekoo": "v:caninde",
+  "jogo-spcor": "morumbistour",
+  "jogo-spflu": "morumbistour",
+  "jogo-corbot": "arenatour",
+  "musical": "v:teatrorenault",
+  "baixoaugusta": "v:augusta",
+  "bluenote": "v:conjuntonacional",
+  "donaonca": "copan",
+  "barosarcos": "theatro",
+  "trilhas-parana": "paranapiacaba",
+  "osesp": "osesp"
+};
+
+window.TF_CITIES.sp.fotosLocal = {
+  "vibra": "v:vibra",
+  "salasp": "osesp",
+  "villalobos": "villalobos",
+  "caninde": "v:caninde",
+  "morumbis": "morumbistour",
+  "ibirapuera": "ibirapuera",
+  "masp": "masp",
+  "ims": "ims",
+  "tomie": "tomie",
+  "embuguacu": "v:embuguacu"
 };
