@@ -1,4 +1,4 @@
-// Testa supabase/schema.sql + 002_perfis.sql num Postgres real (PGlite), com auth/storage simulados.
+// Testa supabase/schema.sql + 002_perfis.sql + 003 num Postgres real (PGlite), com auth/storage simulados.
 import { PGlite } from "@electric-sql/pglite";
 import fs from "fs";
 const raiz = process.argv[2];
@@ -34,7 +34,8 @@ const perfil = async (uid, apelido) => (await como(uid, "select public.perfil_pu
 await db.exec(STUBS);
 await db.exec(fs.readFileSync(raiz + "/supabase/schema.sql", "utf8"));
 await db.exec(fs.readFileSync(raiz + "/supabase/002_perfis.sql", "utf8"));
-console.log("✓ schema.sql e 002_perfis.sql rodaram sem erro");
+await db.exec(fs.readFileSync(raiz + "/supabase/003_limite_identidades.sql", "utf8"));
+console.log("✓ schema.sql, 002 e 003 rodaram sem erro");
 console.log("✓ rodar 002 de novo (idempotente):"); await db.exec(fs.readFileSync(raiz + "/supabase/002_perfis.sql", "utf8")); console.log("  ok");
 // Como no Supabase: as tabelas do public ficam liberadas para anon/authenticated e quem restringe é a RLS.
 await db.exec(`grant select, insert, update, delete on all tables in schema public to anon, authenticated;
@@ -121,9 +122,10 @@ r = await como(null, "select public.apelido_disponivel('ana') v");
 check("visitante anônimo não consulta apelidos", !!r.erro, JSON.stringify(r));
 
 console.log("\nLimite de identidades");
-for (let k = 1; k <= 9; k++) await como(A, `insert into public.identidades (apelido, nome, tipo) values ('persona${k}', 'P${k}', 'animal')`);
-r = await como(A, `insert into public.identidades (apelido, nome, tipo) values ('persona10', 'P10', 'objeto')`);
-check("11ª identidade é recusada", !!r.erro && /limite_identidades/.test(r.erro), r.erro);
+r = await como(A, `insert into public.identidades (apelido, nome, tipo) values ('persona1', 'P1', 'animal'), ('persona2', 'P2', 'historica')`);
+check("A cria 2 personas", !r.erro, r.erro);
+r = await como(A, `insert into public.identidades (apelido, nome, tipo) values ('persona3', 'P3', 'objeto')`);
+check("4ª identidade é recusada", !!r.erro && /limite_identidades/.test(r.erro), r.erro);
 
 console.log("\nStorage (bucket perfil)");
 check("bucket 'perfil' criado como público", (await db.query("select public from storage.buckets where id = 'perfil'")).rows[0]?.public === true);

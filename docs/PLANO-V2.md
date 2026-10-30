@@ -1,7 +1,7 @@
 # Traveler's Friend v2 — auditoria e plano
 
 Branch de trabalho: `nova-versao` · Backup da versão no ar: tag `v1.0` (bf0d998).
-Status: plano aprovado. **Etapas 0, 1, 2 e 3 concluídas** na branch `nova-versao` (Etapa 2 depende de rodar `supabase/002_perfis.sql`; a 3 não precisa de SQL novo); próxima: Etapa 4 (mural de lembranças).
+Status: plano aprovado. **Etapas 0, 1, 2 e 3 concluídas** na branch `nova-versao` (Etapa 2 depende de rodar `supabase/002_perfis.sql`; a 3, de `003_limite_identidades.sql`); próxima: Etapa 4 (mural de lembranças).
 
 ---
 
@@ -111,7 +111,7 @@ Alterações aditivas: `fotos` ganha `album_id`, `legenda` já existe, `tirada_e
 - **Álbuns e fotos**: RLS com `pode_ver(...)`; o bucket `fotos` continua privado e a política de leitura passa a liberar o arquivo quando o álbum é visível para quem pede (links assinados de curta duração).
 - **Avatar e capa** em bucket público `perfil` (são feitos para serem vistos; a interface avisa isso).
 - **Recados**: escrever só se o dono permitir (amigos/ninguém); apagar: autor ou dono do mural.
-- Limites no banco: recados por hora, tamanho de textos, número de personas por conta (ex.: 10).
+- Limites no banco: recados por hora, tamanho de textos, número de identidades por conta (3: perfil + 2 personas).
 
 ---
 

@@ -340,7 +340,7 @@ export function traduzir(err) {
   const m = String((err && err.message) || err || "");
   if (/duplicate key|identidades_apelido_idx/i.test(m)) return "Esse endereço de perfil já está em uso. Escolha outro.";
   if (/identidades_um_principal/i.test(m)) return "Você já tem um perfil principal.";
-  if (/limite_identidades/i.test(m)) return "Limite de 10 identidades por conta atingido.";
+  if (/limite_identidades/i.test(m)) return "Limite de 3 identidades por conta (seu perfil + 2 personas) atingido.";
   if (/row-level security|permission denied/i.test(m)) return "Sem permissão para isso. Entre de novo na sua conta.";
   if (/relation .* does not exist|function .* does not exist|Could not find the (function|table)/i.test(m))
     return "O banco ainda não tem as tabelas de perfil. É preciso rodar supabase/002_perfis.sql no Supabase.";

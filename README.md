@@ -30,6 +30,7 @@ Abrindo o `index.html` direto no navegador o site também funciona, mas só com 
 - `js/conta.js`: contas, viagens salvas e fotos (Supabase)
 - `supabase/schema.sql`: tabelas e regras de segurança do Supabase
 - `supabase/002_perfis.sql`: perfis, identidades, amizades, lugares visitados e privacidade por seção
+- `supabase/003_limite_identidades.sql`: limite de 3 identidades por conta (perfil + 2 personas)
 - `supabase/testes/`: testes do SQL num Postgres local (PGlite)
 - `js/dados/perfis.js`: leitura e gravação de perfis no Supabase
 - `js/social/perfil.js`: páginas `#/@apelido`, `#/perfil` e `#/perfil/editar`
@@ -78,7 +79,7 @@ no Supabase (tabela `agenda_cache`) em vez da pasta `data/`.
    Use a conta pessoal (plano **Hobby**); não crie Team nem inicie o teste do Pro.
 2. **Supabase:** no projeto da Vercel, *Storage* (ou *Integrations*) → **Supabase** → escolha o plano **Free**.
    A integração cria as variáveis `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` (o site aceita também os nomes `NEXT_PUBLIC_…`).
-3. **Banco:** no painel do Supabase, *SQL Editor* → cole e rode [`supabase/schema.sql`](supabase/schema.sql) e depois [`supabase/002_perfis.sql`](supabase/002_perfis.sql) (só acrescenta tabelas; é seguro rodar de novo).
+3. **Banco:** no painel do Supabase, *SQL Editor* → cole e rode [`supabase/schema.sql`](supabase/schema.sql) , depois [`supabase/002_perfis.sql`](supabase/002_perfis.sql) e [`supabase/003_limite_identidades.sql`](supabase/003_limite_identidades.sql) (só acrescentam/ajustam; é seguro rodar de novo).
 4. **Login:** no Supabase, *Authentication → URL Configuration*: em **Site URL** coloque o endereço da Vercel
    (ex.: `https://travelers-friend.vercel.app`) e adicione-o também em **Redirect URLs** (e `http://localhost:5173` para testar).
 5. **Cron (opcional):** crie a variável `CRON_SECRET` na Vercel com um texto aleatório; o `/api/cron` passa a aceitar só a Vercel.
@@ -139,7 +140,7 @@ Os preços, horários e datas são aproximados. Os itens marcados como `ilustrat
 
 ## Identidades
 
-- `#/identidades` lista o perfil principal e as personas da conta (até 10, mesmo limite do banco).
+- `#/identidades` lista o perfil principal e as personas da conta (até 3: o perfil + 2 personas, mesmo limite do banco).
 - `#/identidades/nova`: escolhe o tipo (figura histórica, animal, objeto, personagem original) e abre o mesmo
   formulário do perfil, com ideias prontas, moldura do avatar, emoticons e emoticon de assinatura.
 - Figuras históricas: só pessoas já falecidas, com declaração obrigatória; a página mostra o selo

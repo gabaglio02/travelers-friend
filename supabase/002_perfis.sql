@@ -47,7 +47,7 @@ create trigger identidades_atualizado_em before update on public.identidades
 -- Regras que o banco garante (não dependem do site):
 --  · níveis de privacidade válidos;
 --  · sem declarar 18+, nada fica "publico" (vira "amigos");
---  · até 10 identidades por conta (1 principal + 9 personas).
+--  · até 3 identidades por conta (1 principal + 2 personas; era 10, ver 003_limite_identidades.sql).
 create or replace function public.identidades_validar() returns trigger
 language plpgsql set search_path = '' as $$
 declare
@@ -68,8 +68,8 @@ begin
   end loop;
   if tg_op = 'INSERT' then
     select count(*) into qtd from public.identidades where owner_id = new.owner_id;
-    if qtd >= 10 then
-      raise exception 'limite_identidades: máximo de 10 identidades por conta';
+    if qtd >= 3 then
+      raise exception 'limite_identidades: máximo de 3 identidades por conta';
     end if;
   end if;
   return new;
@@ -282,7 +282,7 @@ grant execute on function public.qtd_arquivos_perfil(uuid) to authenticated;
 drop policy if exists "perfil storage: dono envia" on storage.objects;
 drop policy if exists "perfil storage: dono altera" on storage.objects;
 drop policy if exists "perfil storage: dono apaga" on storage.objects;
--- Leitura é pública pelo próprio bucket; escrever, só na própria pasta (até 40 arquivos: avatares e capas de até 10 identidades).
+-- Leitura é pública pelo próprio bucket; escrever, só na própria pasta (até 40 arquivos: avatares e capas das identidades).
 create policy "perfil storage: dono envia" on storage.objects for insert to authenticated
   with check (bucket_id = 'perfil' and (storage.foldername(name))[1] = auth.uid()::text and public.qtd_arquivos_perfil(auth.uid()) < 40);
 create policy "perfil storage: dono altera" on storage.objects for update to authenticated

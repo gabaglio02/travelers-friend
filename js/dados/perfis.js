@@ -90,7 +90,7 @@ export async function removerImagem(caminho) {
 }
 
 // ---------- Identidades (perfil principal + personas) ----------
-export const LIMITE_IDENTIDADES = 10; // igual ao do banco (supabase/002_perfis.sql)
+export const LIMITE_IDENTIDADES = 3; // perfil principal + 2 personas; igual ao do banco (supabase/003_limite_identidades.sql)
 export async function minhasIdentidades() {
   const { data, error } = await cli().from("identidades").select("*").order("criado_em", { ascending: true });
   falhou(error);
