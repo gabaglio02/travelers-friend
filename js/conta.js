@@ -306,7 +306,7 @@
           <label class="field"><span>E-mail</span><input type="email" name="email" autocomplete="email" required></label>
           <label class="field"><span>Senha (mínimo 8 caracteres)</span><input type="password" name="senha" minlength="8" autocomplete="new-password" required></label>
           <label class="field"><span>Repita a senha</span><input type="password" name="senha2" minlength="8" autocomplete="new-password" required></label>
-          <label class="check"><input type="checkbox" name="aceite" required> Li e aceito a <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></label>
+          <label class="check"><input type="checkbox" name="aceite" required> Li e aceito a <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade e as regras de uso</a></label>
           <button class="btn" type="submit">Criar conta</button>
           <p class="small-text">Já tem conta? <button type="button" class="reset" data-acc="entrar">Entrar</button></p>
         </form>`,

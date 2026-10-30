@@ -1,7 +1,7 @@
 # Traveler's Friend v2 — auditoria e plano
 
 Branch de trabalho: `nova-versao` · Backup da versão no ar: tag `v1.0` (bf0d998).
-Status: plano aprovado. **Etapas 0 a 4 concluídas** na branch `nova-versao` (precisam de `supabase/002_perfis.sql`, `003_limite_identidades.sql` e `004_mural.sql` rodados no Supabase); próxima: Etapa 5 (integração e testes).
+Status: **Etapas 0 a 5 concluídas** na branch `nova-versao` (com `002`, `003` e `004` rodados no Supabase). Falta só a checklist da seção 6 para publicar na `main`.
 
 ---
 
@@ -137,3 +137,27 @@ O site principal só muda quando você aprovar a junção com a `main`.
 3. Recursos sociais públicos **só para maiores de 18** no lançamento — recomendado.
 4. Personas históricas **apenas de figuras já falecidas**, com selo de "não oficial" — recomendado.
 5. Começar pela **Etapa 0** (divisão em módulos), que não muda nada visível mas evita que o redesign vire um arquivo de 4 mil linhas — recomendado.
+
+---
+
+## 6. Etapa 5 — integração e testes (feito) e checklist para publicar
+
+**Testado** (servidor local, banco simulado no navegador + testes de SQL em Postgres real):
+- Planejador: busca, adicionar lugares, linha do tempo, alertas, detalhe, dias, horário de início, mapa, custos — em 1280 px, tablet (768 px) e celular (375 px), sem erros no console e sem rolagem lateral.
+- Área social: perfil (dono, amigo, visitante sem login), identidades, amigos, álbum, editor de lembrança, denúncia, visualizador de fotos.
+- SQL: `perfis.test.mjs` (44 verificações) e `mural.test.mjs` (66).
+- Acessibilidade (auditoria automática por tela): nomes de botões, rótulos de campos, textos alternativos, ids duplicados, contraste AA, foco visível e uso por teclado.
+
+**Corrigido nesta etapa:** cards do Explorar vazavam para o lado no celular; botão "!" com área de toque pequena; 5 campos sem rótulo para leitor de tela;
+contraste de "Fora das datas" e das abas Lugares/Eventos; selo da Classificação Indicativa sem descrição para leitor de tela; detalhe do lugar
+só abria com mouse (agora o nome é um botão); Política de Privacidade desatualizada (agora cobre perfis, personas, álbuns, recados, amizades,
+bloqueios, denúncias e regras de uso).
+
+**Mantido de propósito:** selos da Classificação Indicativa com as cores oficiais (branco sobre verde/laranja/azul fica abaixo do contraste AA,
+mas o selo é padronizado e agora tem descrição completa para leitor de tela).
+
+**Checklist antes de juntar com a `main` (publicar):**
+1. Testar o endereço de teste da branch com a sua conta e uma segunda conta (pedido de amizade, recado, álbum público × só amigos).
+2. Preencher os campos destacados de `privacidade.html` (responsável, e-mail, data, prazos) e, de preferência, revisar com orientação jurídica; tirar o aviso de rascunho.
+3. Combinar quem vai olhar as denúncias e com que frequência (Supabase → Table Editor → `denuncias`).
+4. Lembrar do limite do plano gratuito: 50 fotos / 20 MB por conta e 1 GB no total.

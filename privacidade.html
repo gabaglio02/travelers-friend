@@ -36,31 +36,60 @@
     <h2>2. Quais dados usamos</h2>
     <ul>
       <li><b>Sem conta:</b> o roteiro que você monta (datas, lugares, horários, hospedagens, orçamento) fica salvo <b>apenas no seu navegador</b>.</li>
-      <li><b>Com conta:</b> nome, e-mail e senha (guardada de forma criptografada, que nem nós conseguimos ler), as viagens que você salvar e as fotos que enviar.</li>
+      <li><b>Com conta:</b> nome, e-mail e senha (guardada de forma criptografada, que nem nós conseguimos ler) e as viagens que você salvar.</li>
+      <li><b>Perfil e personas:</b> o que você preencher — nome de exibição, endereço (@), foto de perfil, capa, mensagem, status, "sobre mim",
+        destinos desejados, lugares visitados e a declaração de ter 18 anos ou mais. Você pode ter um perfil principal e até 2 personas.</li>
+      <li><b>Lembranças e fotos:</b> álbuns (título, local, datas, descrição, lugares) e as fotos que você enviar, com legenda, data e local se você preencher.
+        As fotos são reduzidas no seu aparelho antes do envio e os dados de localização (GPS) gravados nelas são removidos.</li>
+      <li><b>Amigos e recados:</b> pedidos de amizade, amizades, bloqueios e os recados que você escreve ou recebe.</li>
+      <li><b>Denúncias:</b> quando você denuncia algo, guardamos o que foi denunciado, o motivo, o texto opcional e a sua conta (para evitar abuso).
+        A pessoa denunciada não sabe quem denunciou.</li>
       <li><b>Hospedagem:</b> se você buscar um endereço, o texto digitado é enviado ao serviço de mapas OpenStreetMap (Nominatim) para encontrar o local.</li>
-      <li><b>Fotos:</b> são reduzidas no seu aparelho antes do envio e os dados de localização (GPS) gravados nelas são removidos.</li>
     </ul>
 
-    <h2>3. Para que usamos</h2>
-    <p>Somente para o site funcionar: entrar na sua conta, guardar e mostrar suas viagens e fotos, e enviar e-mails da conta
-      (confirmação de cadastro e recuperação de senha). Não vendemos seus dados e não usamos suas fotos para nenhum outro fim.</p>
+    <h2>3. Quem vê o quê</h2>
+    <ul>
+      <li><b>Sempre privados</b> (só a sua conta): e-mail, viagens salvas, fotos fora de álbuns, bloqueios e denúncias.</li>
+      <li><b>Você escolhe</b> — por seção do perfil e por álbum — entre <b>público</b> (qualquer pessoa com o link), <b>só amigos</b> ou <b>só eu</b>.
+        O mesmo vale para quem pode ler o seu mural de recados.</li>
+      <li><b>Foto de perfil e capa</b> são visíveis para quem abre o link do perfil, mesmo que outras seções sejam "só amigos".</li>
+      <li><b>Sem declarar 18 anos ou mais</b>, nada do seu perfil ou dos seus álbuns fica público: o máximo é "só amigos".</li>
+      <li>As fotos dos álbuns ficam em armazenamento privado e são abertas por <b>links temporários</b>, gerados só para quem pode ver o álbum.</li>
+      <li>Um recado que você escreve aparece no mural de outra pessoa, para quem ela permitir. Você e o dono do mural podem apagá-lo.</li>
+    </ul>
 
-    <h2>4. Onde os dados ficam</h2>
-    <p>Contas, viagens e fotos ficam no <b>Supabase</b>; o site é hospedado na <b>Vercel</b>. Esses serviços podem guardar dados
-      em servidores fora do Brasil. Suas viagens e fotos são privadas: só a sua conta tem acesso.</p>
+    <h2>4. Para que usamos</h2>
+    <p>Somente para o site funcionar: entrar na sua conta, guardar e mostrar suas viagens, perfil, lembranças, amigos e recados conforme a sua
+      privacidade, analisar denúncias e enviar e-mails da conta (confirmação de cadastro e recuperação de senha).
+      Não vendemos seus dados e não usamos suas fotos para nenhum outro fim.</p>
 
-    <h2>5. Por quanto tempo</h2>
-    <p>Enquanto sua conta existir. Ao excluir a conta, apagamos suas viagens e fotos. <span class="fill">[ajuste se houver backups com prazo próprio]</span></p>
+    <h2>5. Onde os dados ficam</h2>
+    <p>Contas, perfis, viagens, álbuns, fotos e recados ficam no <b>Supabase</b>; o site é hospedado na <b>Vercel</b>.
+      Esses serviços podem guardar dados em servidores fora do Brasil.</p>
 
-    <h2>6. Seus direitos</h2>
-    <p>Você pode ver e corrigir seus dados na própria conta e <b>excluir a conta a qualquer momento</b> pelo botão
-      "Excluir minha conta". Para outros pedidos previstos na LGPD (Lei 13.709/2018), escreva para
+    <h2>6. Por quanto tempo</h2>
+    <p>Enquanto sua conta existir. Ao excluir a conta, apagamos suas viagens, perfil, personas, álbuns, fotos, amizades, bloqueios e
+      os recados que você escreveu. As <b>denúncias</b> que você fez continuam guardadas sem ligação com a sua conta, para a moderação.
+      <span class="fill">[ajuste se houver backups com prazo próprio]</span></p>
+
+    <h2>7. Seus direitos</h2>
+    <p>Você pode ver e corrigir seus dados no próprio site, mudar a privacidade de cada seção e álbum a qualquer momento e
+      <b>excluir a conta</b> pelo botão "Excluir minha conta". Para outros pedidos previstos na LGPD (Lei 13.709/2018), escreva para
       <span class="fill">[e-mail de contato]</span>.</p>
 
-    <h2>7. Armazenamento no navegador</h2>
+    <h2 id="regras">8. Regras de uso dos perfis e do mural</h2>
+    <ul>
+      <li>Personas podem ser animais, objetos, personagens originais ou <b>figuras históricas já falecidas</b>, sempre com o selo de que não são contas oficiais.
+        Não é permitido se passar por pessoas vivas, outras pessoas reais ou marcas.</li>
+      <li>Não é permitido publicar conteúdo ofensivo, assédio, ameaças, conteúdo sexual, discurso de ódio, spam ou fotos de outras pessoas sem autorização.</li>
+      <li>Qualquer pessoa logada pode <b>denunciar</b> perfis, álbuns, fotos e recados, e <b>bloquear</b> outra conta (o bloqueio vale para todas as identidades dela).
+        Conteúdo que viole estas regras pode ser removido e a conta pode ser excluída. <span class="fill">[prazo e forma de resposta às denúncias]</span></li>
+    </ul>
+
+    <h2>9. Armazenamento no navegador</h2>
     <p>Usamos o armazenamento local do navegador para guardar seu roteiro e manter você conectado. Não usamos cookies de publicidade.</p>
 
-    <h2>8. Mudanças</h2>
+    <h2>10. Mudanças</h2>
     <p>Se esta política mudar, a data no topo será atualizada.</p>
 
     <p><a href="./">← Voltar ao Traveler's Friend</a></p>

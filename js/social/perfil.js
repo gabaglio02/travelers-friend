@@ -268,7 +268,7 @@ function renderEditor() {
         <h3>Quero conhecer <small class="muted">${ed.destinos_desejados.length}/30</small></h3>
         <ul class="pf-chips editavel">${ed.destinos_desejados.map((d, i) => `<li>${esc(d)} <button type="button" data-pf="tirar-destino" data-i="${i}" aria-label="Remover ${esc(d)}">×</button></li>`).join("")}</ul>
         <div class="pf-linha">
-          <input id="pfNovoDestino" maxlength="60" placeholder="Ex.: Paranapiacaba, Japão, Chapada Diamantina" ${ed.destinos_desejados.length >= 30 ? "disabled" : ""}>
+          <input id="pfNovoDestino" aria-label="Novo destino" maxlength="60" placeholder="Ex.: Paranapiacaba, Japão, Chapada Diamantina" ${ed.destinos_desejados.length >= 30 ? "disabled" : ""}>
           <button type="button" class="btn ghost small" data-pf="add-destino">Adicionar</button>
         </div>
       </section>

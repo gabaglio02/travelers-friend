@@ -508,7 +508,7 @@ import "./social/amigos.js"; // registra #/amigos
         ${midiaHtml(p)}
         <div class="pcard-body">
           <div class="kicker">${esc(CATEGORIES[p.categoria])} · ${esc(placeLabel(p))}${p.ilustrativo ? " · exemplo" : ""}</div>
-          <h4>${esc(p.nome)}</h4>
+          <h4><button type="button" class="pcard-titulo" data-open="${p.id}">${esc(p.nome)}</button></h4>
           ${fatosHtml(p)}
           ${plannedNote(p.id)}
         </div>
@@ -1032,7 +1032,7 @@ import "./social/amigos.js"; // registra #/amigos
         ${p.ilustrativo ? `<p class="small-text muted" style="margin:0">⚠ Dados ilustrativos para o protótipo — confirme no site oficial.</p>` : ""}
         ${plannedNote(p.id)}
         <div class="modal-actions">
-          ${days.length ? `<select id="detailDay">${opts}</select><button class="btn" data-adddetail="${p.id}">${plannedDays(p.id).length ? "Adicionar outra vez" : "Adicionar ao roteiro"}</button>` : ""}
+          ${days.length ? `<select id="detailDay" aria-label="Dia do roteiro">${opts}</select><button class="btn" data-adddetail="${p.id}">${plannedDays(p.id).length ? "Adicionar outra vez" : "Adicionar ao roteiro"}</button>` : ""}
         </div>
         ${combos.length ? `<h4 style="margin:4px 0 0">Faça um combo</h4>` + combos.map((c) => `
           <div class="combo-box">

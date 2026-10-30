@@ -495,11 +495,12 @@ body.landing .landing-foot span { color: #8a8a8a; }
 /* ---------- Ícone de ajuda ("!") ---------- */
 .label-help { position: relative; display: inline-flex; align-items: center; gap: 6px; }
 .info {
-  width: 16px; height: 16px; padding: 0; border-radius: 50%; cursor: help;
+  position: relative; width: 16px; height: 16px; padding: 0; border-radius: 50%; cursor: help;
   border: 1.5px solid currentColor; background: transparent; color: inherit;
   font: 700 11px/1 var(--font); display: inline-grid; place-items: center;
 }
 .info:hover, .info:focus-visible { background: var(--accent); color: var(--ink); border-color: var(--accent); outline: none; }
+.info::after { content: ""; position: absolute; inset: -8px; } /* área de toque maior que o desenho */
 .tip {
   position: absolute; left: 0; top: calc(100% + 6px); z-index: 1100; width: 250px;
   background: var(--ink); color: var(--paper); border: 2px solid var(--paper); border-radius: var(--radius);
@@ -571,7 +572,7 @@ body.landing .account-btn { position: absolute; top: 16px; right: 16px; }
 .seg { display: flex; gap: 2px; padding: 3px; background: var(--paper-3); border-radius: var(--r-md); }
 .seg button {
   flex: 1; border: 0; background: transparent; border-radius: calc(var(--r-md) - 2px);
-  padding: 7px 8px; font-size: var(--t-sm); font-weight: var(--w-medium); cursor: pointer; color: var(--muted);
+  padding: 7px 8px; font-size: var(--t-sm); font-weight: var(--w-medium); cursor: pointer; color: #555; /* contraste AA sobre o cinza */
   transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
 }
 .seg button small { font-family: var(--mono); font-size: 11px; opacity: .7; margin-left: 2px; }
@@ -593,14 +594,16 @@ body.landing .account-btn { position: absolute; top: 16px; right: 16px; }
 /* Card de lugar/evento */
 .cards { gap: 2px; padding-top: var(--s-2); }
 .pcard {
-  position: relative; display: grid; grid-template-columns: 76px 1fr; gap: var(--s-3);
+  position: relative; display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: var(--s-3);
   padding: var(--s-3) 44px var(--s-3) var(--s-2); border-radius: var(--r-md); cursor: pointer;
   transition: background var(--dur-1) var(--ease);
 }
 .pcard + .pcard { border-top: 1px solid var(--paper-3); }
 .pcard:hover { background: var(--paper-2); }
 .pcard:focus-within { background: var(--paper-2); }
-.pcard h4 { margin: 2px 0 6px; font-size: var(--t-md); line-height: var(--lh-tight); font-weight: var(--w-bold); }
+.pcard h4 { margin: 2px 0 6px; font-size: var(--t-md); line-height: var(--lh-tight); font-weight: var(--w-bold); overflow-wrap: anywhere; }
+.pcard-titulo { all: unset; cursor: pointer; } /* nome do lugar: abre o detalhe pelo teclado também */
+.pcard-titulo:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 2px; }
 .pcard .kicker { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pcard.added { background: transparent; }
 .pcard.added h4, .pcard.added .kicker { color: #8a8a87; }
@@ -638,7 +641,7 @@ body.landing .account-btn { position: absolute; top: 16px; right: 16px; }
 .avail.ok { color: var(--ink); }
 .avail.ok::before { background: var(--st-disponivel); }
 .avail.warn::before { background: var(--st-ausente); }
-.avail.off { color: #9a9a96; }
+.avail.off { color: var(--muted); }
 .avail.off::before { background: transparent; border: 1.5px solid #b9b9b5; }
 .rec .facts-line { font-size: 12px; }
 

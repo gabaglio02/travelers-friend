@@ -110,7 +110,7 @@ function renderMural(p, albuns, mu, logado, erro) {
     const podeEscrever = mu.autores && mu.autores.length;
     const form = podeEscrever ? `
       <form class="mu-recado-form" id="muRecadoForm">
-        <textarea name="texto" maxlength="500" rows="2" required placeholder="Deixe um recado para ${esc(p.nome)}…"></textarea>
+        <textarea name="texto" maxlength="500" rows="2" required aria-label="Recado" placeholder="Deixe um recado para ${esc(p.nome)}…"></textarea>
         <div class="pf-linha">
           ${mu.autores.length > 1 ? `<label class="small-text">Assinar como <select name="autor">${mu.autores.map((a) => `<option value="${esc(a.id)}">@${esc(a.apelido)}</option>`).join("")}</select></label>`
             : `<input type="hidden" name="autor" value="${esc(mu.autores[0].id)}">`}
@@ -376,7 +376,7 @@ function renderEditorAlbum() {
         <h3>Lugares <small class="muted">${lb.lugares.length}/40</small></h3>
         <ul class="pf-chips editavel">${lb.lugares.map((l, n) => `<li>${esc(l.nome)} <button type="button" data-mu="tirar-lugar" data-i="${n}" aria-label="Remover ${esc(l.nome)}">×</button></li>`).join("")}</ul>
         <div class="pf-linha">
-          <input id="lbNovoLugar" list="lbCatalogo" maxlength="120" placeholder="Escolha da lista ou escreva" ${lb.lugares.length >= 40 ? "disabled" : ""}>
+          <input id="lbNovoLugar" aria-label="Novo lugar" list="lbCatalogo" maxlength="120" placeholder="Escolha da lista ou escreva" ${lb.lugares.length >= 40 ? "disabled" : ""}>
           <datalist id="lbCatalogo">${opcoesCat}</datalist>
           <button type="button" class="btn ghost small" data-mu="add-lugar">Adicionar</button>
         </div>
@@ -524,7 +524,7 @@ function abrirDenuncia(tipo, id, nome) {
       <p>O que há de errado com ${esc(nome)}?</p>
       <div class="mu-den-motivos">${Object.entries(M.MOTIVOS).map(([k, n]) => `<label class="check"><input type="radio" name="motivo" value="${k}"> ${n}</label>`).join("")}</div>
       <label class="field"><span>Detalhes (opcional)</span><textarea name="detalhe" maxlength="500" rows="3"></textarea></label>
-      <p class="muted small-text">A pessoa denunciada não sabe quem denunciou. A moderação do Traveler's Friend analisa e pode remover o conteúdo. Para deixar de ver essa pessoa, use também "Bloquear".</p>
+      <p class="muted small-text">A pessoa denunciada não sabe quem denunciou. A moderação do Traveler's Friend analisa e pode remover o conteúdo (veja as <a href="privacidade.html#regras" target="_blank" rel="noopener">regras de uso</a>). Para deixar de ver essa pessoa, use também "Bloquear".</p>
       <p class="mu-den-erro pf-erro-txt" role="alert"></p>
       <div class="modal-actions"><button class="btn" type="submit">Enviar denúncia</button><button type="button" class="btn ghost" data-den="fechar">Cancelar</button></div>
     </div></form>`;

@@ -41,7 +41,8 @@ export function dateRange(start, end) {
 
 export const ageMin = (idade) => idade === "Livre" ? 0 : parseInt(idade, 10) || 0;
 export function bracketFor(age) { return AGE_OPTIONS.reduce((acc, o) => (o.v <= age ? o.v : acc), 0); }
-export const ciIcon = (v, cls = "") => `<span class="ci ci-${v} ${cls}" title="${esc(AGE_OPTIONS.find((o) => o.v === v)?.desc || "")}">${v === 0 ? "L" : v}</span>`;
+// Selo da Classificação Indicativa (cores oficiais); o leitor de tela lê a descrição completa.
+export const ciIcon = (v, cls = "") => { const d = esc(AGE_OPTIONS.find((o) => o.v === v)?.desc || ""); return `<span class="ci ci-${v} ${cls}" title="${d}" role="img" aria-label="${d}">${v === 0 ? "L" : v}</span>`; };
 export const ageBadge = (idade) => ciIcon(ageMin(idade));
 // Lugares da região metropolitana mostram o município; os da capital, o bairro.
 export const placeLabel = (p) => p.municipio ? p.municipio + " · Grande SP" : p.bairro;
