@@ -58,3 +58,9 @@ export const MEALS = {
   almoco: { label: "Almoço", icon: "🍽", min: 30, janela: [11 * 60, 15 * 60] },
   jantar: { label: "Jantar", icon: "🍝", min: 30, janela: [18 * 60, 22 * 60 + 30] }
 };
+
+// Ilustração de cada categoria (usada quando o lugar não tem foto livre).
+export const CAT_ICON = {
+  ponto: "📍", museu: "🏛️", parque: "🌳", show: "🎤", teatro: "🎭", festival: "🎪",
+  gastronomia: "🍽️", noite: "🍸", exposicao: "🖼️", trilha: "🥾", esporte: "⚽"
+};

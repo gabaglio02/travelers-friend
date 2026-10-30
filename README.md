@@ -20,6 +20,8 @@ Abrindo o `index.html` direto no navegador o site também funciona, mas só com 
 - `js/app.js`: filtros, roteiro, horários, refeições, deslocamentos, hospedagens, recomendações, mapa e custos
 - `js/data/sp.js`: lugares fixos de São Paulo e Grande SP
 - `js/data/sp-eventos.js`: agenda de eventos (também usada como reserva quando o servidor não responde)
+- `js/data/sp-fotos.js`: fotos dos lugares (Wikimedia Commons, só licenças livres; crédito exibido nos detalhes)
+- `js/core/`: constantes, utilidades e roteador por hash (`#/`, `#/planejar`)
 - `server/agenda.js`: API `/api/eventos` com cache por datas
 - `server/fontes/`: de onde os eventos vêm (veja abaixo)
 - `server/config.json`: tempo de validade do cache e feeds

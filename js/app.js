@@ -1,7 +1,7 @@
 /* Traveler's Friend — planejador (Explorar · Roteiro · Custos). Módulo ES; usa Leaflet (global L). */
 import {
   CITY_OPTIONS, CATEGORIES, AGE_OPTIONS, MONTHS, WEEKDAYS, WEEKDAYS_FULL,
-  STORAGE_KEY, MAX_DAYS, WALK_LIMIT_KM, MODES, MEALS
+  STORAGE_KEY, MAX_DAYS, WALK_LIMIT_KM, MODES, MEALS, CAT_ICON
 } from "./core/constantes.js";
 import {
   $, esc, money, moneyExact, toMin, toHHMM, fmtDur, parseDur, parseISO, toISO, fmtDay, fmtShort,
@@ -124,7 +124,7 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
   if (state.start < toISO(new Date())) { const d = defaultState(); state.start = d.start; state.end = d.end; state.activeDay = d.activeDay; }
   state = normalizeState(state);
 
-  const ui = { where: "", cats: new Set(), q: "", maxPrice: 1200, onlyFree: false, onlyAge: true, onlyDates: false, focusUid: null, view: "explore" };
+  const ui = { mapAll: false, kind: "", where: "", cats: new Set(), q: "", maxPrice: 1200, onlyFree: false, onlyAge: true, onlyDates: false, focusUid: null, view: "explore" };
 
   // Quem quiser saber de cada alteração (ex.: js/conta.js, que salva a viagem na conta).
   const saveHooks = [];
@@ -214,7 +214,8 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
     const covered = {};
     meals.forEach((m) => {
       // O lugar precisa estar acontecendo perto da hora da refeição (começa até 1h depois e ainda não acabou).
-      const r = base.rows.find((r) => servesFood(r.place) && r.start <= m.at + 60 && r.end >= m.at + 15);
+      const r = base.rows.find((r) => servesFood(r.place) && r.start <= m.at + 60 && r.end >= m.at + 15
+        && (!r.place.horario || r.start < closeMin(r.place))); // fechado não serve refeição
       if (r) covered[m.key] = r.item.uid;
     });
     const res = scheduleCore(iso, day.items.length ? meals.filter((m) => !covered[m.key]) : []);
@@ -291,14 +292,17 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
       let wait = 0;
       if (fixed != null) {
         if (t < fixed) { wait = fixed - t; t = fixed; }
-        else if (t > fixed + 5) warnings.push("Começa às " + toHHMM(fixed) + " — você chegaria atrasado(a).");
+        else if (t > fixed + 5) warnings.push(leg
+          ? "O deslocamento não cabe: você chegaria às " + toHHMM(t) + ", mas o início é " + toHHMM(fixed) + " (" + fmtDur(t - fixed) + " de atraso)."
+          : "Começa às " + toHHMM(fixed) + " — você chegaria atrasado(a).");
       } else if (opens != null && t < opens) {
         wait = opens - t; t = opens;
       }
       const startT = t, endT = t + item.dur;
       if (!happensOn(p, iso)) warnings.push("Não acontece neste dia. Datas: " + datesLabel(p, true) + ".");
       if (isClosed(p, iso)) warnings.push("Fechado às " + WEEKDAYS_FULL[parseISO(iso).getDay()] + "s.");
-      if (p.horario && !p.inicio && endT > closeMin(p)) warnings.push("Fecha às " + p.horario.fecha + ".");
+      if (p.horario && !p.inicio && startT >= closeMin(p)) warnings.push("Você chegaria às " + toHHMM(startT) + ", depois do fechamento (" + p.horario.fecha + ").");
+      else if (p.horario && !p.inicio && endT > closeMin(p)) warnings.push("Fecha às " + p.horario.fecha + " — sobra " + fmtDur(Math.max(0, closeMin(p) - startT)) + " de visita.");
       if (state.youngest < ageMin(p.idade)) warnings.push("Classificação " + p.idade + " — acima da idade da pessoa mais nova do grupo.");
       if (item.at && p.inicio && item.at !== p.inicio) warnings.push("O horário oficial de início é " + p.inicio + ".");
       if (item.at && p.horario && !p.inicio && fixed < toMin(p.horario.abre)) warnings.push("Abre às " + p.horario.abre + ".");
@@ -371,6 +375,8 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
     const q = ui.q.trim().toLowerCase();
     const days = tripDays();
     return activePlaces().filter((p) => {
+      if (ui.kind === "lugar" && hasDates(p)) return false;
+      if (ui.kind === "evento" && !hasDates(p)) return false;
       if (ui.where === "capital" && p.municipio) return false;
       if (ui.where === "grande" && !p.municipio) return false;
       if (ui.cats.size && !ui.cats.has(p.categoria)) return false;
@@ -402,26 +408,52 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
     return highlightTier(p, iso) * 100 + (priceOn(p, iso) === 0 ? 10 : 0) + (p.destaque ? 1 : 0);
   }
 
-  function tagsFor(p, opts = {}) {
-    const t = [];
-    t.push(`<span class="tag dark">${esc(CATEGORIES[p.categoria])}</span>`);
-    const iso = state.activeDay;
-    const today = iso && happensOn(p, iso) && !isClosed(p, iso);
-    if (today && eventOn(p, iso)) t.push(`<span class="tag dark">★ ${p.periodo ? "em cartaz" : priceOn(p, iso) === 0 ? "grátis hoje" : "rola hoje"}</span>`);
-    t.push(`<span class="tag ${p.preco === 0 ? "free" : ""}">${money(p.preco)}</span>`);
-    if (today && p.preco > 0 && priceOn(p, iso) === 0) t.push(`<span class="tag free">★ grátis hoje</span>`);
-    else if (p.gratisDias?.length && p.preco > 0) t.push(`<span class="tag free">grátis ${p.gratisDias.map((d) => WEEKDAYS[d]).join("/")}</span>`);
-    t.push(ageBadge(p.idade));
-    if (!opts.noDur) t.push(`<span class="tag">~${fmtDur(p.duracao)}</span>`);
-    if (combosFor(p.id).length) t.push(`<span class="tag combo" title="Combina com outros lugares">combo</span>`);
+  // ---------- Fatos de um lugar (cards, recomendações, detalhes) ----------
+  // Foto livre do Wikimedia Commons (js/data/sp-fotos.js) ou null.
+  const fotoDe = (p) => (city().fotos || {})[p.id] || null;
+  // Preço confirmado = entrada gratuita conhecida ou valor marcado como confirmado na base; o resto é estimativa.
+  const precoConfirmado = (p) => !!p.precoConfirmado || (p.preco === 0 && !p.ilustrativo);
+  // Data confirmada = evento com fonte e sem aviso de dúvida sobre o dia.
+  const dataConfirmada = (p) => hasDates(p) && !!p.fonte && !/(data|dia|diverg)/i.test(p.confirmar || "");
+
+  function precoHtml(p, iso) {
+    if (iso && p.preco > 0 && priceOn(p, iso) === 0 && happensOn(p, iso)) return `<span class="f-price free">Grátis hoje</span>`;
+    if (p.preco === 0) return `<span class="f-price free">Grátis</span>`;
+    const est = !precoConfirmado(p);
+    return `<span class="f-price${est ? " est" : ""}" title="${est ? "Valor estimado" + (p.precoNota ? " — " + esc(p.precoNota) : "") : "Valor confirmado"}">${money(p.preco)}${est ? "<i>estimado</i>" : ""}</span>`;
+  }
+
+  // Situação no dia escolhido no roteiro: { cls: ok|warn|off, txt }.
+  function disponibilidade(p, iso) {
     if (hasDates(p)) {
-      const inTrip = tripDays().some((d) => eventOn(p, d));
-      const label = datesLabel(p);
-      t.push(`<span class="tag ${inTrip ? "" : "dim"}">📅 ${label}</span>`);
+      const conf = dataConfirmada(p) ? "" : " · data a confirmar";
+      if (iso && eventOn(p, iso)) return { cls: "ok", txt: (p.periodo ? "Em cartaz neste dia" : "Neste dia" + (p.inicio ? " às " + p.inicio : "")) + conf };
+      const dias = tripDays().filter((d) => eventOn(p, d));
+      if (dias.length) return { cls: "warn", txt: "Na viagem: " + dias.slice(0, 2).map(fmtShort).join(", ") + (dias.length > 2 ? "…" : "") + conf };
+      return { cls: "off", txt: "Fora das datas · " + datesLabel(p) };
     }
-    if (p.confirmar) t.push(`<span class="tag confirm" title="${esc(p.confirmar)}">a confirmar</span>`);
-    if (p.ilustrativo) t.push(`<span class="tag dim">ilustrativo</span>`);
-    return t.join("");
+    if (!iso || !p.horario) return { cls: "", txt: "" };
+    if (isClosed(p, iso)) return { cls: "off", txt: "Fechado neste dia" };
+    if (p.horario.abre === "00:00" && p.horario.fecha === "23:59") return { cls: "ok", txt: "Aberto o dia todo" };
+    return { cls: "ok", txt: "Aberto " + p.horario.abre + "–" + p.horario.fecha };
+  }
+
+  function midiaHtml(p, cls = "") {
+    const f = fotoDe(p);
+    return f
+      ? `<span class="media ${cls}"><img src="${esc(f.url)}" alt="" loading="lazy" decoding="async"></span>`
+      : `<span class="media ill cat-${p.categoria} ${cls}" aria-hidden="true">${CAT_ICON[p.categoria] || "📍"}</span>`;
+  }
+
+  // Linha de fatos: preço · duração · idade · disponibilidade (no máximo quatro informações).
+  function fatosHtml(p, iso = state.activeDay) {
+    const disp = disponibilidade(p, iso);
+    return `<div class="facts-line">
+        ${precoHtml(p, iso)}
+        <span class="f-dur">${fmtDur(p.duracao)}</span>
+        ${ageBadge(p.idade)}
+      </div>
+      ${disp.txt ? `<div class="avail ${disp.cls}">${esc(disp.txt)}</div>` : ""}`;
   }
 
   // ---------- Render: cidade e filtros ----------
@@ -453,19 +485,27 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
     $("#resultCount").textContent = list.length + " de " + activePlaces().length;
     const nEvents = activePlaces().filter(hasDates).length;
     $("#agendaInfo").textContent = agendaLabel() + " · " + nEvents + " eventos e exposições por vir";
+    // Contagem por tipo (respeitando os outros filtros) e quantos filtros extras estão ligados.
+    const kindAntes = ui.kind;
+    ["", "lugar", "evento"].forEach((k) => { ui.kind = k; const n = filtered().length; const el = $("#kindCount" + ({ "": "All", lugar: "Lugar", evento: "Evento" })[k]); if (el) el.textContent = n; });
+    ui.kind = kindAntes;
+    const extras = ui.cats.size + (ui.where ? 1 : 0) + (ui.maxPrice < 1200 ? 1 : 0) + (ui.onlyFree ? 1 : 0) + (ui.onlyNight ? 1 : 0) + (ui.onlyAge ? 0 : 1) + (ui.onlyDates ? 1 : 0);
+    $("#filtersActive").textContent = extras ? "· " + extras + (extras === 1 ? " ativo" : " ativos") : "";
     $("#list").innerHTML = list.length ? list.map((p) => {
       const added = plannedDays(p.id).length > 0;
       return `
-      <li class="card ${added ? "added" : ""}" data-open="${p.id}">
-        <h4>${esc(p.nome)}</h4>
-        <div class="actions">
-          <button class="icon-btn" data-add="${p.id}" title="${added ? "Adicionar outra vez ao dia selecionado" : "Adicionar ao dia selecionado"}">+</button>
+      <li class="pcard ${added ? "added" : ""} ${p.ilustrativo ? "demo" : ""}" data-open="${p.id}">
+        ${midiaHtml(p)}
+        <div class="pcard-body">
+          <div class="kicker">${esc(CATEGORIES[p.categoria])} · ${esc(placeLabel(p))}${p.ilustrativo ? " · exemplo" : ""}</div>
+          <h4>${esc(p.nome)}</h4>
+          ${fatosHtml(p)}
+          ${plannedNote(p.id)}
         </div>
-        <span class="sub">${esc(placeLabel(p))} · <span class="readmore">leia mais</span></span>
-        <div class="meta">${tagsFor(p)}</div>
-        ${plannedNote(p.id)}
+        <button class="pcard-add" data-add="${p.id}" title="${added ? "Adicionar outra vez ao dia selecionado" : "Adicionar ao dia selecionado"}" aria-label="Adicionar ${esc(p.nome)} ao roteiro">+</button>
       </li>`;
     }).join("") : `<li class="empty">Nada encontrado com esses filtros.</li>`;
+    if (ui.mapAll && map) renderMap(recommendations().list);
   }
 
   // ---------- Render: dias ----------
@@ -481,10 +521,88 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
   }
 
   // ---------- Render: timeline ----------
+  // ---------- Blocos do dia ----------
+  // Divide o dia em blocos com início/fim: stop (lugar), meal, leg (deslocamento) e free (tempo livre ≥ 30 min).
+  // "antes" = índice da entrada da linha do tempo antes da qual o bloco aparece.
+  const LIVRE_MIN = 30;
+  function blocosDoDia(sched) {
+    const out = [];
+    let fim = null, ultimo = null;
+    const livre = (a, b, antes, extra = {}) => {
+      const ant = out[out.length - 1];
+      // Livre colado no livre anterior (ex.: tempo antes de sair + espera para abrir) vira um bloco só.
+      if (ant && ant.tipo === "free" && ant.end === a) { ant.end = b; ant.mesclado = true; return; }
+      if (b - a > 0) out.push({ tipo: "free", start: a, end: b, antes, perto: ultimo, ...extra });
+    };
+    sched.entries.forEach((e, idx) => {
+      if (e.kind === "missed") return;
+      if (e.kind === "stop") {
+        const r = e.row, legMin = r.leg ? r.leg.min : 0;
+        // Saindo da hospedagem não há espera: a pessoa só sai mais tarde.
+        const espera = r.fromStay ? 0 : r.wait;
+        const sai = r.start - espera - legMin;
+        if (fim != null) livre(fim, sai, idx);
+        if (legMin) out.push({ tipo: "leg", start: sai, end: sai + legMin, label: r.leg.mode, antes: idx });
+        if (espera >= LIVRE_MIN) livre(r.start - espera, r.start, idx, { espera: true });
+        out.push({ tipo: "stop", start: r.start, end: r.end, label: r.place.nome, uid: r.item.uid, alerta: r.warnings.length > 0 });
+        fim = r.end; ultimo = r.item.uid;
+      } else if (e.kind === "meal") {
+        if (fim != null) livre(fim, e.start, idx);
+        out.push({ tipo: "meal", start: e.start, end: e.end, label: e.m.label });
+        fim = e.end;
+      } else if (e.kind === "return") {
+        if (fim != null) livre(fim, e.start, idx);
+        out.push({ tipo: "leg", start: e.start, end: e.end, label: "Volta para a hospedagem" });
+        fim = e.end;
+      }
+    });
+    return out.filter((b) => b.tipo !== "free" || b.end - b.start >= LIVRE_MIN);
+  }
+  const temposLivres = (iso) => blocosDoDia(schedule(iso)).filter((b) => b.tipo === "free");
+
+  // Faixa horizontal do dia, em escala de tempo.
+  function renderFaixa(blocos) {
+    const el = $("#dayStrip");
+    if (!blocos.length) { el.innerHTML = ""; el.hidden = true; return; }
+    el.hidden = false;
+    const ini = Math.floor(Math.min(...blocos.map((b) => b.start)) / 60) * 60;
+    const fim = Math.ceil(Math.max(...blocos.map((b) => b.end)) / 60) * 60;
+    const total = Math.max(60, fim - ini);
+    const pct = (m) => ((m - ini) / total * 100).toFixed(2) + "%";
+    const passo = total > 12 * 60 ? 180 : total > 6 * 60 ? 120 : 60;
+    let marcas = "";
+    for (let h = ini; h <= fim; h += passo) marcas += `<span class="tick" style="left:${pct(h)}">${toHHMM(h).slice(0, 2)}h</span>`;
+    const nome = { stop: "", meal: "", leg: "Deslocamento: ", free: "Tempo livre" };
+    el.innerHTML = `<div class="strip-bar">${blocos.map((b) => `<span class="seg-${b.tipo}${b.alerta ? " alert" : ""}" style="left:${pct(b.start)};width:${pct(ini + b.end - b.start)}"
+        title="${toHHMM(b.start)}–${toHHMM(b.end)} · ${esc(b.tipo === "free" ? nome.free : nome[b.tipo] + b.label)}"${b.uid ? ` data-focus="${b.uid}"` : ""}></span>`).join("")}</div>
+      <div class="strip-ticks">${marcas}</div>
+      <div class="strip-legend"><span class="k-stop">Lugares</span><span class="k-meal">Refeições</span><span class="k-leg">Deslocamento</span><span class="k-free">Tempo livre</span></div>`;
+  }
+
+  // Alertas do dia: atrasos, fechados, deslocamentos que não cabem, refeições sem tempo.
+  function renderAlertas(sched) {
+    const el = $("#dayAlerts");
+    const lista = [];
+    sched.rows.forEach((r) => r.warnings.forEach((w) => lista.push({ uid: r.item.uid, txt: r.place.nome + ": " + w })));
+    sched.entries.forEach((e) => {
+      if (e.kind === "missed") lista.push({ txt: "Sem " + e.m.label.toLowerCase() + ": " + e.why + "." });
+      if (e.kind === "meal") e.warnings.forEach((w) => lista.push({ txt: e.m.label + ": " + w }));
+    });
+    if (!sched.rows.length) { el.innerHTML = ""; return; }
+    el.innerHTML = lista.length
+      ? `<div class="day-alerts" role="status"><b>⚠ ${lista.length} ${lista.length === 1 ? "alerta" : "alertas"} neste dia</b>
+          <ul>${lista.map((a) => `<li>${a.uid ? `<button class="reset" data-goto="${a.uid}">${esc(a.txt)}</button>` : esc(a.txt)}</li>`).join("")}</ul></div>`
+      : `<div class="day-ok">✓ Sem conflitos de horário neste dia</div>`;
+  }
+
   function renderTimeline() {
     if (!state.activeDay) { $("#timeline").innerHTML = ""; return; }
-    const { rows, entries, end, off } = schedule(state.activeDay);
+    const sched = schedule(state.activeDay);
+    const { rows, entries, end, off } = sched;
     $("#dayEnd").textContent = rows.length ? "termina por volta das " + toHHMM(end) : "";
+    const blocos = blocosDoDia(sched);
+    renderFaixa(blocos);
+    renderAlertas(sched);
     if (!rows.length) {
       $("#timeline").innerHTML = `<li class="empty">Dia vazio. Adicione lugares pela lista ou pelas recomendações abaixo.</li>`;
       return;
@@ -514,7 +632,7 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
         <li class="leg"><span></span><div class="leg-line">
           ${r.fromStay ? `<div class="stay-leg">🏨 Saindo de ${esc(r.fromStay)} às ${toHHMM(r.start - r.leg.min)}</div>` : ""}
           ${modesHtml(r.leg, `data-legmode="${r.item.uid}"`)}
-          ${r.wait && !r.fromStay ? `<br>espera de ${fmtDur(r.wait)} até abrir/começar` : ""}
+          ${r.wait && r.wait < LIVRE_MIN && !r.fromStay ? `<br>espera de ${fmtDur(r.wait)} até abrir/começar` : ""}
         </div></li>`;
     const returnHtml = (e) => `
         <li class="leg"><span></span><div class="leg-line">
@@ -547,13 +665,23 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
     };
     const missedHtml = (e) => `<li class="leg"><span></span><div class="leg-line warning">⚠ Sem ${esc(e.m.label.toLowerCase())}: ${esc(e.why)}. Considere encurtar algum lugar.</div></li>`;
 
+    const livreHtml = (b) => `<li class="free-slot"><div class="time">${toHHMM(b.start)}</div>
+        <div class="free-body"><b>Tempo livre · ${fmtDur(b.end - b.start)}</b> <span class="muted">${b.espera ? "até abrir/começar" : "até " + toHHMM(b.end)}</span>
+        ${b.perto ? `<button class="reset" data-focus="${b.perto}">ver o que dá para fazer perto</button>` : ""}</div></li>`;
+    // Tempo livre antes de cada entrada (o de espera aparece depois do deslocamento).
+    const livresAntes = {}, livresEspera = {};
+    blocos.filter((b) => b.tipo === "free").forEach((b) => ((b.espera ? livresEspera : livresAntes)[b.antes] ||= []).push(b));
     let n = 0;
-    $("#timeline").innerHTML = entries.map((e) => {
+    $("#timeline").innerHTML = entries.map((e, idx) => (livresAntes[idx] || []).map(livreHtml).join("") + entradaHtml(e, idx)).join("")
+      + (off.length ? `<li class="leg"><span></span><div class="leg-line">Sem ${off.map((k) => MEALS[k].label.toLowerCase()).join(" e ")} neste dia ·
+      ${off.map((k) => `<button class="reset" data-mealon="${k}">voltar ${MEALS[k].label.toLowerCase()}</button>`).join(" ")}</div></li>` : "");
+
+    function entradaHtml(e, idx) {
       if (e.kind === "meal") return mealHtml(e);
       if (e.kind === "missed") return missedHtml(e);
       if (e.kind === "return") return returnHtml(e);
       const r = e.row, i = n++;
-      const leg = legHtml(r);
+      const leg = legHtml(r) + (livresEspera[idx] || []).map(livreHtml).join("");
       const changed = r.item.dur !== r.place.duracao;
       return leg + `
         <li class="stop ${ui.focusUid === r.item.uid ? "focus" : ""}" data-focus="${r.item.uid}">
@@ -587,8 +715,7 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
             ${comboHint(r.place)}
           </div>
         </li>`;
-    }).join("") + (off.length ? `<li class="leg"><span></span><div class="leg-line">Sem ${off.map((k) => MEALS[k].label.toLowerCase()).join(" e ")} neste dia ·
-      ${off.map((k) => `<button class="reset" data-mealon="${k}">voltar ${MEALS[k].label.toLowerCase()}</button>`).join(" ")}</div></li>` : "");
+    }
   }
 
   // ---------- Render: recomendações ----------
@@ -621,8 +748,25 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
     return { anchor, hasRefs: refs.length > 0, fromStay, list: list.slice(0, 14) };
   }
 
+  // Primeiro tempo livre do dia em que o lugar cabe (respeita horário de funcionamento e início fixo).
+  function cabeNoLivre(p, livres) {
+    const folga = 20; // deslocamento aproximado até lá
+    for (const b of livres) {
+      if (p.inicio) {
+        const ini = toMin(p.inicio);
+        if (ini - folga >= b.start && ini + p.duracao <= b.end) return ini;
+        continue;
+      }
+      const abre = p.horario ? toMin(p.horario.abre) : 0, fecha = p.horario ? closeMin(p) : 24 * 60;
+      const ini = Math.max(b.start + folga, abre);
+      if (ini + p.duracao <= Math.min(b.end, fecha)) return ini;
+    }
+    return null;
+  }
+
   function renderRecs() {
     if (!state.activeDay) { $("#recs").innerHTML = ""; return []; }
+    const livres = temposLivres(state.activeDay);
     const { anchor, hasRefs, fromStay, list } = recommendations();
     $("#recsTitle").textContent = (anchor ? "Perto de " + anchor.nome
       : fromStay ? "Destaques perto da hospedagem"
@@ -639,7 +783,8 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
       return `<div class="rec">
         <h4 data-open="${p.id}">${esc(p.nome)}</h4>
         ${dist ? `<span class="dist">${dist}</span>` : ""}
-        <div class="meta">${tagsFor(p)}</div>
+        ${fatosHtml(p)}
+        ${(() => { const h = livres.length ? cabeNoLivre(p, livres) : null; return h != null ? `<span class="fit">✓ Cabe no tempo livre, a partir das ${toHHMM(h)}</span>` : ""; })()}
         <button class="btn small" data-add="${p.id}">+ Adicionar</button>
       </div>`;
     }).join("") : `<p class="muted">Sem recomendações para este dia.</p>`;
@@ -647,7 +792,16 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
   }
 
   // ---------- Render: mapa ----------
-  let map, mapLayer;
+  let map, mapLayer, clusterLayer;
+  // Pontos do roteiro (numerados) ficam sempre visíveis; sugestões e, se a pessoa quiser,
+  // tudo o que está filtrado no Explorar vão para um grupo que se agrupa quando há muitos pontos.
+  function popupHtml(p, extra) {
+    const f = fotoDe(p);
+    return `<div class="map-pop">${f ? `<img src="${esc(f.url)}" alt="">` : ""}
+      <b>${esc(p.nome)}</b>${extra ? `<span>${esc(extra)}</span>` : ""}
+      <div class="map-pop-act"><button class="btn small" data-open="${p.id}">Detalhes</button>
+      <button class="btn ghost small" data-add="${p.id}">+ Roteiro</button></div></div>`;
+  }
   function renderMap(recList) {
     if (!window.L) { $("#map").innerHTML = `<p class="empty">Mapa indisponível (sem conexão).</p>`; return; }
     if (!map) {
@@ -658,68 +812,164 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
         className: "tiles-bw"
       }).addTo(map);
       mapLayer = L.layerGroup().addTo(map);
+      // Sem o plugin (CDN fora do ar), os pontos aparecem sem agrupamento.
+      clusterLayer = L.markerClusterGroup
+        ? L.markerClusterGroup({
+            showCoverageOnHover: false, maxClusterRadius: 44,
+            iconCreateFunction: (c) => L.divIcon({ className: "", html: `<div class="cluster">${c.getChildCount()}</div>`, iconSize: [34, 34], iconAnchor: [17, 17] })
+          })
+        : L.layerGroup();
+      clusterLayer.addTo(map);
     }
     mapLayer.clearLayers();
-    const { rows } = state.activeDay ? schedule(state.activeDay) : { rows: [] };
-    const pts = rows.map((r) => [r.place.lat, r.place.lng]);
-    if (state.activeDay) {
-      const a = stayPlace(prevStayFor(state.activeDay)), b = stayPlace(stayFor(state.activeDay));
+    clusterLayer.clearLayers();
+    const iso = state.activeDay;
+    const { rows } = iso ? schedule(iso) : { rows: [] };
+    const rota = rows.map((r) => [r.place.lat, r.place.lng]);
+    const linha = rota.slice();
+    if (iso) {
+      const a = stayPlace(prevStayFor(iso)), b = stayPlace(stayFor(iso));
       [a, b].filter((x, i, arr) => x && arr.indexOf(x) === i).forEach((st) => {
         L.marker([st.lat, st.lng], {
-          icon: L.divIcon({ className: "", html: `<div class="pin pin-stay">🏨</div>`, iconSize: [28, 28], iconAnchor: [14, 14] })
+          icon: L.divIcon({ className: "", html: `<div class="pin pin-stay">🏨</div>`, iconSize: [28, 28], iconAnchor: [14, 14] }),
+          zIndexOffset: 500
         }).bindTooltip("Hospedagem: " + st.nome).addTo(mapLayer);
       });
-      if (pts.length) { if (a) pts.unshift([a.lat, a.lng]); if (b) pts.push([b.lat, b.lng]); }
-      else [a, b].filter(Boolean).forEach((st) => pts.push([st.lat, st.lng]));
+      if (rota.length) { if (a) linha.unshift([a.lat, a.lng]); if (b) linha.push([b.lat, b.lng]); }
+      else [a, b].filter(Boolean).forEach((st) => rota.push([st.lat, st.lng]));
     }
-    if (pts.length > 1) L.polyline(pts, { color: "#0b0b0b", weight: 2, dashArray: "6 6" }).addTo(mapLayer);
+    if (linha.length > 1) L.polyline(linha, { color: "#0b0b0b", weight: 2.5, opacity: .8, dashArray: "6 6" }).addTo(mapLayer);
     rows.forEach((r, i) => {
+      const alerta = r.warnings.length > 0, foco = ui.focusUid === r.item.uid;
       L.marker([r.place.lat, r.place.lng], {
-        icon: L.divIcon({ className: "", html: `<div class="pin">${i + 1}</div>`, iconSize: [26, 26], iconAnchor: [13, 13] })
-      }).bindTooltip(r.place.nome).addTo(mapLayer);
+        icon: L.divIcon({ className: "", html: `<div class="pin${alerta ? " pin-alert" : ""}${foco ? " pin-focus" : ""}">${i + 1}</div>`, iconSize: [28, 28], iconAnchor: [14, 14] }),
+        zIndexOffset: 1000 + i
+      }).bindTooltip(`${i + 1}. ${r.place.nome} · ${toHHMM(r.start)}`)
+        .bindPopup(popupHtml(r.place, `${i + 1}º do dia · ${toHHMM(r.start)}–${toHHMM(r.end)}${alerta ? " · ⚠ ver alerta" : ""}`))
+        .addTo(mapLayer);
     });
-    (recList || []).forEach(({ p }) => {
-      L.marker([p.lat, p.lng], {
-        icon: L.divIcon({ className: "", html: `<div class="pin pin-rec"></div>`, iconSize: [14, 14], iconAnchor: [7, 7] })
-      }).bindTooltip("Sugestão: " + p.nome).on("click", () => openDetail(p.id)).addTo(mapLayer);
+    const naRota = new Set(rows.map((r) => r.place.id));
+    const sugeridos = (recList || []).map(({ p }) => p);
+    const idsSug = new Set(sugeridos.map((p) => p.id));
+    sugeridos.forEach((p) => {
+      L.marker([p.lat, p.lng], { icon: L.divIcon({ className: "", html: `<div class="pin pin-rec" title=""></div>`, iconSize: [16, 16], iconAnchor: [8, 8] }) })
+        .bindTooltip("Sugestão: " + p.nome).bindPopup(popupHtml(p, "Sugestão perto do roteiro")).addTo(clusterLayer);
     });
-    const all = pts.concat((recList || []).map(({ p }) => [p.lat, p.lng]));
-    if (all.length) map.fitBounds(all, { padding: [30, 30], maxZoom: 15 });
+    let todos = [];
+    if (ui.mapAll) {
+      todos = filtered().filter((p) => !naRota.has(p.id) && !idsSug.has(p.id));
+      todos.forEach((p) => {
+        L.marker([p.lat, p.lng], { icon: L.divIcon({ className: "", html: `<div class="pin pin-dot">${CAT_ICON[p.categoria] || ""}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] }) })
+          .bindTooltip(p.nome).bindPopup(popupHtml(p, CATEGORIES[p.categoria] + " · " + placeLabel(p))).addTo(clusterLayer);
+      });
+    }
+    const enquadrar = rota.length ? rota.concat(sugeridos.map((p) => [p.lat, p.lng]))
+      : sugeridos.concat(todos).map((p) => [p.lat, p.lng]);
+    if (enquadrar.length) map.fitBounds(enquadrar, { padding: [30, 30], maxZoom: 15 });
     else map.setView(city().centro, 12);
   }
 
+
   // ---------- Render: custos ----------
-  function renderCosts() {
-    const days = tripDays();
-    let tickets = 0, transport = 0;
-    const perDay = days.map((d, i) => {
-      const { rows, ret } = schedule(d);
-      const t = rows.reduce((s, r) => s + r.price * state.people, 0);
-      const tr = rows.reduce((s, r) => s + (r.leg ? r.leg.cost : 0), 0) + (ret ? ret.cost : 0);
-      tickets += t; transport += tr;
-      return { d, i, t, tr, n: rows.length };
-    });
+  // ---------- Custos ----------
+  // Cálculo igual ao de antes (ingressos × pessoas, trechos, noites por hospedagem, alimentação por pessoa/dia),
+  // agora separado entre grupo e pessoa, por dia e por categoria, com a origem de cada valor.
+  // Cores da composição: paleta categórica validada (ver skill dataviz), uma por categoria, sempre na mesma ordem.
+  const CUSTO_CATS = [
+    { k: "hosp", nome: "Hospedagem", cor: "#2a78d6", origem: "seu valor" },
+    { k: "comida", nome: "Alimentação", cor: "#eb6834", origem: "seu valor" },
+    { k: "ingressos", nome: "Ingressos e entradas", cor: "#1baf7a", origem: "" },
+    { k: "transp", nome: "Deslocamento", cor: "#eda100", origem: "estimado" }
+  ];
+  function calcularCustos() {
+    const days = tripDays(), n = Math.max(1, state.people);
     const nights = Math.max(0, days.length - 1);
-    // A noite do dia i é passada na hospedagem desse dia; o último dia é o da volta (sem noite).
+    let ingConf = 0, ingEst = 0, transp = 0;
+    const porDia = days.map((d, i) => {
+      const { rows, ret } = schedule(d);
+      let ing = 0;
+      rows.forEach((r) => {
+        const v = r.price * state.people;
+        ing += v;
+        if (r.price === 0 || precoConfirmado(r.place)) ingConf += v; else ingEst += v;
+      });
+      const tr = rows.reduce((t, r) => t + (r.leg ? r.leg.cost : 0), 0) + (ret ? ret.cost : 0);
+      transp += tr;
+      const st = i < nights ? stayFor(d) : null;
+      const noite = i < nights ? stayPrice(st) : 0;
+      return { d, i, n: rows.length, ing, tr, noite, comida: state.food * state.people };
+    });
     const byStay = new Map();
     days.slice(0, nights).forEach((d) => {
       const st = stayFor(d), key = st ? st.id : "";
       const g = byStay.get(key) || { label: st ? st.label : "Valor padrão", price: stayPrice(st), n: 0 };
       g.n++; byStay.set(key, g);
     });
-    const hotel = [...byStay.values()].reduce((sum, g) => sum + g.n * g.price, 0);
-    const food = days.length * state.people * state.food;
-    const total = tickets + transport + hotel + food;
-    $("#costTable").innerHTML = `
-      <tr><td>Ingressos e entradas</td><td>${moneyExact(tickets)}</td></tr>
-      ${perDay.filter((x) => x.n).map((x) => `<tr class="sub"><td>Dia ${x.i + 1} · ${fmtDay(x.d)}</td><td>${moneyExact(x.t)}</td></tr>`).join("")}
-      <tr><td>Deslocamento entre lugares</td><td>${moneyExact(transport)}</td></tr>
-      <tr><td>Hospedagem (${nights} ${nights === 1 ? "noite" : "noites"})</td><td>${moneyExact(hotel)}</td></tr>
-      ${byStay.size > 1 || (byStay.size === 1 && !byStay.has("")) ? [...byStay.values()].map((g) => `<tr class="sub"><td>${esc(g.label)} · ${g.n} × ${moneyExact(g.price)}</td><td>${moneyExact(g.n * g.price)}</td></tr>`).join("") : ""}
-      <tr><td>Alimentação (${days.length} ${days.length === 1 ? "dia" : "dias"} × ${state.people})</td><td>${moneyExact(food)}</td></tr>
-      <tr class="total"><td>Total da viagem</td><td>${moneyExact(total)}</td></tr>
-      <tr class="pp"><td>Por pessoa</td><td>${moneyExact(total / Math.max(1, state.people))}</td></tr>`;
+    const hosp = [...byStay.values()].reduce((t, g) => t + g.n * g.price, 0);
+    const comida = days.length * state.people * state.food;
+    const grupo = { hosp, comida, ingressos: ingConf + ingEst, transp };
+    const total = hosp + comida + grupo.ingressos + transp;
+    return { days, nights, n, porDia, byStay, grupo, total, ingConf, ingEst };
   }
+
+  function renderCosts() {
+    const c = calcularCustos();
+    const pp = (v) => v / c.n;
+    const dias = Math.max(1, c.days.length);
+    // Resumo
+    $("#costSummary").innerHTML = `
+      <div class="cs-main"><span>Total do grupo</span><b>${moneyExact(c.total)}</b></div>
+      <div class="cs-row">
+        <div><span>Por pessoa</span><b>${moneyExact(pp(c.total))}</b></div>
+        <div><span>Por pessoa / dia</span><b>${moneyExact(pp(c.total) / dias)}</b></div>
+        <div><span>${c.n} ${c.n === 1 ? "pessoa" : "pessoas"} · ${c.days.length} ${c.days.length === 1 ? "dia" : "dias"}</span><b>${c.nights} ${c.nights === 1 ? "noite" : "noites"}</b></div>
+      </div>`;
+    // Orçamento
+    const orc = Number(state.budget) || 0;
+    if (orc > 0) {
+      const uso = c.total / orc, passou = c.total > orc;
+      $("#budgetMeter").innerHTML = `<div class="meter ${passou ? "over" : uso > .9 ? "near" : ""}" role="meter" aria-valuemin="0" aria-valuemax="${orc}" aria-valuenow="${Math.round(c.total)}" aria-label="Gasto projetado em relação ao orçamento">
+          <span style="width:${Math.min(100, uso * 100).toFixed(1)}%"></span></div>
+        <p class="meter-txt">${passou
+          ? `<b>⚠ Passa ${moneyExact(c.total - orc)} do orçamento</b> (${Math.round(uso * 100)}%). Por pessoa: ${moneyExact(pp(c.total - orc))} a mais.`
+          : `<b>Sobram ${moneyExact(orc - c.total)}</b> do orçamento (${Math.round(uso * 100)}% usado) · ${moneyExact(pp(orc - c.total))} por pessoa.`}</p>`;
+    } else {
+      $("#budgetMeter").innerHTML = `<p class="meter-txt muted">Informe quanto o grupo pode gastar para comparar com o projetado.</p>`;
+    }
+    // Composição (barra empilhada + legenda com valor, % e origem)
+    const origem = (k) => k === "ingressos"
+      ? (c.ingEst === 0 ? "confirmado" : c.ingConf === 0 ? "estimado" : `${moneyExact(c.ingConf)} confirmados · ${moneyExact(c.ingEst)} estimados`)
+      : CUSTO_CATS.find((x) => x.k === k).origem;
+    const partes = CUSTO_CATS.map((cat) => ({ ...cat, v: c.grupo[cat.k] })).filter((x) => x.v > 0);
+    $("#costChart").innerHTML = c.total > 0 ? `
+      <div class="stack" role="img" aria-label="Composição dos gastos: ${partes.map((x) => x.nome + " " + Math.round(x.v / c.total * 100) + "%").join(", ")}">
+        ${partes.map((x) => `<span style="flex-grow:${x.v};background:${x.cor}" data-tip="${esc(x.nome)}: ${moneyExact(x.v)} (${Math.round(x.v / c.total * 100)}%)"></span>`).join("")}
+      </div>
+      <ul class="stack-legend">${CUSTO_CATS.map((x) => `<li>
+          <i style="background:${x.cor}"></i><span class="sl-nome">${x.nome}</span>
+          <span class="sl-val">${moneyExact(c.grupo[x.k])}<small>${c.total ? Math.round(c.grupo[x.k] / c.total * 100) : 0}%</small></span>
+          <span class="sl-orig">${origem(x.k)}</span></li>`).join("")}</ul>` : "";
+    // Tabela grupo × pessoa
+    const hospSub = c.byStay.size > 1 || (c.byStay.size === 1 && !c.byStay.has(""))
+      ? [...c.byStay.values()].map((g) => `<tr class="sub"><td>${esc(g.label)} · ${g.n} × ${moneyExact(g.price)}</td><td>${moneyExact(g.n * g.price)}</td><td>${moneyExact(pp(g.n * g.price))}</td></tr>`).join("") : "";
+    $("#costTable").innerHTML = `
+      <thead><tr><th>Categoria</th><th>Grupo</th><th>Por pessoa</th></tr></thead>
+      <tbody>
+        <tr><td>Ingressos e entradas</td><td>${moneyExact(c.grupo.ingressos)}</td><td>${moneyExact(pp(c.grupo.ingressos))}</td></tr>
+        <tr><td>Deslocamento</td><td>${moneyExact(c.grupo.transp)}</td><td>${moneyExact(pp(c.grupo.transp))}</td></tr>
+        <tr><td>Hospedagem (${c.nights} ${c.nights === 1 ? "noite" : "noites"})</td><td>${moneyExact(c.grupo.hosp)}</td><td>${moneyExact(pp(c.grupo.hosp))}</td></tr>
+        ${hospSub}
+        <tr><td>Alimentação (${c.days.length} ${c.days.length === 1 ? "dia" : "dias"})</td><td>${moneyExact(c.grupo.comida)}</td><td>${moneyExact(pp(c.grupo.comida))}</td></tr>
+        <tr class="total"><td>Total</td><td>${moneyExact(c.total)}</td><td>${moneyExact(pp(c.total))}</td></tr>
+      </tbody>`;
+    // Por dia (por pessoa)
+    $("#costDays").innerHTML = `<table class="cost-table days">
+      <thead><tr><th>Dia</th><th>Por pessoa</th><th>Grupo</th></tr></thead><tbody>${c.porDia.map((x) => {
+        const g = x.ing + x.tr + x.noite + x.comida;
+        return `<tr><td>Dia ${x.i + 1} · ${fmtDay(x.d)}<small>${x.n} ${x.n === 1 ? "lugar" : "lugares"}${x.noite ? " · noite " + moneyExact(x.noite) : ""}</small></td><td>${moneyExact(pp(g))}</td><td>${moneyExact(g)}</td></tr>`;
+      }).join("")}</tbody></table>`;
+  }
+
 
   // ---------- Detalhe ----------
   function openDetail(id) {
@@ -732,21 +982,39 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
       const bad = !happensOn(p, d) || isClosed(p, d);
       return `<option value="${d}" ${d === state.activeDay ? "selected" : ""}>Dia ${i + 1} · ${fmtDay(d)}${bad ? " (indisponível)" : ""}</option>`;
     }).join("");
+    // Navegação entre os itens da lista atual (mesmos filtros e ordem do Explorar).
+    const lista = filtered();
+    const pos = lista.findIndex((x) => x.id === p.id);
+    const ant = pos > 0 ? lista[pos - 1] : null, prox = pos >= 0 && pos < lista.length - 1 ? lista[pos + 1] : null;
+    const foto = fotoDe(p);
+    const selo = (ok, sim, nao) => `<em class="st ${ok ? "ok" : "est"}">${ok ? sim : nao}</em>`;
     $("#detail").innerHTML = `
-      <div class="modal-head">
-        <div><h3>${esc(p.nome)}</h3><span class="small-text">${esc(placeLabel(p))} · ${esc(CATEGORIES[p.categoria])}</span></div>
-        <button class="icon-btn" data-close title="Fechar">×</button>
+      <div class="detail-hero ${foto ? "" : "no-photo"}">
+        ${midiaHtml(p, "hero")}
+        <div class="detail-hero-top">
+          <span class="detail-nav">
+            <button class="icon-btn" data-open="${ant ? ant.id : ""}" ${ant ? "" : "disabled"} title="Anterior${ant ? ": " + esc(ant.nome) : ""}" aria-label="Anterior">‹</button>
+            <span class="small-text">${pos >= 0 ? pos + 1 + " de " + lista.length : ""}</span>
+            <button class="icon-btn" data-open="${prox ? prox.id : ""}" ${prox ? "" : "disabled"} title="Próximo${prox ? ": " + esc(prox.nome) : ""}" aria-label="Próximo">›</button>
+          </span>
+          <button class="icon-btn" data-close title="Fechar" aria-label="Fechar">×</button>
+        </div>
+        <div class="detail-hero-text">
+          <span class="kicker">${esc(CATEGORIES[p.categoria])} · ${esc(placeLabel(p))}</span>
+          <h3>${esc(p.nome)}</h3>
+        </div>
       </div>
+      ${foto ? `<p class="photo-credit">Foto: ${esc(foto.autor)} · <a href="${esc(foto.licencaUrl || foto.pagina)}" target="_blank" rel="noopener">${esc(foto.licenca)}</a> · <a href="${esc(foto.pagina)}" target="_blank" rel="noopener">Wikimedia Commons</a></p>` : ""}
       <div class="modal-body">
         <p style="margin:0">${esc(p.descricao)}</p>
         <div class="facts">
-          <div class="fact"><span>Valor</span><b>${money(p.preco)}</b>${p.precoNota ? `<div class="small-text muted">${esc(p.precoNota)}</div>` : ""}
+          <div class="fact"><span>Valor ${selo(precoConfirmado(p), "confirmado", "estimado")}</span><b>${money(p.preco)}</b>${p.precoNota ? `<div class="small-text muted">${esc(p.precoNota)}</div>` : ""}
             ${p.gratisDias?.length ? `<div class="small-text">Grátis: ${p.gratisDias.map((d) => WEEKDAYS_FULL[d]).join(", ")}</div>` : ""}</div>
           <div class="fact"><span>Classificação</span><b style="display:flex;gap:8px;align-items:center">${ageBadge(p.idade)} ${esc(AGE_OPTIONS.find((o) => o.v === ageMin(p.idade))?.desc || p.idade)}</b></div>
           <div class="fact"><span>Tempo sugerido</span><b>${fmtDur(p.duracao)}</b></div>
-          <div class="fact"><span>Horário</span><b>${p.inicio ? "Início " + p.inicio : h.abre + "–" + h.fecha}</b>
+          <div class="fact"><span>Horário ${selo(false, "", "estimado")}</span><b>${p.inicio ? "Início " + p.inicio : h.abre + "–" + h.fecha}</b>
             ${h.fechado.length ? `<div class="small-text muted">Fecha: ${h.fechado.map((d) => WEEKDAYS_FULL[d]).join(", ")}</div>` : ""}</div>
-          ${hasDates(p) ? `<div class="fact" style="grid-column:1/-1"><span>${p.periodo ? "Período" : "Datas"}</span><b>${datesLabel(p, true)}</b></div>` : ""}
+          ${hasDates(p) ? `<div class="fact" style="grid-column:1/-1"><span>${p.periodo ? "Período" : "Datas"} ${selo(dataConfirmada(p), "com fonte", "a confirmar")}</span><b>${datesLabel(p, true)}</b></div>` : ""}
           ${p.fonte ? `<div class="fact" style="grid-column:1/-1"><span>Fonte da data</span><b><a href="${esc(p.fonte)}" target="_blank" rel="noopener">${esc(new URL(p.fonte).hostname.replace(/^www./, ""))}</a></b></div>` : ""}
           <div class="fact" style="grid-column:1/-1"><span>Como chegar</span><b>${esc(p.comoChegar)}</b></div>
         </div>
@@ -765,7 +1033,9 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
           </div>`).join("") + `<p class="small-text muted" style="margin:0">O dia sugerido é só uma dica — você pode montar o combo em qualquer data.</p>` : ""}
         ${dicas.length ? `<details><summary>Leia mais</summary><ul>${dicas.map((d) => `<li>${esc(d)}</li>`).join("")}</ul></details>` : ""}
       </div>`;
-    $("#detail").showModal();
+    const dlg = $("#detail");
+    if (!dlg.open) dlg.showModal(); // já aberto = navegação anterior/próximo
+    dlg.scrollTop = 0;
   }
 
   // ---------- Toast ----------
@@ -1075,12 +1345,12 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
 
   // ---------- Eventos ----------
   function bindSetup() {
-    const fields = { people: "#people", hotel: "#hotel", food: "#food", transport: "#transport" };
+    const fields = { people: "#people", hotel: "#hotel", food: "#food", transport: "#transport", budget: "#budget" };
     for (const [key, sel] of Object.entries(fields)) {
       const el = $(sel);
       el.value = state[key];
       el.addEventListener("change", () => {
-        const numeric = ["people", "hotel", "food"].includes(key);
+        const numeric = ["people", "hotel", "food", "budget"].includes(key);
         state[key] = numeric ? Math.max(0, Number(el.value) || 0) : el.value;
         if (key === "people") state.people = Math.max(1, state.people);
         save(); renderAll();
@@ -1147,6 +1417,14 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
     $("#onlyNight").addEventListener("change", (e) => { ui.onlyNight = e.target.checked; renderList(); });
     $("#onlyAge").addEventListener("change", (e) => { ui.onlyAge = e.target.checked; renderList(); });
     $("#onlyDates").addEventListener("change", (e) => { ui.onlyDates = e.target.checked; renderList(); });
+    $("#mapAll").addEventListener("change", (e) => { ui.mapAll = e.target.checked; renderMap(recommendations().list); });
+    $("#kindTabs").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-kind]");
+      if (!b) return;
+      ui.kind = b.dataset.kind;
+      document.querySelectorAll("#kindTabs button").forEach((x) => x.classList.toggle("on", x === b));
+      renderList();
+    });
     $("#whereTabs").addEventListener("click", (e) => {
       const b = e.target.closest("[data-where]");
       if (!b) return;
@@ -1200,6 +1478,13 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
       if ((el = t.closest("[data-staypick]"))) { pickStayOnMap(el.dataset.staypick); return; }
       if ((el = t.closest("[data-staydefault]"))) { state.stayDefault = el.dataset.staydefault; save(); renderStay(); renderAll(); return; }
       if ((el = t.closest("[data-stayremove]"))) { removeStay(el.dataset.stayremove); return; }
+      if ((el = t.closest("[data-goto]"))) {
+        ui.focusUid = el.dataset.goto;
+        renderTimeline(); renderMap(renderRecs());
+        const alvo = document.querySelector(`.stop[data-focus="${el.dataset.goto}"]`);
+        if (alvo) alvo.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
       if ((el = t.closest("[data-mealoff]"))) { dayMeal(el.dataset.mealoff).off = true; save(); renderAll(); return; }
       if ((el = t.closest("[data-mealon]"))) { delete dayMeal(el.dataset.mealon).off; save(); renderAll(); return; }
       if ((el = t.closest("[data-mealreset]"))) { delete dayMeal(el.dataset.mealreset).dur; save(); renderAll(); return; }
@@ -1284,7 +1569,7 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
 
   // ---------- API para outros módulos (js/conta.js) ----------
   function syncInputs() {
-    ["people", "hotel", "food", "transport"].forEach((k) => { const el = $("#" + k); if (el) el.value = state[k]; });
+    ["people", "hotel", "food", "transport", "budget"].forEach((k) => { const el = $("#" + k); if (el) el.value = state[k] || (k === "budget" ? "" : state[k]); });
   }
   window.TF = {
     getState: () => JSON.parse(JSON.stringify(state)),

@@ -1,7 +1,7 @@
 # Traveler's Friend v2 — auditoria e plano
 
 Branch de trabalho: `nova-versao` · Backup da versão no ar: tag `v1.0` (bf0d998).
-Status: **proposta — aguardando aprovação**. Nada abaixo foi implementado ainda.
+Status: plano aprovado. **Etapa 0 e Etapa 1 concluídas** na branch `nova-versao`; próximas: Etapa 2 (perfil).
 
 ---
 

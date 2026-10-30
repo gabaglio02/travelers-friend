@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="landing">
@@ -72,26 +73,36 @@
 
       <p class="small-text muted" id="agendaInfo" style="margin:-6px 0 10px"></p>
       <div class="filters">
+        <div class="seg" id="kindTabs" role="tablist" aria-label="O que mostrar">
+          <button class="on" data-kind="" role="tab">Tudo <small id="kindCountAll"></small></button>
+          <button data-kind="lugar" role="tab">Lugares <small id="kindCountLugar"></small></button>
+          <button data-kind="evento" role="tab">Eventos <small id="kindCountEvento"></small></button>
+        </div>
         <input type="search" id="search" placeholder="Buscar museu, show, artista, bairro...">
-        <div class="chips" id="catChips"></div>
-        <div class="where" id="whereTabs">
-          <button class="on" data-where="">Tudo</button>
-          <button data-where="capital">Capital</button>
-          <button data-where="grande">Grande SP</button>
-        </div>
-        <div class="filter-row">
-          <label class="field inline">
-            <span>Até R$</span>
-            <input type="range" id="maxPrice" min="0" max="1200" step="10" value="1200">
-            <output id="maxPriceOut" class="mono">1200</output>
-          </label>
-        </div>
-        <div class="filter-row">
-          <label class="check"><input type="checkbox" id="onlyFree"> Só grátis</label>
-          <label class="check"><input type="checkbox" id="onlyNight"> 🌙 Só à noite</label>
-          <label class="check"><input type="checkbox" id="onlyAge" checked> Adequado à idade do grupo</label>
-          <label class="check"><input type="checkbox" id="onlyDates"> Eventos só nas datas da viagem</label>
-        </div>
+        <details class="filters-more" id="filtersMore">
+          <summary>Filtros <span id="filtersActive"></span></summary>
+          <div class="filters-body">
+            <div class="chips" id="catChips"></div>
+            <div class="where" id="whereTabs">
+              <button class="on" data-where="">Tudo</button>
+              <button data-where="capital">Capital</button>
+              <button data-where="grande">Grande SP</button>
+            </div>
+            <div class="filter-row">
+              <label class="field inline">
+                <span>Até R$</span>
+                <input type="range" id="maxPrice" min="0" max="1200" step="10" value="1200">
+                <output id="maxPriceOut" class="mono">1200</output>
+              </label>
+            </div>
+            <div class="filter-row">
+              <label class="check"><input type="checkbox" id="onlyFree"> Só grátis</label>
+              <label class="check"><input type="checkbox" id="onlyNight"> 🌙 Só à noite</label>
+              <label class="check"><input type="checkbox" id="onlyAge" checked> Adequado à idade do grupo</label>
+              <label class="check"><input type="checkbox" id="onlyDates"> Eventos só nas datas da viagem</label>
+            </div>
+          </div>
+        </details>
       </div>
 
       <ul class="cards" id="list"></ul>
@@ -113,6 +124,9 @@
         </label>
         <span class="mono muted" id="dayEnd"></span>
       </div>
+
+      <div class="day-strip" id="dayStrip" hidden aria-label="Resumo visual do dia"></div>
+      <div id="dayAlerts"></div>
 
       <details class="meals-cfg stay-box" id="stayBox">
         <summary>🏨 Hospedagem neste dia: <span id="stayLabel">não definida</span></summary>
@@ -138,6 +152,7 @@
           Se não, o site ajusta o horário da refeição ou do lugar, o que mexer menos no dia. Para mudar só um dia, edite a refeição no próprio roteiro.</p>
       </details>
 
+      <label class="check map-all"><input type="checkbox" id="mapAll"> Mostrar no mapa tudo o que está no Explorar</label>
       <div id="map" class="map"></div>
 
       <ol class="timeline" id="timeline"></ol>
@@ -154,9 +169,29 @@
     <!-- ============ CUSTOS ============ -->
     <section class="panel costs" id="view-costs">
       <div class="panel-head">
-        <h2>Custos estimados</h2>
+        <h2>Custos</h2>
+        <span class="count">previsão</span>
       </div>
 
+      <div class="cost-summary" id="costSummary"></div>
+
+      <div class="budget">
+        <label class="field">
+          <span>Orçamento total do grupo (opcional)</span>
+          <input type="number" id="budget" min="0" step="50" placeholder="ex.: 3000">
+        </label>
+        <div id="budgetMeter"></div>
+      </div>
+
+      <h3 class="cost-h">Para onde vai o dinheiro</h3>
+      <div id="costChart"></div>
+      <table class="cost-table" id="costTable"></table>
+      <details class="cost-days">
+        <summary>Por dia</summary>
+        <div id="costDays"></div>
+      </details>
+
+      <h3 class="cost-h">Seus valores</h3>
       <div class="cost-inputs">
         <div class="field">
           <span>Hospedagens (valor por noite, total do grupo)</span>
@@ -181,11 +216,10 @@
         </label>
       </div>
 
-      <table class="cost-table" id="costTable"></table>
-
       <p class="disclaimer">
-        Valores aproximados para planejamento. Itens <b>a confirmar</b> têm data real, mas horário/preço
-        ainda podem mudar; itens <b>ilustrativo</b> são exemplos. Confirme sempre no site oficial.
+        <b>Confirmado</b> = entrada gratuita ou preço verificado. <b>Estimado</b> = valor aproximado (ingressos pagos e deslocamentos).
+        <b>Seu valor</b> = o que você informou. Itens <b>a confirmar</b> têm data real, mas horário/preço ainda podem mudar;
+        itens <b>exemplo</b> são ilustrativos. Confirme sempre no site oficial.
       </p>
     </section>
   </main>
@@ -196,9 +230,11 @@
   <dialog id="accountDialog" class="modal" aria-label="Conta"></dialog>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="js/config.js"></script>
   <script src="js/data/sp.js"></script>
   <script src="js/data/sp-eventos.js"></script>
+  <script src="js/data/sp-fotos.js"></script>
   <script type="module" src="js/app.js"></script>
   <script type="module" src="js/conta.js"></script>
 </body>
