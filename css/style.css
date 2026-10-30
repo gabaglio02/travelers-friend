@@ -816,8 +816,10 @@ body.landing .social { display: none; }
 .est-ondas { background-image: radial-gradient(circle at 50% 120%, transparent 14px, rgba(0,0,0,.1) 15px, rgba(0,0,0,.1) 18px, transparent 19px); background-size: 36px 22px; }
 
 /* Cabeçalho do perfil */
-.pf-head { position: relative; display: grid; grid-template-columns: auto 1fr auto; gap: var(--s-2) var(--s-4); align-items: end; padding: 0 var(--s-5) var(--s-4); margin-top: -52px; }
-.pf-id { padding-bottom: 6px; min-width: 0; }
+/* Só a foto sobe sobre a capa; nome e botões começam abaixo dela (nome longo não invade a capa). */
+.pf-head { position: relative; display: grid; grid-template-columns: auto 1fr auto; gap: var(--s-2) var(--s-4); align-items: start; padding: var(--s-3) var(--s-5) var(--s-4); }
+.pf-head > .pf-avatar.lg { margin-top: calc(-52px - var(--s-3)); }
+.pf-id { min-width: 0; }
 .pf-id h1 { margin: 0; font-size: var(--t-2xl); line-height: var(--lh-tight); letter-spacing: -.02em; word-break: break-word; }
 .pf-apelido { font-family: var(--mono); font-size: var(--t-sm); color: var(--muted); overflow-wrap: anywhere; }
 .pf-status { display: inline-flex; align-items: center; gap: 6px; margin-left: var(--s-3); font-size: var(--t-sm); }
@@ -826,7 +828,7 @@ body.landing .social { display: none; }
 .dot.st-ocupado { background: var(--st-ocupado); }
 .dot.st-ausente { background: var(--st-ausente); }
 .dot.st-invisivel, .dot.st-off { background: var(--st-invisivel); }
-.pf-acoes { display: flex; gap: var(--s-2); padding-bottom: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.pf-acoes { display: flex; gap: var(--s-2); flex-wrap: wrap; justify-content: flex-end; }
 .pf-acoes .btn { text-decoration: none; display: inline-flex; align-items: center; }
 .pf-msg {
   grid-column: 2 / -1; margin: 0; position: relative; justify-self: start; max-width: 560px;
@@ -902,7 +904,8 @@ body.landing .social { display: none; }
 @media (max-width: 720px) {
   .social { padding: var(--s-3) var(--s-3) var(--s-7); }
   .pf-capa { height: 150px; }
-  .pf-head { grid-template-columns: auto 1fr; margin-top: -40px; padding: 0 var(--s-4) var(--s-3); }
+  .pf-head { grid-template-columns: auto 1fr; padding: var(--s-2) var(--s-4) var(--s-3); }
+  .pf-head > .pf-avatar.lg { margin-top: calc(-40px - var(--s-2)); }
   .pf-avatar.lg { width: 92px; height: 92px; font-size: 42px; }
   .pf-acoes { grid-column: 1 / -1; justify-content: flex-start; }
   .pf-msg { grid-column: 1 / -1; }
