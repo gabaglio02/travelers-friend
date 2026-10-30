@@ -38,16 +38,34 @@ function config() {
 const ttlMs = () => (config().ttlHoras || 12) * 3600 * 1000;
 
 // ---------- Armazenamento (com cópia em memória) ----------
+// Se o banco falhar (ex.: tabela ainda não criada), a agenda segue funcionando só em memória,
+// com as fontes coletadas na hora — o site não fica sem eventos por causa disso.
 const memoria = {};
+let erroArmazenamento = null;
 async function store(cidade) {
   const m = memoria[cidade];
   if (!m || Date.now() - m.lidoEm > RECARREGAR_MS) {
-    memoria[cidade] = { dados: await armazenamento.carregar(cidade), lidoEm: Date.now() };
+    let dados;
+    try {
+      dados = await armazenamento.carregar(cidade);
+      erroArmazenamento = null;
+    } catch (err) {
+      erroArmazenamento = String(err.message || err);
+      console.warn("[agenda] não consegui ler o armazenamento:", erroArmazenamento);
+      dados = m ? m.dados : { eventos: {}, faixas: [], fontes: {} };
+    }
+    memoria[cidade] = { dados, lidoEm: Date.now() };
   }
   return memoria[cidade].dados;
 }
 async function persist(cidade) {
-  await armazenamento.salvar(cidade, memoria[cidade].dados);
+  try {
+    await armazenamento.salvar(cidade, memoria[cidade].dados);
+    erroArmazenamento = null;
+  } catch (err) {
+    erroArmazenamento = String(err.message || err);
+    console.warn("[agenda] não consegui gravar o armazenamento:", erroArmazenamento);
+  }
   memoria[cidade].lidoEm = Date.now();
 }
 
@@ -136,6 +154,7 @@ async function handle(url, res, opts = {}) {
       const s = await store(c);
       out[c] = { fontes: s.fontes, eventos: Object.keys(s.eventos).length, faixas: s.faixas.slice(-5) };
     }
+    out.erroArmazenamento = erroArmazenamento;
     return json(res, 200, out);
   }
   if (url.pathname !== "/api/eventos") return json(res, 404, { erro: "rota não encontrada" });
