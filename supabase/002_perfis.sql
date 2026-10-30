@@ -56,7 +56,7 @@ declare
   qtd integer;
 begin
   for secao, nivel in select key, value #>> '{}' from jsonb_each(new.privacidade) loop
-    if secao not in ('perfil', 'bio', 'status', 'destinos', 'visitados', 'amigos') then
+    if secao not in ('perfil', 'bio', 'status', 'destinos', 'visitados', 'amigos', 'recados') then
       raise exception 'privacidade: seção desconhecida %', secao;
     end if;
     if nivel not in ('publico', 'amigos', 'privado') then

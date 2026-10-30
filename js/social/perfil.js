@@ -124,6 +124,7 @@ export function renderPerfil(p) {
         <div class="pf-acoes">
           ${dono ? `<a class="btn small" href="${editarHref(p)}">Editar perfil</a><a class="btn ghost small" href="#/identidades">Minhas identidades</a>` : ""}
           <button class="btn ghost small" data-pf="copiar" data-link="${esc(link)}">Copiar link</button>
+          ${dono ? "" : `<span class="mu-relacao" id="muRelacao"></span>`}
         </div>
         ${p.mensagem ? `<p class="pf-msg">${esc(p.mensagem)}</p>` : ""}
       </header>
@@ -150,7 +151,10 @@ export function renderPerfil(p) {
             : `<p class="muted">${dono ? "Registre os lugares que você já conheceu em Editar perfil." : "Nenhum lugar registrado."}</p>`, "pf-sec-visitados") : ""}
         </div>
       </div>
+      <div class="pf-mural" id="muMural"></div>
     </article>`);
+  // Álbuns, recados e botões de amizade/denúncia entram depois (js/social/mural.js).
+  document.dispatchEvent(new CustomEvent("tf:perfil", { detail: p }));
 }
 
 // ---------- Edição / criação ----------
@@ -338,12 +342,23 @@ function erro(msg) {
 }
 export function traduzir(err) {
   const m = String((err && err.message) || err || "");
-  if (/duplicate key|identidades_apelido_idx/i.test(m)) return "Esse endereço de perfil já está em uso. Escolha outro.";
+  if (/identidades_apelido_idx/i.test(m)) return "Esse endereço de perfil já está em uso. Escolha outro.";
   if (/identidades_um_principal/i.test(m)) return "Você já tem um perfil principal.";
   if (/limite_identidades/i.test(m)) return "Limite de 3 identidades por conta (seu perfil + 2 personas) atingido.";
+  if (/limite_albuns/i.test(m)) return "Limite de 30 álbuns por conta atingido.";
+  if (/limite_fotos/i.test(m)) return m.replace(/^.*limite_fotos:s*/i, "Limite atingido: ");
+  if (/limite_recados/i.test(m)) return "Você deixou muitos recados na última hora. Tente mais tarde.";
+  if (/limite_amizades/i.test(m)) return "Você mandou muitos pedidos de amizade hoje. Tente amanhã.";
+  if (/limite_denuncias/i.test(m)) return "Você já enviou muitas denúncias hoje.";
+  if (/recado_so_amigos/i.test(m)) return "Só amigos podem deixar recados.";
+  if (/recado_desligado/i.test(m)) return "Este mural não está recebendo recados.";
+  if (/bloquead/i.test(m)) return "Não é possível: há um bloqueio entre as contas.";
+  if (/amizade_existente/i.test(m)) return "Essa pessoa já te mandou um pedido — aceite em Amigos.";
+  if (/amizades_pkey|duplicate key value.*amizades/i.test(m)) return "Você já mandou um pedido para esse perfil.";
+  if (/seção desconhecida/i.test(m)) return "O banco ainda não foi atualizado: é preciso rodar supabase/004_mural.sql no Supabase.";
   if (/row-level security|permission denied/i.test(m)) return "Sem permissão para isso. Entre de novo na sua conta.";
   if (/relation .* does not exist|function .* does not exist|Could not find the (function|table)/i.test(m))
-    return "O banco ainda não tem as tabelas de perfil. É preciso rodar supabase/002_perfis.sql no Supabase.";
+    return "O banco ainda não tem as tabelas novas. É preciso rodar os arquivos de supabase/ (002 a 004) no Supabase.";
   if (/Failed to fetch|NetworkError/i.test(m)) return "Sem conexão com o servidor.";
   return m || "Não foi possível salvar.";
 }

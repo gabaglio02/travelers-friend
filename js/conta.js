@@ -63,7 +63,8 @@
     usuario: () => user,
     nome: () => nomeDe(user),
     aoMudarUsuario: (fn) => ouvintes.push(fn),
-    abrirLogin: () => abrir(sb ? "entrar" : "info")
+    abrirLogin: () => abrir(sb ? "entrar" : "info"),
+    viagemAtual: () => viagemId
   };
   window.dispatchEvent(new Event("tf:conta"));
   const avisarMudanca = () => ouvintes.forEach((fn) => { try { fn(user); } catch (err) { console.warn(err); } });
@@ -344,6 +345,7 @@
             <button class="btn ghost small" data-acc="nova-viagem">+ Nova viagem</button>
             <a class="btn small" href="#/perfil" data-acc="fechar">👤 Meu perfil</a>
             <a class="btn ghost small" href="#/identidades" data-acc="fechar">🎭 Identidades</a>
+            <a class="btn ghost small" href="#/amigos" data-acc="fechar">👥 Amigos</a>
             <button class="btn ghost small" data-acc="fotos">📷 Minhas fotos</button>
           </div>
           <div class="modal-actions acc-foot">

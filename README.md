@@ -31,6 +31,7 @@ Abrindo o `index.html` direto no navegador o site também funciona, mas só com 
 - `supabase/schema.sql`: tabelas e regras de segurança do Supabase
 - `supabase/002_perfis.sql`: perfis, identidades, amizades, lugares visitados e privacidade por seção
 - `supabase/003_limite_identidades.sql`: limite de 3 identidades por conta (perfil + 2 personas)
+- `supabase/004_mural.sql`: álbuns de lembranças, recados, amizades mais seguras, bloqueio por conta e denúncias
 - `supabase/testes/`: testes do SQL num Postgres local (PGlite)
 - `js/dados/perfis.js`: leitura e gravação de perfis no Supabase
 - `js/social/perfil.js`: páginas `#/@apelido`, `#/perfil` e `#/perfil/editar`
@@ -79,7 +80,7 @@ no Supabase (tabela `agenda_cache`) em vez da pasta `data/`.
    Use a conta pessoal (plano **Hobby**); não crie Team nem inicie o teste do Pro.
 2. **Supabase:** no projeto da Vercel, *Storage* (ou *Integrations*) → **Supabase** → escolha o plano **Free**.
    A integração cria as variáveis `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` (o site aceita também os nomes `NEXT_PUBLIC_…`).
-3. **Banco:** no painel do Supabase, *SQL Editor* → cole e rode [`supabase/schema.sql`](supabase/schema.sql) , depois [`supabase/002_perfis.sql`](supabase/002_perfis.sql) e [`supabase/003_limite_identidades.sql`](supabase/003_limite_identidades.sql) (só acrescentam/ajustam; é seguro rodar de novo).
+3. **Banco:** no painel do Supabase, *SQL Editor* → cole e rode [`supabase/schema.sql`](supabase/schema.sql) , depois [`supabase/002_perfis.sql`](supabase/002_perfis.sql) , [`supabase/003_limite_identidades.sql`](supabase/003_limite_identidades.sql) e [`supabase/004_mural.sql`](supabase/004_mural.sql) (só acrescentam/ajustam; é seguro rodar de novo).
 4. **Login:** no Supabase, *Authentication → URL Configuration*: em **Site URL** coloque o endereço da Vercel
    (ex.: `https://travelers-friend.vercel.app`) e adicione-o também em **Redirect URLs** (e `http://localhost:5173` para testar).
 5. **Cron (opcional):** crie a variável `CRON_SECRET` na Vercel com um texto aleatório; o `/api/cron` passa a aceitar só a Vercel.
@@ -137,6 +138,7 @@ Os preços, horários e datas são aproximados. Os itens marcados como `ilustrat
 - Avatar e capa ficam no bucket público `perfil`; fotos de viagem continuam no bucket privado `fotos`.
 - Testar o SQL localmente: numa pasta fora do projeto, `npm i @electric-sql/pglite@0.2.17` e
   `node supabase/testes/perfis.test.mjs <pasta-do-projeto>` (o script fica nessa pasta junto do pacote).
+  O mural tem o seu: `node supabase/testes/mural.test.mjs <pasta-do-projeto>`.
 
 ## Identidades
 
@@ -146,3 +148,17 @@ Os preços, horários e datas são aproximados. Os itens marcados como `ilustrat
 - Figuras históricas: só pessoas já falecidas, com declaração obrigatória; a página mostra o selo
   "perfil temático — não é a conta oficial".
 - Apagar uma persona pede para digitar o @ e remove também o avatar/capa dela no bucket `perfil`.
+
+## Mural de lembranças, recados e amigos
+
+- **Lembranças** (álbuns): título, local, datas, descrição, lugares e visibilidade própria (público · só amigos · só eu).
+  Ficam no perfil (`#/@apelido`) e abrem em `#/@apelido/album/<id>`. Criar: "+ Nova lembrança" no perfil ou
+  "📸 Virar lembrança" no Roteiro (leva lugares e datas e pode marcá-los como visitados).
+- **Fotos** dos álbuns continuam no bucket privado `fotos` (limite de 50 fotos / 20 MB por conta) e são abertas por
+  links temporários só para quem pode ver o álbum. Apagar um álbum mantém as fotos em "Minhas fotos", a menos que a pessoa marque o contrário.
+- **Recados**: só amigos escrevem; quem lê é definido na privacidade do perfil (seção "Mural de recados"; "Só eu" desliga).
+  O autor e o dono do mural podem apagar. Limite de 20 recados por hora por conta.
+- **Amigos** (`#/amigos`): pedidos recebidos/enviados, amigos e bloqueados; o número de pedidos aparece no topo.
+- **Bloquear** vale para a conta inteira (todas as identidades dos dois lados) e desfaz a amizade; só quem bloqueou desbloqueia.
+- **Denúncias** vão para a tabela `denuncias`. Para moderar: Supabase → *Table Editor* → `denuncias` (filtre `estado = aberta`),
+  veja `alvo_tipo`/`alvo_id`, remova o conteúdo se for o caso e mude o estado para `analisada` ou `removida`.

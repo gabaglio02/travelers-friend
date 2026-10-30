@@ -1,7 +1,7 @@
 # Traveler's Friend v2 — auditoria e plano
 
 Branch de trabalho: `nova-versao` · Backup da versão no ar: tag `v1.0` (bf0d998).
-Status: plano aprovado. **Etapas 0, 1, 2 e 3 concluídas** na branch `nova-versao` (Etapa 2 depende de rodar `supabase/002_perfis.sql`; a 3, de `003_limite_identidades.sql`); próxima: Etapa 4 (mural de lembranças).
+Status: plano aprovado. **Etapas 0 a 4 concluídas** na branch `nova-versao` (precisam de `supabase/002_perfis.sql`, `003_limite_identidades.sql` e `004_mural.sql` rodados no Supabase); próxima: Etapa 5 (integração e testes).
 
 ---
 

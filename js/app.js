@@ -10,6 +10,8 @@ import {
 import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
 import "./social/perfil.js"; // registra #/@apelido, #/perfil e #/perfil/editar
 import "./social/identidades.js"; // registra #/identidades, #/identidades/nova e #/identidades/editar/<id>
+import "./social/mural.js"; // registra #/@apelido/album/<id> e #/lembrancas/...; álbuns e recados no perfil
+import "./social/amigos.js"; // registra #/amigos
 
 (function () {
   "use strict";
@@ -1606,6 +1608,15 @@ import "./social/identidades.js"; // registra #/identidades, #/identidades/nova 
     hasContent: () => Object.values(state.days).some((d) => (d.items || []).length) || (state.stays || []).length > 0,
     newState: () => defaultState(),
     abrirDetalhe: (id) => { if (placeById(id)) openDetail(id); },
+    // Resumo da viagem para "Virar lembrança" (js/social/mural.js): cidade, datas e lugares do roteiro na ordem.
+    lembranca() {
+      const lugares = [];
+      Object.keys(state.days).sort().forEach((iso) => (state.days[iso].items || []).forEach((it) => {
+        const p = placeById(it.id);
+        if (p && !lugares.some((l) => l.id === p.id)) lugares.push({ id: p.id, nome: p.nome, data: iso });
+      }));
+      return { cidade: city().nome, inicio: state.start, fim: state.end, lugares };
+    },
     onSave: (fn) => saveHooks.push(fn),
     toast, esc, fmtDay, fmtShort
   };

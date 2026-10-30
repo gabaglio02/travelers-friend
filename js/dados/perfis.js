@@ -18,9 +18,9 @@ export const APELIDO_RE = /^[a-z0-9_]{3,24}$/;
 export const NIVEIS = ["publico", "amigos", "privado"];
 export const SECOES = {
   perfil: "Perfil inteiro", status: "Status e mensagem", bio: "Sobre mim",
-  destinos: "Quero conhecer", visitados: "Lugares visitados", amigos: "Lista de amigos"
+  destinos: "Quero conhecer", visitados: "Lugares visitados", amigos: "Lista de amigos", recados: "Mural de recados (quem lê)"
 };
-export const PRIVACIDADE_PADRAO = { perfil: "publico", bio: "publico", status: "publico", destinos: "publico", visitados: "amigos", amigos: "amigos" };
+export const PRIVACIDADE_PADRAO = { perfil: "publico", bio: "publico", status: "publico", destinos: "publico", visitados: "amigos", amigos: "amigos", recados: "amigos" };
 
 // Perfil como um visitante (ou o dono) pode ver — o banco já filtra por seção. null = não existe ou é privado.
 export async function perfilPublico(apelido) {
