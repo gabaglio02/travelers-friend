@@ -1133,3 +1133,8 @@ body.landing .social { display: none; }
   .mu-menu > div { right: auto; left: 0; }
   .panel-head #toMemory { padding-inline: 8px; }
 }
+
+/* Confirmação do site (substitui o confirm() nativo) */
+.tf-confirmar { width: min(420px, 92vw); }
+.tf-confirmar .modal-body p { margin: 0; line-height: var(--lh-base); }
+.tf-confirmar .modal-actions { justify-content: flex-end; }

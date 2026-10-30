@@ -7,6 +7,7 @@ import { esc } from "../core/util.js";
 import { contaPronta, minhasIdentidades, APELIDO_RE } from "../dados/perfis.js";
 import * as M from "../dados/mural.js";
 import { mostrar, carregando, aviso, traduzir, avatarHtml } from "./perfil.js";
+import { confirmar } from "./confirmar.js";
 
 const toast = (m) => window.TF && window.TF.toast(m);
 
@@ -82,7 +83,7 @@ rota("/amigos", async () => {
 document.addEventListener("click", async (e) => {
   const el = e.target.closest("#socialView [data-am]");
   if (!el) return;
-  if (el.dataset.confirma && !confirm(el.dataset.confirma)) return;
+  if (el.dataset.confirma && !(await confirmar({ titulo: el.dataset.confirma, botao: "Desfazer amizade" }))) return;
   el.disabled = true;
   try {
     const { de, para, id } = el.dataset;

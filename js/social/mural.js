@@ -12,6 +12,7 @@ import { contaPronta, minhasIdentidades, meusVisitados, adicionarVisitado } from
 import * as M from "../dados/mural.js";
 import { mostrar, carregando, aviso, traduzir, avatarHtml, CORES } from "./perfil.js";
 import { atualizarAvisoAmigos } from "./amigos.js";
+import { confirmar } from "./confirmar.js";
 
 const toast = (m) => window.TF && window.TF.toast(m);
 const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
@@ -286,7 +287,7 @@ async function acaoLightbox(e) {
       case "capa": await M.salvarAlbum({ id: album.id, capa_foto: f.id }); toast("Capa do álbum trocada"); break;
       case "tirar": await M.editarFoto(f.id, { album_id: null }); toast("Foto tirada do álbum (continua em Minhas fotos)"); d.close(); break;
       case "apagar":
-        if (!confirm("Apagar esta foto para sempre?")) return;
+        if (!(await confirmar({ titulo: "Apagar esta foto?", texto: "Ela sai do álbum e é apagada para sempre.", botao: "Apagar foto" }))) return;
         await M.apagarFoto(f); toast("Foto apagada"); d.close(); break;
       default: return;
     }
@@ -559,11 +560,11 @@ document.addEventListener("click", async (e) => {
       case "pedir-como": await M.pedirAmizade(el.dataset.de, perfilAtual.id); break;
       case "aceitar": await M.aceitarAmizade(el.dataset.de, el.dataset.para); toast("Agora vocês são amigos!"); break;
       case "desfazer":
-        if (el.dataset.confirma && !confirm(el.dataset.confirma)) return;
+        if (el.dataset.confirma && !(await confirmar({ titulo: el.dataset.confirma, botao: "Desfazer amizade" }))) return;
         await M.desfazerAmizade(el.dataset.de, el.dataset.para); break;
       case "bloquear": {
         const p = perfilAtual;
-        if (!confirm(`Bloquear @${p.apelido}?\n\nVocês deixam de ver os perfis um do outro (inclusive personas da mesma conta), a amizade é desfeita e não dá mais para trocar pedidos nem recados. Você pode desbloquear depois em Amigos.`)) return;
+        if (!(await confirmar({ titulo: `Bloquear @${p.apelido}?`, texto: "Vocês deixam de ver os perfis um do outro (inclusive personas da mesma conta), a amizade é desfeita e não dá mais para trocar pedidos nem recados. Você pode desbloquear depois em Amigos.", botao: "Bloquear" }))) return;
         await M.bloquear(p.id);
         toast("Perfil bloqueado");
         atualizarAvisoAmigos();
@@ -571,7 +572,7 @@ document.addEventListener("click", async (e) => {
       }
       case "denunciar": return abrirDenuncia(el.dataset.tipo, el.dataset.id, el.dataset.nome);
       case "apagar-recado":
-        if (!confirm("Apagar este recado?")) return;
+        if (!(await confirmar({ titulo: "Apagar este recado?", botao: "Apagar" }))) return;
         await M.apagarRecado(el.dataset.id); toast("Recado apagado"); break;
       // ----- álbum -----
       case "ver": return verFoto(+el.dataset.i);
