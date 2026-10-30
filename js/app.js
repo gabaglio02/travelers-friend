@@ -8,6 +8,7 @@ import {
   dateRange, ageMin, bracketFor, ciIcon, ageBadge, placeLabel, distanceKm, walkMinutes
 } from "./core/util.js";
 import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
+import "./social/perfil.js"; // registra #/@apelido, #/perfil e #/perfil/editar
 
 (function () {
   "use strict";
@@ -1603,6 +1604,7 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
     // Viagem "vazia"? (nada no roteiro e nenhuma hospedagem) — para decidir se vale importar para a conta.
     hasContent: () => Object.values(state.days).some((d) => (d.items || []).length) || (state.stays || []).length > 0,
     newState: () => defaultState(),
+    abrirDetalhe: (id) => { if (placeById(id)) openDetail(id); },
     onSave: (fn) => saveHooks.push(fn),
     toast, esc, fmtDay, fmtShort
   };
@@ -1622,12 +1624,15 @@ import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
 
   // ---------- Rotas ----------
   // #/ → tela inicial (busca) · #/planejar → painel. Novas áreas (perfil, personas) entram aqui.
+  const sairDaAreaSocial = () => { document.body.classList.remove("v-social"); $("#socialView").hidden = true; };
   rota("/", () => {
+    sairDaAreaSocial();
     document.body.classList.add("landing");
     window.scrollTo(0, 0);
   });
   rota("/planejar", () => {
-    const vindoDoInicio = document.body.classList.contains("landing");
+    const vindoDoInicio = document.body.classList.contains("landing") || document.body.classList.contains("v-social");
+    sairDaAreaSocial();
     document.body.classList.remove("landing");
     if (vindoDoInicio) window.scrollTo(0, 0);
     renderAll();

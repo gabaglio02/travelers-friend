@@ -53,10 +53,25 @@
     });
   }
 
+  // ---------- Ponte para outros módulos (js/dados/*, js/social/*) ----------
+  // "pronto" resolve quando já se sabe se há Supabase e quem está logado.
+  const ouvintes = [];
+  let prontoOk;
+  window.TFConta = {
+    pronto: new Promise((ok) => (prontoOk = ok)),
+    cliente: () => sb,
+    usuario: () => user,
+    nome: () => nomeDe(user),
+    aoMudarUsuario: (fn) => ouvintes.push(fn),
+    abrirLogin: () => abrir(sb ? "entrar" : "info")
+  };
+  window.dispatchEvent(new Event("tf:conta"));
+  const avisarMudanca = () => ouvintes.forEach((fn) => { try { fn(user); } catch (err) { console.warn(err); } });
+
   async function iniciar() {
     renderBotao();
     const cfg = await lerConfig();
-    if (!cfg) return; // contas desativadas
+    if (!cfg) { prontoOk(); return; } // contas desativadas
     try {
       await carregarScript(SUPABASE_JS);
       sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
@@ -65,6 +80,7 @@
     } catch (err) {
       console.warn("[conta] Supabase indisponível:", err);
       sb = null;
+      prontoOk();
       return;
     }
     sb.auth.onAuthStateChange((evento, sessao) => {
@@ -74,8 +90,12 @@
       renderBotao();
       if (user && user.id !== antes) setTimeout(aoEntrar, 0); // fora do callback (recomendação do supabase-js)
       if (!user && antes) aoSair();
+      if ((user && user.id) !== antes) setTimeout(avisarMudanca, 0);
     });
     TF.onSave(agendarSalvar);
+    try { const { data } = await sb.auth.getSession(); user = data && data.session ? data.session.user : user; } catch (_) { /* segue sem sessão */ }
+    renderBotao();
+    prontoOk();
   }
 
   // ---------- Botão do topo ----------
@@ -223,6 +243,13 @@
       const r = await st.remove(data.map((o) => `${user.id}/${o.name}`));
       if (r.error) throw r.error;
     }
+    const pf = sb.storage.from("perfil");
+    const pastas = (await pf.list(user.id, { limit: 100 })).data || [];
+    for (const pasta of pastas) {
+      const prefixo = pasta.id ? user.id : `${user.id}/${pasta.name}`; // arquivo solto ou subpasta da identidade
+      const arquivos = pasta.id ? [pasta] : ((await pf.list(prefixo, { limit: 100 })).data || []);
+      if (arquivos.length) await pf.remove(arquivos.map((a) => `${prefixo}/${a.name}`));
+    }
     const { error } = await sb.rpc("excluir_minha_conta");
     if (error) throw error;
     try { localStorage.removeItem(chaveViagem()); } catch (_) { /* ignora */ }
@@ -315,6 +342,7 @@
           </ul>
           <div class="modal-actions">
             <button class="btn ghost small" data-acc="nova-viagem">+ Nova viagem</button>
+            <a class="btn small" href="#/perfil" data-acc="fechar">👤 Meu perfil</a>
             <button class="btn ghost small" data-acc="fotos">📷 Minhas fotos</button>
           </div>
           <div class="modal-actions acc-foot">
@@ -369,7 +397,7 @@
     aviso = "";
     try {
       switch (nome) {
-        case "fechar": return fechar();
+        case "fechar": fechar(); return el.tagName === "A" ? (location.hash = el.getAttribute("href")) : undefined;
         case "entrar": case "criar": case "esqueci": case "excluir": return abrir(nome);
         case "conta": return abrir("conta");
         case "abrir": await abrirViagem(el.dataset.id); return abrir("conta");

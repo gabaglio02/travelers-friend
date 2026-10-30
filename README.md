@@ -29,6 +29,10 @@ Abrindo o `index.html` direto no navegador o site também funciona, mas só com 
 - `api/`: funções da Vercel (agenda, status, config, cron)
 - `js/conta.js`: contas, viagens salvas e fotos (Supabase)
 - `supabase/schema.sql`: tabelas e regras de segurança do Supabase
+- `supabase/002_perfis.sql`: perfis, identidades, amizades, lugares visitados e privacidade por seção
+- `supabase/testes/`: testes do SQL num Postgres local (PGlite)
+- `js/dados/perfis.js`: leitura e gravação de perfis no Supabase
+- `js/social/perfil.js`: páginas `#/@apelido`, `#/perfil` e `#/perfil/editar`
 - `privacidade.html`: política de privacidade (rascunho)
 - `data/`: banco da agenda gerado pelo servidor (pode apagar para recomeçar)
 
@@ -74,7 +78,7 @@ no Supabase (tabela `agenda_cache`) em vez da pasta `data/`.
    Use a conta pessoal (plano **Hobby**); não crie Team nem inicie o teste do Pro.
 2. **Supabase:** no projeto da Vercel, *Storage* (ou *Integrations*) → **Supabase** → escolha o plano **Free**.
    A integração cria as variáveis `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` (o site aceita também os nomes `NEXT_PUBLIC_…`).
-3. **Banco:** no painel do Supabase, *SQL Editor* → cole e rode [`supabase/schema.sql`](supabase/schema.sql).
+3. **Banco:** no painel do Supabase, *SQL Editor* → cole e rode [`supabase/schema.sql`](supabase/schema.sql) e depois [`supabase/002_perfis.sql`](supabase/002_perfis.sql) (só acrescenta tabelas; é seguro rodar de novo).
 4. **Login:** no Supabase, *Authentication → URL Configuration*: em **Site URL** coloque o endereço da Vercel
    (ex.: `https://travelers-friend.vercel.app`) e adicione-o também em **Redirect URLs** (e `http://localhost:5173` para testar).
 5. **Cron (opcional):** crie a variável `CRON_SECRET` na Vercel com um texto aleatório; o `/api/cron` passa a aceitar só a Vercel.
@@ -124,3 +128,11 @@ Sem o Supabase configurado, o site funciona como antes e a viagem fica salva só
 4. Na API, inclua a cidade em `CIDADES` (`server/agenda.js`) e os arquivos dela em `server/fontes/local.js`.
 
 Os preços, horários e datas são aproximados. Os itens marcados como `ilustrativo` são exemplos.
+
+## Perfis
+
+- `#/@apelido` mostra o perfil; o banco (`perfil_publico`) já devolve só as seções que quem está vendo pode ver.
+- Cada seção tem privacidade própria: público · só amigos · só eu. Sem declarar 18+, nada fica público.
+- Avatar e capa ficam no bucket público `perfil`; fotos de viagem continuam no bucket privado `fotos`.
+- Testar o SQL localmente: numa pasta fora do projeto, `npm i @electric-sql/pglite@0.2.17` e
+  `node supabase/testes/perfis.test.mjs <pasta-do-projeto>` (o script fica nessa pasta junto do pacote).
