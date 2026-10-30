@@ -1141,3 +1141,15 @@ body.landing .social { display: none; }
 .tf-confirmar { width: min(420px, 92vw); }
 .tf-confirmar .modal-body p { margin: 0; line-height: var(--lh-base); }
 .tf-confirmar .modal-actions { justify-content: flex-end; }
+
+/* Tabela de custos: cabe na coluna estreita (330 px) mesmo com valores grandes ou zoom */
+.costs .cost-table td:nth-child(2), .costs .cost-table td:nth-child(3), .costs .cost-table th { padding-left: 6px; }
+.costs .cost-table td:nth-child(2), .costs .cost-table td:nth-child(3) { font-size: 12.5px; letter-spacing: -.02em; }
+.costs .cost-table tr.total td { font-size: 14px; }
+.costs .cost-table tr.total td:nth-child(2), .costs .cost-table tr.total td:nth-child(3) { font-size: 13.5px; }
+.costs .cost-table td:first-child { overflow-wrap: break-word; }
+.cost-table.uma-coluna tr.total td:last-child { background: var(--accent); }
+/* Último recurso: se ainda não couber (zoom muito grande), a tabela rola dentro do painel em vez de empurrar a página */
+.cost-scroll, #costDays { max-width: 100%; overflow-x: auto; }
+.cost-table.por-dia td:first-child { white-space: nowrap; font-size: 13px; }
+.cost-table.por-dia td:first-child small { white-space: normal; }

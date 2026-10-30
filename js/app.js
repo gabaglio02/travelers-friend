@@ -959,24 +959,28 @@ import "./social/amigos.js"; // registra #/amigos
           <i style="background:${x.cor}"></i><span class="sl-nome">${x.nome}</span>
           <span class="sl-val">${moneyExact(c.grupo[x.k])}<small>${c.total ? Math.round(c.grupo[x.k] / c.total * 100) : 0}%</small></span>
           <span class="sl-orig">${origem(x.k)}</span></li>`).join("")}</ul>` : "";
-    // Tabela grupo × pessoa
+    // Tabela grupo × pessoa (com 1 pessoa os dois valores são iguais: só uma coluna, "Total")
+    const sozinho = (state.people || 1) <= 1;
+    const vals = (v) => sozinho ? `<td>${moneyExact(v)}</td>` : `<td>${moneyExact(v)}</td><td>${moneyExact(pp(v))}</td>`;
+    const cab = sozinho ? "<th>Valor</th>" : "<th>Grupo</th><th>Por pessoa</th>";
     const hospSub = c.byStay.size > 1 || (c.byStay.size === 1 && !c.byStay.has(""))
-      ? [...c.byStay.values()].map((g) => `<tr class="sub"><td>${esc(g.label)} · ${g.n} × ${moneyExact(g.price)}</td><td>${moneyExact(g.n * g.price)}</td><td>${moneyExact(pp(g.n * g.price))}</td></tr>`).join("") : "";
+      ? [...c.byStay.values()].map((g) => `<tr class="sub"><td>${esc(g.label)} · ${g.n} × ${moneyExact(g.price)}</td>${vals(g.n * g.price)}</tr>`).join("") : "";
+    $("#costTable").classList.toggle("uma-coluna", sozinho);
     $("#costTable").innerHTML = `
-      <thead><tr><th>Categoria</th><th>Grupo</th><th>Por pessoa</th></tr></thead>
+      <thead><tr><th>Categoria</th>${cab}</tr></thead>
       <tbody>
-        <tr><td>Ingressos e entradas</td><td>${moneyExact(c.grupo.ingressos)}</td><td>${moneyExact(pp(c.grupo.ingressos))}</td></tr>
-        <tr><td>Deslocamento</td><td>${moneyExact(c.grupo.transp)}</td><td>${moneyExact(pp(c.grupo.transp))}</td></tr>
-        <tr><td>Hospedagem (${c.nights} ${c.nights === 1 ? "noite" : "noites"})</td><td>${moneyExact(c.grupo.hosp)}</td><td>${moneyExact(pp(c.grupo.hosp))}</td></tr>
+        <tr><td>Ingressos e entradas</td>${vals(c.grupo.ingressos)}</tr>
+        <tr><td>Deslocamento</td>${vals(c.grupo.transp)}</tr>
+        <tr><td>Hospedagem (${c.nights} ${c.nights === 1 ? "noite" : "noites"})</td>${vals(c.grupo.hosp)}</tr>
         ${hospSub}
-        <tr><td>Alimentação (${c.days.length} ${c.days.length === 1 ? "dia" : "dias"})</td><td>${moneyExact(c.grupo.comida)}</td><td>${moneyExact(pp(c.grupo.comida))}</td></tr>
-        <tr class="total"><td>Total</td><td>${moneyExact(c.total)}</td><td>${moneyExact(pp(c.total))}</td></tr>
+        <tr><td>Alimentação (${c.days.length} ${c.days.length === 1 ? "dia" : "dias"})</td>${vals(c.grupo.comida)}</tr>
+        <tr class="total"><td>Total</td>${vals(c.total)}</tr>
       </tbody>`;
     // Por dia (por pessoa)
-    $("#costDays").innerHTML = `<table class="cost-table days">
-      <thead><tr><th>Dia</th><th>Por pessoa</th><th>Grupo</th></tr></thead><tbody>${c.porDia.map((x) => {
+    $("#costDays").innerHTML = `<table class="cost-table por-dia${sozinho ? " uma-coluna" : ""}">
+      <thead><tr><th>Dia</th>${sozinho ? "<th>Valor</th>" : "<th>Por pessoa</th><th>Grupo</th>"}</tr></thead><tbody>${c.porDia.map((x) => {
         const g = x.ing + x.tr + x.noite + x.comida;
-        return `<tr><td>Dia ${x.i + 1} · ${fmtDay(x.d)}<small>${x.n} ${x.n === 1 ? "lugar" : "lugares"}${x.noite ? " · noite " + moneyExact(x.noite) : ""}</small></td><td>${moneyExact(pp(g))}</td><td>${moneyExact(g)}</td></tr>`;
+        return `<tr><td>Dia ${x.i + 1} · ${fmtDay(x.d)}<small>${x.n} ${x.n === 1 ? "lugar" : "lugares"}${x.noite ? " · noite " + moneyExact(x.noite) : ""}</small></td>${sozinho ? `<td>${moneyExact(g)}</td>` : `<td>${moneyExact(pp(g))}</td><td>${moneyExact(g)}</td>`}</tr>`;
       }).join("")}</tbody></table>`;
   }
 
