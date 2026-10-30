@@ -1,113 +1,18 @@
-/* Traveler's Friend — lógica do roteiro (sem dependências além do Leaflet para o mapa). */
+/* Traveler's Friend — planejador (Explorar · Roteiro · Custos). Módulo ES; usa Leaflet (global L). */
+import {
+  CITY_OPTIONS, CATEGORIES, AGE_OPTIONS, MONTHS, WEEKDAYS, WEEKDAYS_FULL,
+  STORAGE_KEY, MAX_DAYS, WALK_LIMIT_KM, MODES, MEALS
+} from "./core/constantes.js";
+import {
+  $, esc, money, moneyExact, toMin, toHHMM, fmtDur, parseDur, parseISO, toISO, fmtDay, fmtShort,
+  dateRange, ageMin, bracketFor, ciIcon, ageBadge, placeLabel, distanceKm, walkMinutes
+} from "./core/util.js";
+import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
+
 (function () {
   "use strict";
 
-  // ---------- Configuração ----------
-  const CITY_OPTIONS = [
-    { id: "sp", nome: "São Paulo, SP" },
-    { id: "rj", nome: "Rio de Janeiro, RJ", soon: true },
-    { id: "bh", nome: "Belo Horizonte, MG", soon: true },
-    { id: "ssa", nome: "Salvador, BA", soon: true },
-    { id: "cwb", nome: "Curitiba, PR", soon: true }
-  ];
-
-  const CATEGORIES = {
-    ponto: "Pontos turísticos",
-    museu: "Museus",
-    parque: "Parques",
-    show: "Shows",
-    teatro: "Teatro & concertos",
-    festival: "Festivais",
-    gastronomia: "Gastronomia",
-    noite: "Bares & noite",
-    exposicao: "Exposições temporárias",
-    trilha: "Trilhas & natureza",
-    esporte: "Esportes & estádios"
-  };
-
-  // Classificação indicativa (padrão ClassInd).
-  //  desc  → como descrevemos a classificação de um lugar
-  //  faixa → como a pessoa escolhe a idade da pessoa mais nova do grupo (campo "Idade mínima")
-  const AGE_OPTIONS = [
-    { v: 0, label: "Livre", desc: "Livre para todos os públicos", faixa: "Menos de 10 anos", faixaDesc: "Mostra só o que é livre para todos" },
-    { v: 10, label: "10 anos", desc: "Não recomendado para menores de 10", faixa: "10 ou 11 anos", faixaDesc: "Mostra até a classificação 10" },
-    { v: 12, label: "12 anos", desc: "Não recomendado para menores de 12", faixa: "12 ou 13 anos", faixaDesc: "Mostra até a classificação 12" },
-    { v: 14, label: "14 anos", desc: "Não recomendado para menores de 14", faixa: "14 ou 15 anos", faixaDesc: "Mostra até a classificação 14" },
-    { v: 16, label: "16 anos", desc: "Não recomendado para menores de 16", faixa: "16 ou 17 anos", faixaDesc: "Mostra até a classificação 16" },
-    { v: 18, label: "18 anos", desc: "Não recomendado para menores de 18", faixa: "18 anos ou mais", faixaDesc: "Mostra tudo, inclusive baladas e bares 18+" }
-  ];
-
-  const MONTHS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-  const WEEKDAYS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
-  const WEEKDAYS_FULL = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
-  const STORAGE_KEY = "travelerfriend:v1";
-  const MAX_DAYS = 21;
-  const WALK_LIMIT_KM = 1.2;
-
-  // ---------- Utilidades ----------
-  const $ = (sel) => document.querySelector(sel);
-  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const money = (v) => v === 0 ? "Grátis" : "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  const moneyExact = (v) => "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-  const toMin = (hhmm) => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; };
-  const toHHMM = (min) => {
-    const m = Math.round(min);
-    const h = Math.floor(m / 60) % 24;
-    return String(h).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
-  };
-  const fmtDur = (min) => {
-    const h = Math.floor(min / 60), m = min % 60;
-    if (!h) return m + "min";
-    return h + "h" + (m ? String(m).padStart(2, "0") : "");
-  };
-  function parseDur(text) {
-    const t = String(text).trim().toLowerCase().replace(/\s/g, "");
-    let m;
-    if ((m = t.match(/^(\d+)h(\d{0,2})(min)?$/))) return +m[1] * 60 + (+m[2] || 0);
-    if ((m = t.match(/^(\d+):(\d{1,2})$/))) return +m[1] * 60 + +m[2];
-    if ((m = t.match(/^(\d+)(min|m)?$/))) return +m[1];
-    return null;
-  }
-
-  const parseISO = (iso) => { const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d); };
-  const toISO = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-  const fmtDay = (iso) => { const d = parseISO(iso); return WEEKDAYS[d.getDay()] + ", " + String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0"); };
-  const fmtShort = (iso) => { const d = parseISO(iso); return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0"); };
-
-  function dateRange(start, end) {
-    const out = [];
-    if (!start || !end) return out;
-    const d = parseISO(start), last = parseISO(end);
-    while (d <= last && out.length < MAX_DAYS) { out.push(toISO(d)); d.setDate(d.getDate() + 1); }
-    return out;
-  }
-
-  const ageMin = (idade) => idade === "Livre" ? 0 : parseInt(idade, 10) || 0;
-  function bracketFor(age) { return AGE_OPTIONS.reduce((acc, o) => (o.v <= age ? o.v : acc), 0); }
-  const ciIcon = (v, cls = "") => `<span class="ci ci-${v} ${cls}" title="${esc(AGE_OPTIONS.find((o) => o.v === v)?.desc || "")}">${v === 0 ? "L" : v}</span>`;
-  const ageBadge = (idade) => ciIcon(ageMin(idade));
-  // Lugares da região metropolitana mostram o município; os da capital, o bairro.
-  const placeLabel = (p) => p.municipio ? p.municipio + " · Grande SP" : p.bairro;
-
-  function distanceKm(a, b) {
-    const R = 6371, rad = Math.PI / 180;
-    const dLat = (b.lat - a.lat) * rad, dLng = (b.lng - a.lng) * rad;
-    const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
-    return 2 * R * Math.asin(Math.sqrt(h));
-  }
-  const walkMinutes = (km) => Math.max(1, Math.round(km * 1.25 / 4.8 * 60));
-
   // ---------- Deslocamento ----------
-  const MODES = {
-    pe: { icon: "🚶", label: "A pé" },
-    bike: { icon: "🚲", label: "Bicicleta" },
-    metro: { icon: "🚇", label: "Metrô" },
-    trem: { icon: "🚆", label: "Trem (CPTM)" },
-    onibus: { icon: "🚌", label: "Ônibus" },
-    carro: { icon: "🚗", label: "App / carro" }
-  };
-
   // Opções possíveis entre dois lugares, com tempo (min) e custo total do grupo.
   // Estimativas por distância em linha reta; metrô/trem só quando os dois lados têm estação.
   function transportOptions(a, b) {
@@ -281,12 +186,6 @@
   }
 
   // ---------- Refeições ----------
-  // "janela" é o intervalo em que ainda faz sentido encaixar a refeição; "min" é o tempo abaixo do qual avisamos.
-  const MEALS = {
-    cafe: { label: "Café da manhã", icon: "☕", min: 15, janela: [6 * 60, 10 * 60 + 30] },
-    almoco: { label: "Almoço", icon: "🍽", min: 30, janela: [11 * 60, 15 * 60] },
-    jantar: { label: "Jantar", icon: "🍝", min: 30, janela: [18 * 60, 22 * 60 + 30] }
-  };
   function defaultMeals() {
     return {
       cafe: { on: true, at: "08:00", dur: 30 },
@@ -1195,7 +1094,7 @@
       if (e.target.value) d.stayId = e.target.value; else delete d.stayId;
       save(); renderStay(); renderAll();
     });
-    $(".brand").addEventListener("click", () => { document.body.classList.add("landing"); window.scrollTo(0, 0); });
+    $(".brand").addEventListener("click", () => ir("/"));
     $("#dateBtn").addEventListener("click", () => ($("#datePicker").hidden ? openDatePicker() : closeDatePicker()));
     $("#youngestAge").addEventListener("input", (e) => {
       const n = parseInt(e.target.value, 10);
@@ -1208,11 +1107,7 @@
     $("#setup").addEventListener("submit", (e) => {
       e.preventDefault();
       closeDatePicker();
-      document.body.classList.remove("landing");
-      window.scrollTo(0, 0);
-      renderAll();
-      loadAgenda();
-      if (map) setTimeout(() => { map.invalidateSize(); renderMap(renderRecs()); }, 0);
+      ir("/planejar");
     });
     $("#city").addEventListener("change", (e) => {
       if (window.TF_CITIES[e.target.value]) { state.city = e.target.value; save(); renderCitySelect(); renderAll(); }
@@ -1420,4 +1315,20 @@
   bindDelegates();
   renderView();
   renderAll();
+
+  // ---------- Rotas ----------
+  // #/ → tela inicial (busca) · #/planejar → painel. Novas áreas (perfil, personas) entram aqui.
+  rota("/", () => {
+    document.body.classList.add("landing");
+    window.scrollTo(0, 0);
+  });
+  rota("/planejar", () => {
+    const vindoDoInicio = document.body.classList.contains("landing");
+    document.body.classList.remove("landing");
+    if (vindoDoInicio) window.scrollTo(0, 0);
+    renderAll();
+    loadAgenda();
+    if (map) setTimeout(() => { map.invalidateSize(); renderMap(renderRecs()); }, 0);
+  });
+  iniciarRotas();
 })();
