@@ -261,6 +261,7 @@ language sql stable security definer set search_path = '' as $$
   select p_apelido ~ '^[a-z0-9_]{3,24}$'
      and not exists (select 1 from public.identidades where lower(apelido) = lower(p_apelido) and owner_id is distinct from auth.uid());
 $$;
+revoke all on function public.apelido_disponivel(text) from public, anon; -- o Supabase libera funções novas para anon por padrão
 grant execute on function public.apelido_disponivel(text) to authenticated;
 
 -- =========================================================
