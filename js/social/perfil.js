@@ -6,7 +6,7 @@ import { rota, ir } from "../core/router.js";
 import { esc } from "../core/util.js";
 import {
   contaPronta, perfilPublico, minhaPrincipal, apelidoDisponivel, salvarIdentidade,
-  meusVisitados, adicionarVisitado, removerVisitado, urlImagem, enviarImagem, removerImagem,
+  meusVisitados, adicionarVisitado, removerVisitado, urlImagem, enviarImagem, removerImagem, apagarIdentidade,
   APELIDO_RE, NIVEIS, SECOES, PRIVACIDADE_PADRAO
 } from "../dados/perfis.js";
 
@@ -21,6 +21,43 @@ export const CORES = [
 ];
 export const ESTAMPAS = { lisa: "Lisa", bolinhas: "Bolinhas", xadrez: "Xadrez", listras: "Listras", ondas: "Ondas" };
 export const EMOJIS = ["🧳", "✈️", "🗺️", "🧭", "📷", "🎒", "🏖️", "🏔️", "🌎", "🚲", "🐶", "🐱", "🦜", "🐢", "🦊", "🌵"];
+
+// Tipos de identidade. "ideias" preenchem nome e @ com um clique (pura sugestão).
+export const TIPOS = {
+  principal: { nome: "Perfil principal", icone: "👤", emojis: EMOJIS },
+  historica: {
+    nome: "Figura histórica", icone: "🎩", desc: "Exploradores, inventores e viajantes que já fizeram história.",
+    emojis: ["🎩", "🛩️", "🧭", "📜", "🖋️", "🗺️", "⚓", "🔭", "🏛️", "⛵"],
+    ideias: [{ nome: "Santos Dumont Viajante", figura: "Santos Dumont", emoji: "🛩️" }, { nome: "Marco Polo em SP", figura: "Marco Polo", emoji: "🧭" },
+      { nome: "Leonardo Inventor", figura: "Leonardo da Vinci", emoji: "🖋️" }, { nome: "Amelia nos Céus", figura: "Amelia Earhart", emoji: "✈️" }],
+    bio: "Ex.: Em 1906 voei com o 14-Bis em Paris. Hoje procuro os melhores mirantes de São Paulo."
+  },
+  animal: {
+    nome: "Animal", icone: "🐾", desc: "Seu pet viajante ou um bicho imaginário.",
+    emojis: ["🐶", "🐱", "🦜", "🐢", "🦊", "🐧", "🦙", "🐒", "🐸", "🦉"],
+    ideias: [{ nome: "Caramelo Viajante", emoji: "🐶" }, { nome: "Gata Mochileira", emoji: "🐱" }, { nome: "Papagaio Guia", emoji: "🦜" }, { nome: "Tartaruga Sem Pressa", emoji: "🐢" }],
+    bio: "Ex.: Vira-lata caramelo, especialista em parques e em pedir petisco no Mercadão."
+  },
+  objeto: {
+    nome: "Objeto", icone: "🧳", desc: "Uma mala, uma câmera, um mapa… com história para contar.",
+    emojis: ["🧳", "📷", "✈️", "🗺️", "🧭", "🎒", "⛺", "🚂", "🎟️", "📮"],
+    ideias: [{ nome: "Mala de Rodinhas", emoji: "🧳" }, { nome: "Câmera Analógica", emoji: "📷" }, { nome: "Mapa Amassado", emoji: "🗺️" }, { nome: "Bússola Desorientada", emoji: "🧭" }],
+    bio: "Ex.: Já rodei 12 países no porão de aviões e ainda carrego a etiqueta de Lisboa."
+  },
+  original: {
+    nome: "Personagem original", icone: "✨", desc: "Alguém que só existe na sua imaginação.",
+    emojis: ["👽", "🤖", "🧚", "🦸", "🧙", "🐉", "🧜", "👻", "🦄", "🌈"],
+    ideias: [{ nome: "Robô Turista", emoji: "🤖" }, { nome: "Fada das Calçadas", emoji: "🧚" }, { nome: "Viajante do Tempo", emoji: "🕰️" }, { nome: "Agente do Metrô", emoji: "🕶️" }],
+    bio: "Ex.: Viajante do tempo preso em 2026, colecionando pores do sol pela cidade."
+  }
+};
+// Moldura do avatar ("retrô" lembra as fotos de exibição do MSN, com cantos arredondados).
+export const MOLDURAS = { circulo: "Círculo", quadrado: "Quadrado", retro: "Retrô" };
+// Emoticons (Unicode, sem arte de terceiros) para a mensagem pessoal e a assinatura.
+export const EMOTICONS = ["😀", "😎", "🥳", "😴", "🤩", "😍", "🤔", "😅", "🙃", "😇", "🤠", "🥶", "☕", "🍕", "🎉", "✈️", "🌧️", "☀️", "🌙", "❤️", "⭐", "🎵", "📸", "🗺️"];
+// "Santos Dumont Viajante" → "santos_dumont_viajante"
+export const paraApelido = (txt) => txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+  .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 24) || "";
 const NIVEL_NOME = { publico: "Público", amigos: "Só amigos", privado: "Só eu" };
 const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 const dataCurta = (iso) => iso ? MESES[+iso.slice(5, 7) - 1] + " " + iso.slice(0, 4) : "";
@@ -37,15 +74,28 @@ function mostrar(html, manterRolagem = false) {
   view().innerHTML = html;
   window.scrollTo(0, manterRolagem ? y : 0);
 }
-const carregando = () => mostrar(`<div class="pf-vazio"><p class="muted">Carregando…</p></div>`);
-const aviso = (titulo, texto, acoes = "") => mostrar(`<div class="pf-vazio"><h2>${titulo}</h2><p class="muted">${texto}</p><div class="pf-vazio-acoes">${acoes}</div></div>`);
+export { mostrar };
+export const carregando = () => mostrar(`<div class="pf-vazio"><p class="muted">Carregando…</p></div>`);
+export const aviso = (titulo, texto, acoes = "") => mostrar(`<div class="pf-vazio"><h2>${titulo}</h2><p class="muted">${texto}</p><div class="pf-vazio-acoes">${acoes}</div></div>`);
 
 export function avatarHtml(p, cls = "") {
   const url = p.avatar && urlImagem(p.avatar);
   const st = p.status ? ` st-${p.status}` : "";
   const dentro = url ? `<img src="${esc(url)}" alt="">` : `<span>${esc(p.avatar_emoji || (p.nome || "?").trim().charAt(0).toUpperCase())}</span>`;
-  return `<span class="pf-avatar ${cls}${st}" aria-hidden="true">${dentro}</span>`;
+  const mold = p.tema && MOLDURAS[p.tema.moldura] ? " mold-" + p.tema.moldura : "";
+  return `<span class="pf-avatar ${cls}${st}${mold}" aria-hidden="true">${dentro}</span>`;
 }
+// Selo das identidades temáticas (deixa claro que não é conta oficial nem pessoa real).
+function seloHtml(p) {
+  if (!p.tipo || p.tipo === "principal") return "";
+  const t = TIPOS[p.tipo] || TIPOS.original;
+  const figura = (p.tema && p.tema.figura) || p.nome;
+  const txt = p.tipo === "historica"
+    ? `Perfil temático criado por um usuário do Traveler's Friend — não é a conta oficial de ${esc(figura)} nem tem ligação com seus herdeiros.`
+    : `Personagem fictício (${esc(t.nome.toLowerCase())}) criado por um usuário do Traveler's Friend.`;
+  return `<p class="pf-selo"><span>${t.icone}</span>${txt}</p>`;
+}
+const editarHref = (p) => !p.tipo || p.tipo === "principal" ? "#/perfil/editar" : "#/identidades/editar/" + p.id;
 function capaHtml(p) {
   const url = p.capa && urlImagem(p.capa);
   const estampa = (p.tema && p.tema.estampa) || "lisa";
@@ -54,7 +104,7 @@ function capaHtml(p) {
 const corDe = (p) => (p.tema && CORES.some((c) => c.v === p.tema.cor) ? p.tema.cor : "#ffe14d");
 
 // ---------- Página do perfil ----------
-function renderPerfil(p) {
+export function renderPerfil(p) {
   const dono = p.relacao === "dono";
   const link = location.origin + location.pathname + "#/@" + p.apelido;
   const secao = (titulo, corpo, cls = "") => `<section class="pf-sec ${cls}"><h3>${titulo}</h3>${corpo}</section>`;
@@ -67,17 +117,18 @@ function renderPerfil(p) {
       <header class="pf-head">
         ${avatarHtml(p, "lg")}
         <div class="pf-id">
-          <h1>${esc(p.nome)}</h1>
+          <h1>${esc(p.nome)}${p.tema && p.tema.emoticon ? ` <span class="pf-emo" aria-hidden="true">${esc(p.tema.emoticon)}</span>` : ""}</h1>
           <span class="pf-apelido">@${esc(p.apelido)}</span>
           ${p.status !== undefined ? `<span class="pf-status">${p.status ? `<i class="dot st-${p.status}"></i>${STATUS[p.status].nome}` : `<i class="dot st-off"></i>Offline`}</span>` : ""}
         </div>
         <div class="pf-acoes">
-          ${dono ? `<a class="btn small" href="#/perfil/editar">Editar perfil</a>` : ""}
+          ${dono ? `<a class="btn small" href="${editarHref(p)}">Editar perfil</a><a class="btn ghost small" href="#/identidades">Minhas identidades</a>` : ""}
           <button class="btn ghost small" data-pf="copiar" data-link="${esc(link)}">Copiar link</button>
         </div>
         ${p.mensagem ? `<p class="pf-msg">${esc(p.mensagem)}</p>` : ""}
       </header>
-      ${dono ? `<p class="pf-dica">Você está vendo o seu perfil completo. Visitantes só veem as seções que você deixou públicas — <a href="#/perfil/editar">ajustar privacidade</a>.</p>` : ""}
+      ${seloHtml(p)}
+      ${dono ? `<p class="pf-dica">Você está vendo o seu perfil completo. Visitantes só veem as seções que você deixou públicas — <a href="${editarHref(p)}">ajustar privacidade</a>.</p>` : ""}
       <div class="pf-grid">
         <div class="pf-col">
           ${"bio" in p ? secao("Sobre", p.bio ? `<p class="pf-bio">${esc(p.bio)}</p>` : `<p class="muted">${dono ? "Conte um pouco sobre você em Editar perfil." : "Sem descrição."}</p>`) : ""}
@@ -104,17 +155,22 @@ function renderPerfil(p) {
 
 // ---------- Edição / criação ----------
 let ed = null; // rascunho do formulário
-async function abrirEditor(principal, user) {
-  const base = principal || {
-    nome: (window.TFConta.nome() || "").slice(0, 60), apelido: "", bio: "", mensagem: "", status: "disponivel",
-    tema: { cor: "#ffe14d", estampa: "lisa" }, destinos_desejados: [], privacidade: { ...PRIVACIDADE_PADRAO }, maior_de_idade: false
+// ident: identidade existente (ou null para criar). opts.tipo: tipo da nova; opts.maior: herda o 18+ do perfil principal.
+export async function abrirEditor(ident, opts = {}) {
+  const tipo = ident ? ident.tipo : (opts.tipo || "principal");
+  const base = ident || {
+    tipo, nome: tipo === "principal" ? (window.TFConta.nome() || "").slice(0, 60) : "", apelido: "", bio: "", mensagem: "",
+    status: "disponivel", tema: { cor: tipo === "principal" ? "#ffe14d" : CORES[Math.floor(Math.random() * 5)].v, estampa: tipo === "principal" ? "lisa" : "bolinhas" },
+    destinos_desejados: [], privacidade: { ...PRIVACIDADE_PADRAO }, maior_de_idade: !!opts.maior,
+    avatar_emoji: tipo === "principal" ? null : (TIPOS[tipo].emojis || [])[0]
   };
   ed = {
     ...JSON.parse(JSON.stringify(base)),
+    destinos_desejados: base.destinos_desejados || [],
     privacidade: { ...PRIVACIDADE_PADRAO, ...(base.privacidade || {}) },
-    tema: { cor: "#ffe14d", estampa: "lisa", ...(base.tema || {}) },
-    criando: !principal, avatarBlob: null, capaBlob: null, tirarAvatar: false, tirarCapa: false,
-    visitados: principal ? await meusVisitados(principal.id) : []
+    tema: { cor: "#ffe14d", estampa: "lisa", moldura: tipo === "principal" ? "circulo" : "retro", ...(base.tema || {}) },
+    criando: !ident, avatarBlob: null, capaBlob: null, tirarAvatar: false, tirarCapa: false, confirmandoApagar: false,
+    visitados: ident ? await meusVisitados(ident.id) : []
   };
   renderEditor();
 }
@@ -130,27 +186,47 @@ function renderEditor() {
   const av = previa("avatar"), cp = previa("capa");
   const opcoesCat = catalogo().map((c) => `<option value="${esc(c.nome)}">`).join("");
   const redesenho = !!document.getElementById("pfForm");
+  const persona = ed.tipo && ed.tipo !== "principal";
+  const T = TIPOS[ed.tipo] || TIPOS.principal;
   mostrar(`
     <form class="pf-form" id="pfForm" novalidate>
       <div class="pf-form-head">
-        <h1>${ed.criando ? "Criar meu perfil" : "Editar perfil"}</h1>
+        <h1>${persona ? `${TIPOS[ed.tipo].icone} ${ed.criando ? "Nova identidade" : "Editar identidade"}` : ed.criando ? "Criar meu perfil" : "Editar perfil"}</h1>
         <div class="pf-acoes">
+          ${persona ? `<a class="btn ghost small" href="#/identidades">Minhas identidades</a>` : ""}
           ${ed.criando ? "" : `<a class="btn ghost small" href="#/@${esc(ed.apelido)}">Ver perfil</a>`}
           <button class="btn" type="submit">Salvar</button>
         </div>
       </div>
       <p class="pf-erro" id="pfErro" role="alert" hidden></p>
+      ${persona ? `
+      <section class="pf-bloco pf-persona">
+        <h3>${T.icone} ${T.nome}</h3>
+        <p class="muted small-text">${T.desc}</p>
+        ${ed.criando && T.ideias ? `<div class="pf-linha"><span class="small-text">Precisa de ideia?</span>
+          ${T.ideias.map((i, n) => `<button type="button" class="chip" data-pf="ideia" data-i="${n}">${esc(i.emoji || "")} ${esc(i.nome)}</button>`).join("")}</div>` : ""}
+        ${ed.tipo === "historica" ? `
+        <div class="pf-campos">
+          <label class="field"><span>Quem esta identidade representa</span><input name="figura" maxlength="60" required value="${esc(ed.tema.figura || "")}" placeholder="Ex.: Santos Dumont"></label>
+        </div>
+        <label class="check pf-declara"><input type="checkbox" name="declaracao" ${ed.tema.declaracao ? "checked" : ""}>
+          Confirmo que é uma figura histórica já falecida e que este perfil é uma homenagem/brincadeira, não uma conta oficial.</label>
+        <p class="muted small-text">Pessoas vivas, marcas e contas que se passam por alguém não são permitidas.</p>` : ""}
+      </section>` : ""}
 
       <section class="pf-bloco pf-visual" style="--pf-cor:${esc(ed.tema.cor)}">
         <div class="pf-capa est-${esc(ed.tema.estampa)}">${cp ? `<img src="${esc(cp)}" alt="">` : ""}</div>
-        <div class="pf-visual-av">${av ? `<span class="pf-avatar lg"><img src="${esc(av)}" alt=""></span>` : `<span class="pf-avatar lg"><span>${esc(ed.avatar_emoji || (ed.nome || "?").charAt(0).toUpperCase())}</span></span>`}</div>
+        <div class="pf-visual-av">${av ? `<span class="pf-avatar lg mold-${esc(ed.tema.moldura)}"><img src="${esc(av)}" alt=""></span>` : `<span class="pf-avatar lg mold-${esc(ed.tema.moldura)}"><span>${esc(ed.avatar_emoji || (ed.nome || "?").charAt(0).toUpperCase())}</span></span>`}</div>
         <div class="pf-visual-ctrl">
           <div class="pf-linha">
             <label class="btn ghost small">Foto de perfil<input type="file" accept="image/*" data-pf-img="avatar" hidden></label>
             ${av ? `<button type="button" class="link" data-pf="tirar-avatar">remover foto</button>` : ""}
             <span class="muted small-text">ou um emoji:</span>
           </div>
-          <div class="pf-emojis" role="radiogroup" aria-label="Avatar em emoji">${EMOJIS.map((e) => `<button type="button" class="${!av && ed.avatar_emoji === e ? "on" : ""}" data-pf="emoji" data-v="${e}" aria-label="Avatar ${e}">${e}</button>`).join("")}</div>
+          <div class="pf-emojis" role="radiogroup" aria-label="Avatar em emoji">${T.emojis.map((e) => `<button type="button" class="${!av && ed.avatar_emoji === e ? "on" : ""}" data-pf="emoji" data-v="${e}" aria-label="Avatar ${e}">${e}</button>`).join("")}</div>
+          <div class="pf-linha"><span class="small-text">Moldura</span>
+            ${Object.entries(MOLDURAS).map(([k, n]) => `<button type="button" class="chip ${ed.tema.moldura === k ? "on" : ""}" data-pf="moldura" data-v="${k}">${n}</button>`).join("")}
+          </div>
           <div class="pf-linha">
             <label class="btn ghost small">Foto de capa<input type="file" accept="image/*" data-pf-img="capa" hidden></label>
             ${cp ? `<button type="button" class="link" data-pf="tirar-capa">remover capa</button>` : ""}
@@ -174,7 +250,13 @@ function renderEditor() {
             <small class="muted" id="pfApelidoMsg">3 a 24 caracteres: letras minúsculas, números e _</small></label>
           <label class="field"><span>Status</span><select name="status">${Object.entries(STATUS).map(([k, s]) => `<option value="${k}" ${ed.status === k ? "selected" : ""}>${s.nome}</option>`).join("")}</select></label>
           <label class="field pf-wide"><span>Mensagem pessoal <small class="muted" id="pfMsgConta"></small></span><input name="mensagem" maxlength="140" value="${esc(ed.mensagem || "")}" placeholder="Ex.: Contando os dias para Paranapiacaba ☁️"></label>
-          <label class="field pf-wide"><span>Sobre mim</span><textarea name="bio" maxlength="500" rows="4" placeholder="Que tipo de viagem você curte?">${esc(ed.bio || "")}</textarea></label>
+          <div class="pf-wide pf-emoticons" aria-label="Emoticons">
+            <span class="small-text">Emoticons <span class="muted">(toque para pôr na mensagem)</span></span>
+            <div>${EMOTICONS.map((e) => `<button type="button" data-pf="emoticon" data-v="${e}" aria-label="Inserir ${e}">${e}</button>`).join("")}</div>
+            <span class="small-text">Emoticon ao lado do nome</span>
+            <div>${["", ...EMOTICONS.slice(0, 12)].map((e) => `<button type="button" class="${(ed.tema.emoticon || "") === e ? "on" : ""}" data-pf="assinatura" data-v="${e}" aria-label="${e ? "Usar " + e : "Nenhum"}">${e || "∅"}</button>`).join("")}</div>
+          </div>
+          <label class="field pf-wide"><span>${persona ? "História" : "Sobre mim"}</span><textarea name="bio" maxlength="500" rows="4" placeholder="${esc(T.bio || "Que tipo de viagem você curte?")}">${esc(ed.bio || "")}</textarea></label>
         </div>
       </section>
 
@@ -209,7 +291,17 @@ function renderEditor() {
           <select name="priv_${k}">${NIVEIS.map((n) => `<option value="${n}" ${privacidadeEfetiva()[k] === n ? "selected" : ""} ${n === "publico" && !ed.maior_de_idade ? "disabled" : ""}>${NIVEL_NOME[n]}</option>`).join("")}</select></label>`).join("")}</div>
       </section>
 
-      <div class="pf-form-foot"><button class="btn" type="submit">Salvar perfil</button></div>
+      ${persona && !ed.criando ? `
+      <section class="pf-bloco pf-perigo">
+        <h3>Apagar identidade</h3>
+        ${ed.confirmandoApagar ? `
+          <p class="small-text">Isso apaga <b>@${esc(ed.apelido)}</b> com foto, capa e lugares visitados. Não dá para desfazer. Digite o endereço para confirmar:</p>
+          <div class="pf-linha"><input id="pfApagarConf" placeholder="${esc(ed.apelido)}" autocomplete="off">
+            <button type="button" class="btn danger small" data-pf="apagar-confirmar">Apagar para sempre</button>
+            <button type="button" class="link" data-pf="apagar-cancelar">cancelar</button></div>`
+        : `<button type="button" class="btn ghost small" data-pf="apagar">Apagar esta identidade…</button>`}
+      </section>` : ""}
+      <div class="pf-form-foot"><button class="btn" type="submit">${persona ? "Salvar identidade" : "Salvar perfil"}</button></div>
     </form>`, redesenho);
   atualizarContador();
 }
@@ -221,6 +313,8 @@ function lerCampos() {
   const v = (n) => f.elements[n] ? f.elements[n].value : undefined;
   ed.nome = v("nome").trim(); ed.apelido = v("apelido").trim().toLowerCase();
   ed.status = v("status"); ed.mensagem = v("mensagem").trim(); ed.bio = v("bio").trim();
+  if (f.elements.figura) ed.tema.figura = f.elements.figura.value.trim();
+  if (f.elements.declaracao) ed.tema.declaracao = f.elements.declaracao.checked;
   const eraMaior = ed.maior_de_idade;
   ed.maior_de_idade = f.elements.maior_de_idade.checked;
   Object.keys(SECOES).forEach((k) => {
@@ -242,10 +336,11 @@ function erro(msg) {
   el.textContent = msg; el.hidden = !msg;
   if (msg) el.scrollIntoView({ behavior: "smooth", block: "center" });
 }
-function traduzir(err) {
+export function traduzir(err) {
   const m = String((err && err.message) || err || "");
   if (/duplicate key|identidades_apelido_idx/i.test(m)) return "Esse endereço de perfil já está em uso. Escolha outro.";
   if (/identidades_um_principal/i.test(m)) return "Você já tem um perfil principal.";
+  if (/limite_identidades/i.test(m)) return "Limite de 10 identidades por conta atingido.";
   if (/row-level security|permission denied/i.test(m)) return "Sem permissão para isso. Entre de novo na sua conta.";
   if (/relation .* does not exist|function .* does not exist|Could not find the (function|table)/i.test(m))
     return "O banco ainda não tem as tabelas de perfil. É preciso rodar supabase/002_perfis.sql no Supabase.";
@@ -271,12 +366,15 @@ async function salvar() {
   lerCampos();
   if (!ed.nome) return erro("Escreva um nome de exibição.");
   if (!APELIDO_RE.test(ed.apelido)) return erro("Endereço do perfil: use 3 a 24 caracteres (a–z, 0–9 e _).");
+  if (ed.tipo === "historica" && !ed.tema.figura) return erro("Diga quem esta identidade representa.");
+  if (ed.tipo === "historica" && !ed.tema.declaracao) return erro("Confirme que é uma figura histórica já falecida e que o perfil não é oficial.");
   const botoes = [...document.querySelectorAll("#pfForm button[type=submit]")];
+  const rotulos = botoes.map((b) => b.textContent);
   botoes.forEach((b) => { b.disabled = true; b.textContent = "Salvando…"; });
   try {
     if (!(await apelidoDisponivel(ed.apelido))) return erro("Esse endereço de perfil já está em uso. Escolha outro.");
     const dados = {
-      id: ed.id, tipo: "principal", nome: ed.nome, apelido: ed.apelido, status: ed.status, mensagem: ed.mensagem || null,
+      id: ed.id, tipo: ed.tipo || "principal", nome: ed.nome, apelido: ed.apelido, status: ed.status, mensagem: ed.mensagem || null,
       bio: ed.bio || null, tema: ed.tema, destinos_desejados: ed.destinos_desejados, privacidade: privacidadeEfetiva(),
       maior_de_idade: ed.maior_de_idade, avatar_emoji: ed.avatar_emoji || null
     };
@@ -287,13 +385,13 @@ async function salvar() {
     if (ed.capaBlob) extra.capa = await enviarImagem(salvo.id, "capa", ed.capaBlob, salvo.capa);
     else if (ed.tirarCapa && salvo.capa) { await removerImagem(salvo.capa); extra.capa = null; }
     if (Object.keys(extra).length) salvo = await salvarIdentidade({ id: salvo.id, ...extra });
-    toast(ed.criando ? "Perfil criado!" : "Perfil salvo");
+    toast(ed.criando ? (ed.tipo && ed.tipo !== "principal" ? "Identidade criada!" : "Perfil criado!") : "Salvo");
     ed = null;
     ir("/@" + salvo.apelido);
   } catch (err) {
     erro(traduzir(err));
   } finally {
-    botoes.forEach((b) => { if (b.isConnected) { b.disabled = false; b.textContent = b.closest(".pf-form-foot") ? "Salvar perfil" : "Salvar"; } });
+    botoes.forEach((b, n) => { if (b.isConnected) { b.disabled = false; b.textContent = rotulos[n]; } });
   }
 }
 
@@ -315,6 +413,15 @@ document.addEventListener("click", async (e) => {
   }
   if (!ed) return;
   e.preventDefault();
+  if (acao === "emoticon") {
+    // Insere onde o cursor estava na mensagem (ou no fim).
+    const inp = document.querySelector("#pfForm [name=mensagem]");
+    const ini = inp.selectionStart ?? inp.value.length, fim = inp.selectionEnd ?? ini;
+    const novo = (inp.value.slice(0, ini) + el.dataset.v + inp.value.slice(fim)).slice(0, 140);
+    inp.value = novo; atualizarContador();
+    inp.focus(); const pos = Math.min(140, ini + el.dataset.v.length); inp.setSelectionRange(pos, pos);
+    return;
+  }
   lerCampos();
   try {
     switch (acao) {
@@ -322,6 +429,25 @@ document.addEventListener("click", async (e) => {
       case "tirar-avatar": ed.avatarBlob = null; ed.tirarAvatar = true; break;
       case "tirar-capa": ed.capaBlob = null; ed.tirarCapa = true; break;
       case "cor": ed.tema.cor = el.dataset.v; break;
+      case "moldura": ed.tema.moldura = el.dataset.v; break;
+      case "assinatura": ed.tema.emoticon = el.dataset.v || null; break;
+      case "ideia": {
+        const i = TIPOS[ed.tipo].ideias[+el.dataset.i];
+        ed.nome = i.nome; ed.apelido = paraApelido(i.nome);
+        if (i.figura) ed.tema.figura = i.figura;
+        if (i.emoji) { ed.avatar_emoji = i.emoji; ed.avatarBlob = null; }
+        break;
+      }
+      case "apagar": ed.confirmandoApagar = true; break;
+      case "apagar-cancelar": ed.confirmandoApagar = false; break;
+      case "apagar-confirmar": {
+        if (document.getElementById("pfApagarConf").value.trim().toLowerCase() !== ed.apelido) return erro("Digite o endereço exato para confirmar.");
+        await apagarIdentidade(ed.id);
+        toast("Identidade apagada");
+        ed = null;
+        ir("/identidades");
+        return;
+      }
       case "estampa": ed.tema.estampa = el.dataset.v; break;
       case "add-destino": {
         const inp = document.getElementById("pfNovoDestino"), v = inp.value.trim();

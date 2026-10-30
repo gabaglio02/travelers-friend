@@ -9,6 +9,7 @@ import {
 } from "./core/util.js";
 import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
 import "./social/perfil.js"; // registra #/@apelido, #/perfil e #/perfil/editar
+import "./social/identidades.js"; // registra #/identidades, #/identidades/nova e #/identidades/editar/<id>
 
 (function () {
   "use strict";

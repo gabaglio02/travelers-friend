@@ -136,3 +136,12 @@ Os preços, horários e datas são aproximados. Os itens marcados como `ilustrat
 - Avatar e capa ficam no bucket público `perfil`; fotos de viagem continuam no bucket privado `fotos`.
 - Testar o SQL localmente: numa pasta fora do projeto, `npm i @electric-sql/pglite@0.2.17` e
   `node supabase/testes/perfis.test.mjs <pasta-do-projeto>` (o script fica nessa pasta junto do pacote).
+
+## Identidades
+
+- `#/identidades` lista o perfil principal e as personas da conta (até 10, mesmo limite do banco).
+- `#/identidades/nova`: escolhe o tipo (figura histórica, animal, objeto, personagem original) e abre o mesmo
+  formulário do perfil, com ideias prontas, moldura do avatar, emoticons e emoticon de assinatura.
+- Figuras históricas: só pessoas já falecidas, com declaração obrigatória; a página mostra o selo
+  "perfil temático — não é a conta oficial".
+- Apagar uma persona pede para digitar o @ e remove também o avatar/capa dela no bucket `perfil`.

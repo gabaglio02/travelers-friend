@@ -343,6 +343,7 @@
           <div class="modal-actions">
             <button class="btn ghost small" data-acc="nova-viagem">+ Nova viagem</button>
             <a class="btn small" href="#/perfil" data-acc="fechar">👤 Meu perfil</a>
+            <a class="btn ghost small" href="#/identidades" data-acc="fechar">🎭 Identidades</a>
             <button class="btn ghost small" data-acc="fotos">📷 Minhas fotos</button>
           </div>
           <div class="modal-actions acc-foot">

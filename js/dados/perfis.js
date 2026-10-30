@@ -88,3 +88,26 @@ export async function enviarImagem(identidadeId, tipo, blob, anterior) {
 export async function removerImagem(caminho) {
   if (caminho) await cli().storage.from("perfil").remove([caminho]);
 }
+
+// ---------- Identidades (perfil principal + personas) ----------
+export const LIMITE_IDENTIDADES = 10; // igual ao do banco (supabase/002_perfis.sql)
+export async function minhasIdentidades() {
+  const { data, error } = await cli().from("identidades").select("*").order("criado_em", { ascending: true });
+  falhou(error);
+  // Principal sempre primeiro.
+  return (data || []).sort((a, b) => (a.tipo === "principal" ? -1 : b.tipo === "principal" ? 1 : 0));
+}
+export async function identidadePorId(id) {
+  const { data, error } = await cli().from("identidades").select("*").eq("id", id).maybeSingle();
+  falhou(error);
+  return data || null;
+}
+// Apaga a persona e os arquivos dela (avatar/capa). Lugares visitados e amizades saem junto (on delete cascade).
+export async function apagarIdentidade(id) {
+  const st = cli().storage.from("perfil");
+  const pasta = `${uid()}/${id}`;
+  const { data } = await st.list(pasta, { limit: 100 });
+  if (data && data.length) await st.remove(data.map((a) => `${pasta}/${a.name}`));
+  const { error } = await cli().from("identidades").delete().eq("id", id).neq("tipo", "principal");
+  falhou(error);
+}

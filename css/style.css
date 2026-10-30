@@ -816,7 +816,7 @@ body.landing .social { display: none; }
 .pf-head { position: relative; display: grid; grid-template-columns: auto 1fr auto; gap: var(--s-2) var(--s-4); align-items: end; padding: 0 var(--s-5) var(--s-4); margin-top: -52px; }
 .pf-id { padding-bottom: 6px; min-width: 0; }
 .pf-id h1 { margin: 0; font-size: var(--t-2xl); line-height: var(--lh-tight); letter-spacing: -.02em; word-break: break-word; }
-.pf-apelido { font-family: var(--mono); font-size: var(--t-sm); color: var(--muted); }
+.pf-apelido { font-family: var(--mono); font-size: var(--t-sm); color: var(--muted); overflow-wrap: anywhere; }
 .pf-status { display: inline-flex; align-items: center; gap: 6px; margin-left: var(--s-3); font-size: var(--t-sm); }
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .dot.st-disponivel { background: var(--st-disponivel); }
@@ -911,4 +911,83 @@ body.landing .social { display: none; }
   .pf-visitados li > .link { grid-column: 2; justify-self: start; }
   .top-nav { gap: var(--s-3); }
   body.v-social .account-btn { order: 0; margin-left: 0; }
+}
+
+/* =====================================================================
+   v2 · Identidades e personas
+   ===================================================================== */
+/* Selo de perfil temático / personagem fictício */
+.pf-selo {
+  margin: 0 var(--s-5) var(--s-3); padding: var(--s-2) var(--s-3); display: flex; gap: var(--s-2); align-items: flex-start;
+  background: var(--paper-2); border-left: 3px solid var(--ink); border-radius: 0 var(--r-sm) var(--r-sm) 0; font-size: var(--t-sm);
+}
+.pf-selo span { font-size: 18px; line-height: 1.1; }
+.pf-emo { font-size: .8em; }
+
+/* Molduras do avatar */
+.pf-avatar.mold-quadrado { border-radius: 22%; }
+.pf-avatar.mold-retro { border-radius: 18%; }
+.pf-avatar.lg.mold-retro { box-shadow: 0 0 0 4px var(--paper), 0 0 0 8px var(--st-invisivel), 0 6px 0 8px rgba(0,0,0,.12); }
+.pf-avatar.lg.mold-retro.st-disponivel { box-shadow: 0 0 0 4px var(--paper), 0 0 0 8px var(--st-disponivel), 0 6px 0 8px rgba(0,0,0,.12); }
+.pf-avatar.lg.mold-retro.st-ocupado { box-shadow: 0 0 0 4px var(--paper), 0 0 0 8px var(--st-ocupado), 0 6px 0 8px rgba(0,0,0,.12); }
+.pf-avatar.lg.mold-retro.st-ausente { box-shadow: 0 0 0 4px var(--paper), 0 0 0 8px var(--st-ausente), 0 6px 0 8px rgba(0,0,0,.12); }
+.pf-avatar.lg.mold-retro::after {
+  /* brilho "vidro" nostálgico */
+  content: ""; position: absolute; inset: 0 0 55% 0; background: linear-gradient(to bottom, rgba(255,255,255,.45), rgba(255,255,255,0)); pointer-events: none;
+}
+.pf-avatar.md { width: 56px; height: 56px; font-size: 26px; }
+.pf-avatar.md.st-disponivel { box-shadow: 0 0 0 3px var(--paper), 0 0 0 5px var(--st-disponivel); }
+.pf-avatar.md.st-ocupado { box-shadow: 0 0 0 3px var(--paper), 0 0 0 5px var(--st-ocupado); }
+.pf-avatar.md.st-ausente { box-shadow: 0 0 0 3px var(--paper), 0 0 0 5px var(--st-ausente); }
+
+/* Formulário: bloco da persona, emoticons, zona de perigo */
+.pf-persona { border-left: 4px solid var(--accent); }
+.pf-declara { align-items: flex-start; font-size: var(--t-sm); margin-top: var(--s-2); }
+.pf-declara input { margin-top: 3px; }
+.pf-emoticons { display: flex; flex-direction: column; gap: 6px; }
+.pf-emoticons div { display: flex; flex-wrap: wrap; gap: 3px; }
+.pf-emoticons button {
+  width: 32px; height: 32px; border-radius: var(--r-sm); border: 1px solid var(--soft-line); background: var(--paper);
+  font-size: 17px; cursor: pointer; transition: transform var(--dur-1) var(--ease);
+}
+.pf-emoticons button:hover { transform: scale(1.15); background: var(--paper-2); }
+.pf-emoticons button.on { border-color: var(--ink); background: var(--accent); }
+.pf-perigo { border: 1.5px solid #f3c7c7; box-shadow: none; }
+.pf-perigo h3 { color: var(--danger); }
+.pf-perigo input { padding: 6px 9px; border: 1.5px solid var(--soft-line); border-radius: var(--r-md); font-family: var(--mono); }
+
+/* Minhas identidades */
+.idt h1 { margin: 0; font-size: var(--t-2xl); letter-spacing: -.02em; }
+.idt .pf-form-head p { margin: 4px 0 0; }
+.idt-lista { list-style: none; margin: var(--s-4) 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--s-3); }
+.idt-card {
+  position: relative; display: grid; grid-template-columns: auto 1fr; gap: var(--s-2) var(--s-3); align-items: center;
+  background: var(--paper); border-radius: var(--r-lg); padding: var(--s-5) var(--s-4) var(--s-3); box-shadow: var(--shadow-1); overflow: hidden;
+  transition: transform var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+}
+.idt-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
+.idt-faixa { position: absolute; left: 0; right: 0; top: 0; height: 12px; background-color: var(--pf-cor); }
+.idt-info { display: flex; flex-direction: column; min-width: 0; }
+.idt-info b { font-size: var(--t-md); }
+.idt-tipo { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
+.idt-tipo .dot { width: 8px; height: 8px; }
+.idt-msg { font-size: 12px; font-style: italic; color: #444; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.idt-acoes { grid-column: 1 / -1; display: flex; gap: var(--s-2); justify-content: flex-end; }
+.idt-acoes .btn { text-decoration: none; }
+.idt-convite { margin-top: var(--s-5); padding: var(--s-3) var(--s-4); background: #fffbe6; border-radius: var(--r-md); font-size: var(--t-sm); }
+.idt-convite a { color: var(--ink); font-weight: var(--w-bold); }
+.idt-tipos { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--s-3); margin: var(--s-4) 0; }
+.idt-tipo-card {
+  display: flex; flex-direction: column; gap: 6px; align-items: flex-start; text-align: left; cursor: pointer;
+  background: var(--paper); border: 1.5px solid var(--soft-line); border-radius: var(--r-lg); padding: var(--s-4); font: inherit; color: var(--ink);
+  transition: transform var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+}
+.idt-tipo-card:hover, .idt-tipo-card:focus-visible { border-color: var(--ink); transform: translateY(-3px); box-shadow: var(--shadow-hard); outline: none; }
+.idt-tipo-ico { font-size: 34px; }
+.idt-tipo-card b { font-size: var(--t-lg); }
+.idt-tipo-card .muted { font-size: var(--t-sm); }
+.idt-exemplos { font-size: 18px; letter-spacing: 2px; margin-top: auto; }
+@media (max-width: 720px) {
+  .pf-selo { margin: 0 var(--s-4) var(--s-3); }
+  .idt-lista { grid-template-columns: 1fr; }
 }
