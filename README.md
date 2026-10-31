@@ -35,7 +35,7 @@ Abrindo o `index.html` direto no navegador o site também funciona, mas só com 
 - `supabase/testes/`: testes do SQL num Postgres local (PGlite)
 - `js/dados/perfis.js`: leitura e gravação de perfis no Supabase
 - `js/social/perfil.js`: páginas `#/@apelido`, `#/perfil` e `#/perfil/editar`
-- `privacidade.html`: política de privacidade (rascunho)
+- `privacidade.html`: política de privacidade
 - `data/`: banco da agenda gerado pelo servidor (pode apagar para recomeçar)
 
 ## Agenda online
@@ -92,7 +92,7 @@ Notas:
 - O Supabase Free envia poucos e-mails por hora (confirmação de conta e recuperação de senha). Para lançar de verdade,
   configure um SMTP próprio em *Authentication → Emails*.
 - Limites de fotos: 50 fotos ou 20 MB por conta (em `supabase/schema.sql` e `js/conta.js`).
-- Antes de publicar, revise e complete a [Política de Privacidade](privacidade.html) (está como rascunho).
+- A [Política de Privacidade](privacidade.html) está preenchida; ao mudar o que o site guarda ou o e-mail de contato, atualize o texto e a data no topo.
 
 ### Testar contas no computador
 

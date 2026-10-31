@@ -158,6 +158,6 @@ mas o selo é padronizado e agora tem descrição completa para leitor de tela).
 
 **Checklist antes de juntar com a `main` (publicar):**
 1. Testar o endereço de teste da branch com a sua conta e uma segunda conta (pedido de amizade, recado, álbum público × só amigos).
-2. Preencher os campos destacados de `privacidade.html` (responsável, e-mail, data, prazos) e, de preferência, revisar com orientação jurídica; tirar o aviso de rascunho.
+2. ~~Preencher `privacidade.html`~~ (feito em 31/10/2026). Ainda vale uma revisão com orientação jurídica.
 3. Combinar quem vai olhar as denúncias e com que frequência (Supabase → Table Editor → `denuncias`).
 4. Lembrar do limite do plano gratuito: 50 fotos / 20 MB por conta e 1 GB no total.
