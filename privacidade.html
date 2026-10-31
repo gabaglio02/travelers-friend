@@ -14,6 +14,10 @@
     .doc h1 { font-size: 28px; margin: 0 0 4px; }
     .doc h2 { font-size: 18px; margin: 26px 0 6px; }
     .doc p, .doc li { font-size: 15px; line-height: 1.6; }
+    /* .panel some em telas estreitas (abas do planejador); aqui é página única e precisa aparecer sempre */
+    main.doc.panel { display: block; }
+    .resumo { background: var(--paper-2); border: 2px solid var(--ink); border-radius: var(--radius); padding: 4px 16px; margin: 16px 0; }
+    .resumo ul { margin: 0 0 12px; padding-left: 20px; }
   </style>
 </head>
 <body>
@@ -23,9 +27,20 @@
     <h1>Política de Privacidade</h1>
     <p class="muted">Última atualização: 31 de outubro de 2026</p>
 
+    <div class="resumo">
+      <p><b>Em resumo</b></p>
+      <ul>
+        <li>Sem conta, o seu roteiro fica só no seu navegador.</li>
+        <li>Não vendemos seus dados, não mostramos anúncios e não usamos suas fotos para outro fim.</li>
+        <li>Você escolhe quem vê cada parte do seu perfil e cada álbum: público, só amigos ou só eu.</li>
+        <li>Você pode corrigir ou apagar seus dados, pedir uma cópia deles e excluir a conta a qualquer momento.</li>
+      </ul>
+    </div>
+
     <h2>1. Quem somos</h2>
-    <p>O Traveler's Friend é um organizador de viagens mantido por Pedro Henrique de Lima Sousa (pessoa física), responsável pelo tratamento dos dados.
-      Para falar sobre seus dados, escreva para <a href="mailto:travelersfriend.contato@gmail.com">travelersfriend.contato@gmail.com</a>.</p>
+    <p>O Traveler's Friend é um organizador de viagens mantido por Pedro Henrique de Lima Sousa (pessoa física), que é o
+      <b>controlador</b> dos dados (quem decide como eles são usados) e também o <b>encarregado</b> (a pessoa de contato sobre dados pessoais).
+      Para qualquer assunto sobre seus dados, escreva para <a href="mailto:travelersfriend.contato@gmail.com">travelersfriend.contato@gmail.com</a>.</p>
 
     <h2>2. Quais dados usamos</h2>
     <ul>
@@ -38,7 +53,8 @@
       <li><b>Amigos e recados:</b> pedidos de amizade, amizades, bloqueios e os recados que você escreve ou recebe.</li>
       <li><b>Denúncias:</b> quando você denuncia algo, guardamos o que foi denunciado, o motivo, o texto opcional e a sua conta (para evitar abuso).
         A pessoa denunciada não sabe quem denunciou.</li>
-      <li><b>Hospedagem:</b> se você buscar um endereço, o texto digitado é enviado ao serviço de mapas OpenStreetMap (Nominatim) para encontrar o local.</li>
+      <li><b>Dados técnicos:</b> como em qualquer site, os serviços que entregam as páginas registram o endereço IP, o navegador e a data de acesso
+        (veja a seção 5). Não usamos ferramentas de análise de visitas nem rastreadores de publicidade.</li>
     </ul>
 
     <h2>3. Quem vê o quê</h2>
@@ -52,26 +68,68 @@
       <li>Um recado que você escreve aparece no mural de outra pessoa, para quem ela permitir. Você e o dono do mural podem apagá-lo.</li>
     </ul>
 
-    <h2>4. Para que usamos</h2>
-    <p>Somente para o site funcionar: entrar na sua conta, guardar e mostrar suas viagens, perfil, lembranças, amigos e recados conforme a sua
-      privacidade, analisar denúncias e enviar e-mails da conta (confirmação de cadastro e recuperação de senha).
-      Não vendemos seus dados e não usamos suas fotos para nenhum outro fim.</p>
+    <h2>4. Para que usamos e com que base legal</h2>
+    <p>A LGPD (Lei 13.709/2018) só permite usar dados pessoais com uma justificativa prevista em lei, chamada base legal. As nossas são:</p>
+    <ul>
+      <li><b>Criar e manter sua conta, salvar viagens e enviar e-mails da conta</b> (confirmação de cadastro e recuperação de senha):
+        necessário para prestar o serviço que você pediu (art. 7º, V).</li>
+      <li><b>Perfil, personas, álbuns, fotos, amizades e recados:</b> o seu <b>consentimento</b>, dado ao preencher e publicar cada item (art. 7º, I).
+        Você pode retirá-lo apagando o conteúdo ou mudando a privacidade.</li>
+      <li><b>Denúncias, bloqueios e limites contra spam:</b> <b>legítimo interesse</b> em manter o site seguro para todos (art. 7º, IX).</li>
+      <li><b>Registros técnicos de acesso:</b> legítimo interesse em manter o site funcionando e protegido contra ataques (art. 7º, IX).</li>
+    </ul>
+    <p>Não vendemos seus dados, não os usamos para publicidade e não usamos suas fotos para nenhum outro fim.</p>
 
-    <h2>5. Onde os dados ficam</h2>
-    <p>Contas, perfis, viagens, álbuns, fotos e recados ficam no <b>Supabase</b>; o site é hospedado na <b>Vercel</b>.
-      Esses serviços podem guardar dados em servidores fora do Brasil.</p>
+    <h2>5. Serviços de terceiros e onde os dados ficam</h2>
+    <p>Para funcionar, o site usa os serviços abaixo. Cada um recebe apenas o necessário para a sua parte:</p>
+    <ul>
+      <li><b>Supabase</b> — banco de dados, contas e armazenamento de fotos: guarda contas, perfis, viagens, álbuns, fotos, amizades, recados e denúncias.</li>
+      <li><b>Vercel</b> — hospedagem do site: entrega as páginas e registra dados técnicos de acesso.</li>
+      <li><b>OpenStreetMap</b> — imagens do mapa e, ao buscar o endereço de uma hospedagem, o texto digitado (serviço Nominatim).</li>
+      <li><b>Google Fonts</b> — fontes do texto do site.</li>
+      <li><b>unpkg</b> e <b>jsDelivr</b> — bibliotecas de código usadas pelo site (mapa e contas).</li>
+      <li><b>Wikimedia Commons</b> — fotos dos lugares turísticos, com os créditos de cada autor.</li>
+    </ul>
+    <p>Ao abrir o site, seu navegador se conecta diretamente a esses serviços, que recebem o seu endereço IP e dados do navegador, conforme as
+      políticas de privacidade de cada um. Alguns deles mantêm servidores fora do Brasil; essa transferência internacional acontece porque é
+      necessária para prestar o serviço que você usa (art. 33 da LGPD).</p>
 
     <h2>6. Por quanto tempo</h2>
     <p>Enquanto sua conta existir. Ao excluir a conta, apagamos suas viagens, perfil, personas, álbuns, fotos, amizades, bloqueios e
       os recados que você escreveu. As <b>denúncias</b> que você fez continuam guardadas sem ligação com a sua conta, para a moderação.
       Cópias de segurança automáticas dos serviços que usamos podem manter dados por um curto período até serem substituídas.</p>
 
-    <h2>7. Seus direitos</h2>
-    <p>Você pode ver e corrigir seus dados no próprio site, mudar a privacidade de cada seção e álbum a qualquer momento e
-      <b>excluir a conta</b> pelo botão "Excluir minha conta". Para outros pedidos previstos na LGPD (Lei 13.709/2018), escreva para
-      <a href="mailto:travelersfriend.contato@gmail.com">travelersfriend.contato@gmail.com</a>. Respondemos em até 15 dias.</p>
+    <h2>7. Segurança</h2>
+    <ul>
+      <li>Toda a comunicação com o site é <b>criptografada</b> (HTTPS).</li>
+      <li>A senha é guardada de forma que <b>ninguém consegue lê-la</b>, nem nós.</li>
+      <li>O banco de dados tem regras que deixam cada conta acessar <b>apenas o que lhe é permitido</b>, de acordo com a privacidade escolhida.</li>
+      <li>Fotos dos álbuns só abrem por <b>links temporários</b>, e a localização (GPS) é removida das fotos antes do envio.</li>
+    </ul>
+    <p>Nenhum sistema é totalmente imune a falhas. Se acontecer um incidente de segurança que possa trazer risco ou dano relevante a você,
+      avisaremos as pessoas afetadas e a Autoridade Nacional de Proteção de Dados (ANPD), como pede a LGPD.</p>
 
-    <h2 id="regras">8. Regras de uso dos perfis e do mural</h2>
+    <h2>8. Seus direitos</h2>
+    <p>Pela LGPD (art. 18), você pode pedir a qualquer momento:</p>
+    <ul>
+      <li>a <b>confirmação</b> de que tratamos seus dados e o <b>acesso</b> a eles;</li>
+      <li>a <b>correção</b> de dados incompletos ou errados;</li>
+      <li>a <b>eliminação</b> de dados, inclusive dos que dependem do seu consentimento;</li>
+      <li>a <b>portabilidade</b>, ou seja, uma cópia dos seus dados para levar a outro serviço;</li>
+      <li><b>informação</b> sobre com quem compartilhamos seus dados (veja a seção 5);</li>
+      <li>a <b>revogação do consentimento</b> e informação sobre o que acontece se você não consentir.</li>
+    </ul>
+    <p>Boa parte disso você faz no próprio site: ver e corrigir o perfil, mudar a privacidade de cada seção e álbum, apagar fotos e recados e
+      <b>excluir a conta</b> pelo botão "Excluir minha conta". Para os demais pedidos, escreva para <a href="mailto:travelersfriend.contato@gmail.com">travelersfriend.contato@gmail.com</a>. Respondemos em até 15 dias.
+      Se não ficar satisfeito, você também pode reclamar na <a href="https://www.gov.br/anpd" rel="noopener">ANPD</a>.</p>
+
+    <h2>9. Crianças e adolescentes</h2>
+    <p>O planejador pode ser usado por qualquer pessoa sem conta. Para <b>criar uma conta</b>, é preciso ter pelo menos <b>13 anos</b>;
+      menores de 18 anos precisam da autorização dos pais ou responsáveis. Perfis e álbuns de quem não declarou ter 18 anos ou mais nunca ficam
+      públicos. Se você é responsável por uma criança ou adolescente e acredita que ela criou uma conta sem autorização, escreva para <a href="mailto:travelersfriend.contato@gmail.com">travelersfriend.contato@gmail.com</a>
+      e a conta será excluída.</p>
+
+    <h2 id="regras">10. Regras de uso dos perfis e do mural</h2>
     <ul>
       <li>Personas podem ser animais, objetos, personagens originais ou <b>figuras históricas já falecidas</b>, sempre com o selo de que não são contas oficiais.
         Não é permitido se passar por pessoas vivas, outras pessoas reais ou marcas.</li>
@@ -80,10 +138,11 @@
         Conteúdo que viole estas regras pode ser removido e a conta pode ser excluída. As denúncias são analisadas em até 7 dias, e casos graves (ameaças, assédio, conteúdo sexual) têm prioridade.</li>
     </ul>
 
-    <h2>9. Armazenamento no navegador</h2>
-    <p>Usamos o armazenamento local do navegador para guardar seu roteiro e manter você conectado. Não usamos cookies de publicidade.</p>
+    <h2>11. Armazenamento no navegador</h2>
+    <p>Usamos o armazenamento local do navegador para guardar seu roteiro e manter você conectado. Não usamos cookies de publicidade
+      nem de análise de visitas.</p>
 
-    <h2>10. Mudanças</h2>
+    <h2>12. Mudanças</h2>
     <p>Se esta política mudar, a data no topo será atualizada. Mudanças importantes, como um novo uso dos seus dados,
       serão avisadas por e-mail ou no próprio site antes de valer.</p>
 
