@@ -77,12 +77,11 @@ function renderTipos() {
     </section>`);
 }
 
-let maiorDoPrincipal = false;
 document.addEventListener("click", (e) => {
   const el = e.target.closest("#socialView [data-idt-tipo]");
   if (!el) return;
   // Passo 2: o mesmo formulário do perfil, já preparado para o tipo escolhido.
-  abrirEditor(null, { tipo: el.dataset.idtTipo, maior: maiorDoPrincipal });
+  abrirEditor(null, { tipo: el.dataset.idtTipo });
 });
 
 rota("/identidades", async () => {
@@ -94,7 +93,6 @@ rota("/identidades/nova", async () => {
     const d = await preparar();
     if (!d) return;
     if (d.lista.length >= LIMITE_IDENTIDADES) return aviso("Limite atingido", `Cada conta pode ter até ${LIMITE_IDENTIDADES} identidades.`, `<a class="btn" href="#/identidades">Voltar</a>`);
-    maiorDoPrincipal = !!d.principal.maior_de_idade;
     renderTipos();
   } catch (err) { aviso("Não foi possível criar identidade", esc(traduzir(err))); }
 });

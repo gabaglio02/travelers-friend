@@ -32,6 +32,7 @@ Abrindo o `index.html` direto no navegador o site também funciona, mas só com 
 - `supabase/002_perfis.sql`: perfis, identidades, amizades, lugares visitados e privacidade por seção
 - `supabase/003_limite_identidades.sql`: limite de 3 identidades por conta (perfil + 2 personas)
 - `supabase/004_mural.sql`: álbuns de lembranças, recados, amizades mais seguras, bloqueio por conta e denúncias
+- `supabase/005_contas_18.sql`: contas só para maiores de 18 (toda identidade passa a ser 18+)
 - `supabase/testes/`: testes do SQL num Postgres local (PGlite)
 - `js/dados/perfis.js`: leitura e gravação de perfis no Supabase
 - `js/social/perfil.js`: páginas `#/@apelido`, `#/perfil` e `#/perfil/editar`
@@ -80,7 +81,7 @@ no Supabase (tabela `agenda_cache`) em vez da pasta `data/`.
    Use a conta pessoal (plano **Hobby**); não crie Team nem inicie o teste do Pro.
 2. **Supabase:** no projeto da Vercel, *Storage* (ou *Integrations*) → **Supabase** → escolha o plano **Free**.
    A integração cria as variáveis `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` (o site aceita também os nomes `NEXT_PUBLIC_…`).
-3. **Banco:** no painel do Supabase, *SQL Editor* → cole e rode [`supabase/schema.sql`](supabase/schema.sql) , depois [`supabase/002_perfis.sql`](supabase/002_perfis.sql) , [`supabase/003_limite_identidades.sql`](supabase/003_limite_identidades.sql) e [`supabase/004_mural.sql`](supabase/004_mural.sql) (só acrescentam/ajustam; é seguro rodar de novo).
+3. **Banco:** no painel do Supabase, *SQL Editor* → cole e rode [`supabase/schema.sql`](supabase/schema.sql) , depois [`supabase/002_perfis.sql`](supabase/002_perfis.sql) , [`supabase/003_limite_identidades.sql`](supabase/003_limite_identidades.sql) [`supabase/004_mural.sql`](supabase/004_mural.sql) e [`supabase/005_contas_18.sql`](supabase/005_contas_18.sql) (só acrescentam/ajustam; é seguro rodar de novo).
 4. **Login:** no Supabase, *Authentication → URL Configuration*: em **Site URL** coloque o endereço da Vercel
    (ex.: `https://travelers-friend.vercel.app`) e adicione-o também em **Redirect URLs** (e `http://localhost:5173` para testar).
 5. **Cron (opcional):** crie a variável `CRON_SECRET` na Vercel com um texto aleatório; o `/api/cron` passa a aceitar só a Vercel.
@@ -134,7 +135,7 @@ Os preços, horários e datas são aproximados. Os itens marcados como `ilustrat
 ## Perfis
 
 - `#/@apelido` mostra o perfil; o banco (`perfil_publico`) já devolve só as seções que quem está vendo pode ver.
-- Cada seção tem privacidade própria: público · só amigos · só eu. Sem declarar 18+, nada fica público.
+- Cada seção tem privacidade própria: público · só amigos · só eu. Contas são só para maiores de 18 (declarado no cadastro).
 - Avatar e capa ficam no bucket público `perfil`; fotos de viagem continuam no bucket privado `fotos`.
 - Testar o SQL localmente: numa pasta fora do projeto, `npm i @electric-sql/pglite@0.2.17` e
   `node supabase/testes/perfis.test.mjs <pasta-do-projeto>` (o script fica nessa pasta junto do pacote).

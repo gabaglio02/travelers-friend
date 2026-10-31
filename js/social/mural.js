@@ -347,8 +347,6 @@ function lerAlbum() {
 
 function renderEditorAlbum() {
   const ident = lb.identidades.find((i) => i.id === lb.identidade_id) || lb.identidades[0];
-  const maior = !!ident.maior_de_idade;
-  if (lb.visibilidade === "publico" && !maior) lb.visibilidade = "amigos";
   const voltar = lb.id ? `#/@${esc(ident.apelido)}/album/${esc(lb.id)}` : `#/@${esc(ident.apelido)}`;
   const opcoesCat = catalogo().map((p) => `<option value="${esc(p.nome)}"></option>`).join("");
   mostrar(`
@@ -386,11 +384,10 @@ function renderEditorAlbum() {
 
       <section class="pf-bloco">
         <h3>Quem vê</h3>
-        <div class="lb-vis">${Object.entries(M.VISIBILIDADES).map(([k, n]) => `<label class="lb-vis-op ${lb.visibilidade === k ? "on" : ""} ${k === "publico" && !maior ? "off" : ""}">
-          <input type="radio" name="visibilidade" value="${k}" ${lb.visibilidade === k ? "checked" : ""} ${k === "publico" && !maior ? "disabled" : ""}>
+        <div class="lb-vis">${Object.entries(M.VISIBILIDADES).map(([k, n]) => `<label class="lb-vis-op ${lb.visibilidade === k ? "on" : ""} ">
+          <input type="radio" name="visibilidade" value="${k}" ${lb.visibilidade === k ? "checked" : ""}>
           <b>${{ publico: "🌎", amigos: "👥", privado: "🔒" }[k]} ${n}</b>
           <span class="muted small-text">${{ publico: "Qualquer pessoa com o link do perfil.", amigos: "Só quem é seu amigo.", privado: "Só você." }[k]}</span></label>`).join("")}</div>
-        ${maior ? "" : `<p class="muted small-text">"Público" exige confirmar 18 anos ou mais no perfil.</p>`}
         <p class="muted small-text">As fotos seguem a visibilidade do álbum e são abertas por links temporários.</p>
       </section>
 

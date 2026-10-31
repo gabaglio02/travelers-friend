@@ -194,5 +194,14 @@ await como(A, "select public.excluir_minha_conta()");
 check("excluir conta apaga álbuns e identidades da Ana", (await db.query(`select (select count(*) from public.albuns where owner_id = '${A}')::int + (select count(*) from public.identidades where owner_id = '${A}')::int n`)).rows[0].n === 0);
 check("…e mantém a denúncia do Caio (alvo apagado não some do histórico)", (await db.query("select count(*)::int n from public.denuncias")).rows[0].n === 1);
 
+console.log("\n005: contas só para maiores de 18");
+await db.exec(ler("005_contas_18.sql"));
+await db.exec(ler("005_contas_18.sql"));
+check("005 roda duas vezes e marca a Bia como 18+", (await db.query(`select maior_de_idade v from public.identidades where id = '${bia}'`)).rows[0].v === true);
+r = await um(B, `insert into public.albuns (identidade_id, titulo, visibilidade) values ('${bia}', 'agora pública', 'publico') returning visibilidade`);
+check("…e o álbum 'publico' dela passa a valer", r.visibilidade === "publico", JSON.stringify(r));
+r = await um(B, `insert into public.identidades (apelido, nome, tipo) values ('bia_gato', 'Gato', 'animal') returning maior_de_idade`);
+check("identidade nova já nasce 18+", r.maior_de_idade === true, JSON.stringify(r));
+
 console.log(`\n${ok} ok · ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

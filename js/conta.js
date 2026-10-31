@@ -306,7 +306,7 @@
           <label class="field"><span>E-mail</span><input type="email" name="email" autocomplete="email" required></label>
           <label class="field"><span>Senha (mínimo 8 caracteres)</span><input type="password" name="senha" minlength="8" autocomplete="new-password" required></label>
           <label class="field"><span>Repita a senha</span><input type="password" name="senha2" minlength="8" autocomplete="new-password" required></label>
-          <label class="check"><input type="checkbox" name="idade" required> Tenho 13 anos ou mais (menores de 18 anos, com autorização dos pais ou responsáveis)</label>
+          <label class="check"><input type="checkbox" name="idade" required> Tenho 18 anos ou mais</label>
           <label class="check"><input type="checkbox" name="aceite" required> Li e aceito a <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade e as regras de uso</a></label>
           <button class="btn" type="submit">Criar conta</button>
           <p class="small-text">Já tem conta? <button type="button" class="reset" data-acc="entrar">Entrar</button></p>
@@ -466,7 +466,7 @@
           const { data, error } = await sb.auth.signUp({
             email: f.email.trim(), password: f.senha,
             // Registro do aceite (idade mínima e versão da política) junto da conta
-            options: { data: { nome: f.nome.trim(), idade_minima: true, politica_aceita: "2026-10-31" }, emailRedirectTo: location.origin + location.pathname }
+            options: { data: { nome: f.nome.trim(), idade_minima: 18, politica_aceita: "2026-10-31" }, emailRedirectTo: location.origin + location.pathname }
           });
           if (error) throw error;
           if (!data.session) { aviso = "Conta criada! Enviamos um e-mail para " + f.email.trim() + ". Confirme pelo link e depois entre."; return abrir("entrar"); }

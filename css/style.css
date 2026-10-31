@@ -898,7 +898,6 @@ body.landing .social { display: none; }
 .pf-emojis button.on { border-color: var(--ink); background: var(--accent); }
 .pf-cor { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--paper); box-shadow: 0 0 0 1.5px var(--soft-line); cursor: pointer; }
 .pf-cor.on { box-shadow: 0 0 0 2px var(--ink); }
-.pf-maior { font-weight: var(--w-medium); }
 .pf-form-foot { display: flex; justify-content: flex-end; }
 
 @media (max-width: 720px) {
@@ -1104,7 +1103,6 @@ body.landing .social { display: none; }
 .lb-vis-op { position: relative; display: flex; flex-direction: column; gap: 2px; border: 1.5px solid var(--soft-line); border-radius: var(--r-md); padding: var(--s-3); cursor: pointer; }
 .lb-vis-op input { position: absolute; opacity: 0; pointer-events: none; }
 .lb-vis-op.on { border-color: var(--ink); background: #fffbe6; box-shadow: var(--shadow-hard); }
-.lb-vis-op.off { opacity: .45; cursor: not-allowed; }
 .lb-vis-op:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
 #lbNovoLugar { flex: 1 1 240px; padding: 8px 10px; border: 1.5px solid var(--soft-line); border-radius: var(--r-md); font: inherit; }
 

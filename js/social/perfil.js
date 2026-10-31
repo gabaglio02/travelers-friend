@@ -159,13 +159,14 @@ export function renderPerfil(p) {
 
 // ---------- Edição / criação ----------
 let ed = null; // rascunho do formulário
-// ident: identidade existente (ou null para criar). opts.tipo: tipo da nova; opts.maior: herda o 18+ do perfil principal.
+// ident: identidade existente (ou null para criar). opts.tipo: tipo da nova.
+// Contas são só para maiores de 18 (declarado no cadastro), então toda identidade salva com maior_de_idade = true.
 export async function abrirEditor(ident, opts = {}) {
   const tipo = ident ? ident.tipo : (opts.tipo || "principal");
   const base = ident || {
     tipo, nome: tipo === "principal" ? (window.TFConta.nome() || "").slice(0, 60) : "", apelido: "", bio: "", mensagem: "",
     status: "disponivel", tema: { cor: tipo === "principal" ? "#ffe14d" : CORES[Math.floor(Math.random() * 5)].v, estampa: tipo === "principal" ? "lisa" : "bolinhas" },
-    destinos_desejados: [], privacidade: { ...PRIVACIDADE_PADRAO }, maior_de_idade: !!opts.maior,
+    destinos_desejados: [], privacidade: { ...PRIVACIDADE_PADRAO }, maior_de_idade: true,
     avatar_emoji: tipo === "principal" ? null : (TIPOS[tipo].emojis || [])[0]
   };
   ed = {
@@ -173,6 +174,7 @@ export async function abrirEditor(ident, opts = {}) {
     destinos_desejados: base.destinos_desejados || [],
     privacidade: { ...PRIVACIDADE_PADRAO, ...(base.privacidade || {}) },
     tema: { cor: "#ffe14d", estampa: "lisa", moldura: tipo === "principal" ? "circulo" : "retro", ...(base.tema || {}) },
+    maior_de_idade: true,
     criando: !ident, avatarBlob: null, capaBlob: null, tirarAvatar: false, tirarCapa: false, confirmandoApagar: false,
     visitados: ident ? await meusVisitados(ident.id) : []
   };
@@ -289,10 +291,8 @@ function renderEditor() {
 
       <section class="pf-bloco">
         <h3>Privacidade</h3>
-        <label class="check pf-maior"><input type="checkbox" name="maior_de_idade" ${ed.maior_de_idade ? "checked" : ""}> Tenho 18 anos ou mais</label>
-        <p class="muted small-text">${ed.maior_de_idade ? "Você pode deixar seções públicas." : "Sem esta confirmação, nada do perfil fica público: o máximo é \"só amigos\"."}</p>
         <div class="pf-priv">${Object.entries(SECOES).map(([k, nome]) => `<label class="field"><span>${nome}</span>
-          <select name="priv_${k}">${NIVEIS.map((n) => `<option value="${n}" ${privacidadeEfetiva()[k] === n ? "selected" : ""} ${n === "publico" && !ed.maior_de_idade ? "disabled" : ""}>${NIVEL_NOME[n]}</option>`).join("")}</select></label>`).join("")}</div>
+          <select name="priv_${k}">${NIVEIS.map((n) => `<option value="${n}" ${privacidadeEfetiva()[k] === n ? "selected" : ""}>${NIVEL_NOME[n]}</option>`).join("")}</select></label>`).join("")}</div>
       </section>
 
       ${persona && !ed.criando ? `
@@ -319,17 +319,9 @@ function lerCampos() {
   ed.status = v("status"); ed.mensagem = v("mensagem").trim(); ed.bio = v("bio").trim();
   if (f.elements.figura) ed.tema.figura = f.elements.figura.value.trim();
   if (f.elements.declaracao) ed.tema.declaracao = f.elements.declaracao.checked;
-  const eraMaior = ed.maior_de_idade;
-  ed.maior_de_idade = f.elements.maior_de_idade.checked;
-  Object.keys(SECOES).forEach((k) => {
-    const sel = v("priv_" + k);
-    // Sem 18+ a tela mostra "Só amigos" no lugar de "Público"; isso não apaga a escolha guardada.
-    if (!eraMaior && ed.privacidade[k] === "publico" && sel === "amigos") return;
-    ed.privacidade[k] = sel;
-  });
+  Object.keys(SECOES).forEach((k) => { ed.privacidade[k] = v("priv_" + k); });
 }
-// O que vai para o banco: sem 18+, nada público (o banco também garante isso).
-const privacidadeEfetiva = () => Object.fromEntries(Object.entries(ed.privacidade).map(([k, n]) => [k, !ed.maior_de_idade && n === "publico" ? "amigos" : n]));
+const privacidadeEfetiva = () => ed.privacidade;
 function atualizarContador() {
   const f = document.getElementById("pfForm"), el = document.getElementById("pfMsgConta");
   if (f && el) el.textContent = f.elements.mensagem.value.length + "/140";
@@ -504,7 +496,6 @@ document.addEventListener("change", async (e) => {
     } catch (err) { erro(err.message); }
     return;
   }
-  if (el.name === "maior_de_idade") { lerCampos(); renderEditor(); }
 });
 document.addEventListener("input", (e) => {
   if (e.target.name === "mensagem" && e.target.closest("#pfForm")) atualizarContador();
