@@ -203,5 +203,28 @@ check("…e o álbum 'publico' dela passa a valer", r.visibilidade === "publico"
 r = await um(B, `insert into public.identidades (apelido, nome, tipo) values ('bia_gato', 'Gato', 'animal') returning maior_de_idade`);
 check("identidade nova já nasce 18+", r.maior_de_idade === true, JSON.stringify(r));
 
+console.log("\n006: perfil 'Só amigos' como conta privada");
+await db.exec(ler("006_perfil_so_amigos.sql"));
+await db.exec(ler("006_perfil_so_amigos.sql"));
+await como(B, `update public.identidades set bio = 'segredo da Bia', privacidade = privacidade || '{"perfil":"amigos","bio":"publico"}' where id = '${bia}'`);
+r = await val(C, "perfil_publico", "bia");
+check("quem não é amigo vê o cartão mínimo", r && r.restrito === true && r.nome === "Bia" && r.id === bia, JSON.stringify(r));
+check("…sem bio, amigos nem lugares", r && !("bio" in r) && !("amigos" in r) && !("visitados" in r), JSON.stringify(r));
+r = await val(null, "perfil_publico", "bia");
+check("visitante sem conta também vê o cartão", r && r.restrito === true, JSON.stringify(r));
+r = await como(C, `insert into public.amizades (de, para) values ('${caio}', '${bia}')`);
+check("dá para pedir amizade a partir do cartão", !r.erro, r.erro);
+await como(B, `update public.amizades set estado = 'aceita' where de = '${caio}' and para = '${bia}'`);
+r = await val(C, "perfil_publico", "bia");
+check("depois de aceito, o amigo vê o perfil completo", r && !r.restrito && r.bio === "segredo da Bia", JSON.stringify(r));
+await como(C, `delete from public.amizades where de = '${caio}' and para = '${bia}'`);
+await como(B, `update public.identidades set privacidade = privacidade || '{"perfil":"privado"}' where id = '${bia}'`);
+check("'Só eu' continua invisível", (await val(C, "perfil_publico", "bia")) === null);
+r = await como(C, `insert into public.amizades (de, para) values ('${caio}', '${bia}')`);
+check("'Só eu' não recebe pedido de amizade", !!r.erro && /perfil_fechado/.test(r.erro), JSON.stringify(r));
+await como(B, `update public.identidades set privacidade = privacidade || '{"perfil":"amigos"}' where id = '${bia}'`);
+await como(B, "select public.bloquear($1)", [caio]);
+check("quem foi bloqueado não vê nem o cartão", (await val(C, "perfil_publico", "bia")) === null);
+
 console.log(`\n${ok} ok · ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

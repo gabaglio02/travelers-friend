@@ -33,6 +33,7 @@ Abrindo o `index.html` direto no navegador o site também funciona, mas só com 
 - `supabase/003_limite_identidades.sql`: limite de 3 identidades por conta (perfil + 2 personas)
 - `supabase/004_mural.sql`: álbuns de lembranças, recados, amizades mais seguras, bloqueio por conta e denúncias
 - `supabase/005_contas_18.sql`: contas só para maiores de 18 (toda identidade passa a ser 18+)
+- `supabase/006_perfil_so_amigos.sql`: perfil "Só amigos" mostra um cartão para pedir amizade; "Só eu" não recebe pedidos
 - `supabase/testes/`: testes do SQL num Postgres local (PGlite)
 - `js/dados/perfis.js`: leitura e gravação de perfis no Supabase
 - `js/social/perfil.js`: páginas `#/@apelido`, `#/perfil` e `#/perfil/editar`
@@ -81,7 +82,7 @@ no Supabase (tabela `agenda_cache`) em vez da pasta `data/`.
    Use a conta pessoal (plano **Hobby**); não crie Team nem inicie o teste do Pro.
 2. **Supabase:** no projeto da Vercel, *Storage* (ou *Integrations*) → **Supabase** → escolha o plano **Free**.
    A integração cria as variáveis `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` (o site aceita também os nomes `NEXT_PUBLIC_…`).
-3. **Banco:** no painel do Supabase, *SQL Editor* → cole e rode [`supabase/schema.sql`](supabase/schema.sql) , depois [`supabase/002_perfis.sql`](supabase/002_perfis.sql) , [`supabase/003_limite_identidades.sql`](supabase/003_limite_identidades.sql) [`supabase/004_mural.sql`](supabase/004_mural.sql) e [`supabase/005_contas_18.sql`](supabase/005_contas_18.sql) (só acrescentam/ajustam; é seguro rodar de novo).
+3. **Banco:** no painel do Supabase, *SQL Editor* → cole e rode [`supabase/schema.sql`](supabase/schema.sql) , depois [`supabase/002_perfis.sql`](supabase/002_perfis.sql) , [`supabase/003_limite_identidades.sql`](supabase/003_limite_identidades.sql) [`supabase/004_mural.sql`](supabase/004_mural.sql), [`supabase/005_contas_18.sql`](supabase/005_contas_18.sql) e [`supabase/006_perfil_so_amigos.sql`](supabase/006_perfil_so_amigos.sql) (só acrescentam/ajustam; é seguro rodar de novo).
 4. **Login:** no Supabase, *Authentication → URL Configuration*: em **Site URL** coloque o endereço da Vercel
    (ex.: `https://travelers-friend.vercel.app`) e adicione-o também em **Redirect URLs** (e `http://localhost:5173` para testar).
 5. **Cron (opcional):** crie a variável `CRON_SECRET` na Vercel com um texto aleatório; o `/api/cron` passa a aceitar só a Vercel.

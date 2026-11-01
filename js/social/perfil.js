@@ -129,6 +129,7 @@ export function renderPerfil(p) {
         ${p.mensagem ? `<p class="pf-msg">${esc(p.mensagem)}</p>` : ""}
       </header>
       ${seloHtml(p)}
+      ${p.restrito ? `<p class="pf-dica pf-restrito">🔒 Este perfil é só para amigos. Peça amizade para ver o resto.</p>` : ""}
       ${dono ? `<p class="pf-dica">Você está vendo o seu perfil completo. Visitantes só veem as seções que você deixou públicas — <a href="${editarHref(p)}">ajustar privacidade</a>.</p>` : ""}
       <div class="pf-grid">
         <div class="pf-col">
@@ -291,6 +292,8 @@ function renderEditor() {
 
       <section class="pf-bloco">
         <h3>Privacidade</h3>
+        <p class="muted small-text">No "Perfil inteiro": <b>Só amigos</b> — quem não é amigo vê só nome, @, foto e capa, e pode pedir amizade.
+          <b>Só eu</b> — ninguém encontra o perfil nem pede amizade.</p>
         <div class="pf-priv">${Object.entries(SECOES).map(([k, nome]) => `<label class="field"><span>${nome}</span>
           <select name="priv_${k}">${NIVEIS.map((n) => `<option value="${n}" ${privacidadeEfetiva()[k] === n ? "selected" : ""}>${NIVEL_NOME[n]}</option>`).join("")}</select></label>`).join("")}</div>
       </section>
@@ -344,13 +347,14 @@ export function traduzir(err) {
   if (/limite_denuncias/i.test(m)) return "Você já enviou muitas denúncias hoje.";
   if (/recado_so_amigos/i.test(m)) return "Só amigos podem deixar recados.";
   if (/recado_desligado/i.test(m)) return "Este mural não está recebendo recados.";
+  if (/perfil_fechado/i.test(m)) return "Este perfil não está recebendo pedidos de amizade.";
   if (/bloquead/i.test(m)) return "Não é possível: há um bloqueio entre as contas.";
   if (/amizade_existente/i.test(m)) return "Essa pessoa já te mandou um pedido — aceite em Amigos.";
   if (/amizades_pkey|duplicate key value.*amizades/i.test(m)) return "Você já mandou um pedido para esse perfil.";
   if (/seção desconhecida/i.test(m)) return "O banco ainda não foi atualizado: é preciso rodar supabase/004_mural.sql no Supabase.";
   if (/row-level security|permission denied/i.test(m)) return "Sem permissão para isso. Entre de novo na sua conta.";
   if (/relation .* does not exist|function .* does not exist|Could not find the (function|table)/i.test(m))
-    return "O banco ainda não tem as tabelas novas. É preciso rodar os arquivos de supabase/ (002 a 004) no Supabase.";
+    return "O banco ainda não tem as tabelas novas. É preciso rodar os arquivos de supabase/ (002 a 006) no Supabase.";
   if (/Failed to fetch|NetworkError/i.test(m)) return "Sem conexão com o servidor.";
   return m || "Não foi possível salvar.";
 }
@@ -525,7 +529,7 @@ rota("/@:apelido", async ({ apelido }) => {
   if (!conta.cliente()) return semContas();
   try {
     const p = await perfilPublico(apelido);
-    if (!p) return aviso("Perfil não encontrado", `Não há perfil público em @${esc(apelido)}, ou ele é visível só para amigos.`, `<a class="btn" href="#/planejar">Ir para o planejamento</a>`);
+    if (!p) return aviso("Perfil não encontrado", `Não há perfil em @${esc(apelido)}, ou ele não está visível para você. A busca é pelo @ exato.`, `<a class="btn" href="#/planejar">Ir para o planejamento</a>`);
     renderPerfil(p);
   } catch (err) { aviso("Não foi possível abrir o perfil", esc(traduzir(err))); }
 });

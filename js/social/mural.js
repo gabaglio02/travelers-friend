@@ -55,6 +55,12 @@ document.addEventListener("tf:perfil", (e) => {
 async function preencherPerfil(p) {
   const conta = await contaPronta();
   const logado = !!conta.usuario(), dono = p.relacao === "dono";
+  // Perfil "Só amigos" visto por quem não é amigo: só o botão de amizade, sem álbuns nem recados.
+  if (p.restrito) {
+    const amz = logado ? await M.amizadeCom(p.id).catch(() => null) : null;
+    if (perfilAtual === p) renderRelacao(p, logado, amz);
+    return;
+  }
   let erro = null;
   const [albuns, mu, amz] = await Promise.all([
     M.albunsDe(p.id).catch((err) => { erro = err; return []; }),
