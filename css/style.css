@@ -1188,3 +1188,11 @@ body:not(.landing):not(.v-social) .trip-setup { order: 3; flex-basis: 100%; }
 .vg-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
 .vg-quando { font-size: 12.5px; font-weight: var(--w-medium); }
 .vg-botoes { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+
+/* ---------- Compartilhar roteiro ---------- */
+.share-link { width: 100%; font-family: var(--mono); font-size: 13px; padding: 8px 10px; border: 2px solid var(--ink); border-radius: var(--radius); margin: var(--s-2) 0; }
+.share-botoes { flex-wrap: wrap; }
+.rot-copiar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-3); }
+.rot-copiar p { flex-basis: 100%; margin: 0; }
+.rot-lista { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.rot-lista li span { display: block; }

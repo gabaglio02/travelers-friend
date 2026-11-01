@@ -13,6 +13,7 @@ import "./social/identidades.js"; // registra #/identidades, #/identidades/nova 
 import "./social/mural.js"; // registra #/@apelido/album/<id> e #/lembrancas/...; álbuns e recados no perfil
 import "./social/amigos.js"; // registra #/amigos
 import "./social/viagens.js"; // registra #/viagens (Minhas viagens)
+import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<código>
 
 (function () {
   "use strict";
@@ -1679,6 +1680,22 @@ import "./social/viagens.js"; // registra #/viagens (Minhas viagens)
     // Viagem "vazia"? (nada no roteiro e nenhuma hospedagem) — para decidir se vale importar para a conta.
     hasContent: () => Object.values(state.days).some((d) => (d.items || []).length) || (state.stays || []).length > 0,
     newState: () => defaultState(),
+    // Versão do roteiro para mandar por link (js/social/compartilhar.js): sem hospedagens nem orçamento.
+    compartilhavel() {
+      const days = {}, nomes = {};
+      let lugares = 0;
+      Object.keys(state.days).sort().forEach((iso) => {
+        if (iso < state.start || iso > state.end) return;
+        const d = state.days[iso];
+        const items = (d.items || []).map(({ uid, id, dur, at, mode, refeicao }) => ({ uid, id, dur, at, mode, refeicao }));
+        items.forEach((it) => { const p = placeById(it.id); if (p) nomes[it.id] = p.nome; });
+        lugares += items.length;
+        if (items.length || d.start || d.meals) days[iso] = { items, start: d.start, meals: d.meals, returnMode: d.returnMode };
+      });
+      const dados = { city: state.city, start: state.start, end: state.end, people: state.people, youngestAge: state.youngestAge,
+        food: state.food, transport: state.transport, meals: state.meals, activeDay: state.start, days, nomes };
+      return { nome: city().nome + " · " + fmtShort(state.start) + " → " + fmtShort(state.end), dados, lugares };
+    },
     abrirDetalhe: (id) => { if (placeById(id)) openDetail(id); },
     // Resumo da viagem para "Virar lembrança" (js/social/mural.js): cidade, datas e lugares do roteiro na ordem.
     lembranca() {

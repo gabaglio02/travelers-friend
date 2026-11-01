@@ -73,6 +73,12 @@
       const v = await criarViagem(TF.newState(), "Nova viagem");
       await abrirViagem(v.id);
     },
+    // Roteiro recebido por link (js/social/compartilhar.js) vira uma viagem nova da conta.
+    importarViagem: async (dados, nome) => {
+      clearTimeout(salvarTimer); await salvarAgora();
+      const v = await criarViagem(dados, nome);
+      await abrirViagem(v.id);
+    },
     apagarViagem: async (id) => {
       if (id === viagemId) throw new Error("Não dá para apagar a viagem aberta.");
       const { error } = await sb.from("viagens").delete().eq("id", id);

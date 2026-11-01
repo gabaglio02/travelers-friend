@@ -226,5 +226,32 @@ await como(B, `update public.identidades set privacidade = privacidade || '{"per
 await como(B, "select public.bloquear($1)", [caio]);
 check("quem foi bloqueado não vê nem o cartão", (await val(C, "perfil_publico", "bia")) === null);
 
+console.log("\n007: roteiros compartilhados e erros do site");
+await db.exec(ler("007_compartilhar_e_erros.sql"));
+await db.exec(ler("007_compartilhar_e_erros.sql"));
+r = await como(null, `select public.compartilhar_roteiro('Fim de semana', '{"city":"sp"}'::jsonb) v`);
+check("sem conta não gera link", !!r.erro, JSON.stringify(r));
+const link = (await um(C, `select public.compartilhar_roteiro('Fim de semana em SP', '{"city":"sp","days":{}}'::jsonb, 'Caio') v`)).v;
+check("logado gera um código de 12 caracteres", typeof link === "string" && /^[0-9a-f]{12}$/.test(link), link);
+r = await val(null, "roteiro_compartilhado", link);
+check("qualquer pessoa com o código abre o roteiro", r && r.nome === "Fim de semana em SP" && r.dados.city === "sp" && r.autor_nome === "Caio", JSON.stringify(r));
+check("…mas não sabe quem é a conta do autor", r && !JSON.stringify(r).includes(C));
+check("código errado não abre nada", (await val(null, "roteiro_compartilhado", "000000000000")) === null);
+r = await como(null, "select * from public.roteiros_compartilhados");
+check("ninguém lista os roteiros da tabela", !!r.erro || r.rows.length === 0, JSON.stringify(r));
+r = await como(C, `insert into public.roteiros_compartilhados (nome, dados) values ('x', '{}')`);
+check("não dá para gravar direto na tabela", !!r.erro);
+
+await como(null, `select public.registrar_erro('TypeError: x is undefined', 'app.js:10', 'pilha', '#/planejar', 'Firefox')`);
+await como(B, `select public.registrar_erro('TypeError: x is undefined', 'app.js:10', 'pilha', '#/planejar', 'Chrome')`);
+await como(null, `select public.registrar_erro('${"a".repeat(2000)}', null, null, null, null)`);
+const erros = (await db.query("select mensagem, vezes from public.erros_site order by id")).rows;
+check("visitante registra erro e o repetido só soma", erros.length === 2 && erros[0].vezes === 2, JSON.stringify(erros.map((e) => [e.mensagem.length, e.vezes])));
+check("mensagem enorme é cortada", erros[1].mensagem.length === 500);
+r = await como(null, "select * from public.erros_site");
+check("ninguém lê os erros pelo site", !!r.erro || r.rows.length === 0, JSON.stringify(r));
+await como(C, "select public.excluir_minha_conta()");
+check("excluir a conta apaga os links dela", (await db.query("select count(*)::int n from public.roteiros_compartilhados")).rows[0].n === 0);
+
 console.log(`\n${ok} ok · ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

@@ -34,6 +34,7 @@ Abrindo o `index.html` direto no navegador o site também funciona, mas só com 
 - `supabase/004_mural.sql`: álbuns de lembranças, recados, amizades mais seguras, bloqueio por conta e denúncias
 - `supabase/005_contas_18.sql`: contas só para maiores de 18 (toda identidade passa a ser 18+)
 - `supabase/006_perfil_so_amigos.sql`: perfil "Só amigos" mostra um cartão para pedir amizade; "Só eu" não recebe pedidos
+- `supabase/007_compartilhar_e_erros.sql`: roteiros compartilhados por link (#/r/<código>) e registro de erros do site (tabela `erros_site`)
 - `supabase/testes/`: testes do SQL num Postgres local (PGlite)
 - `js/dados/perfis.js`: leitura e gravação de perfis no Supabase
 - `js/social/perfil.js`: páginas `#/@apelido`, `#/perfil` e `#/perfil/editar`
@@ -82,7 +83,7 @@ no Supabase (tabela `agenda_cache`) em vez da pasta `data/`.
    Use a conta pessoal (plano **Hobby**); não crie Team nem inicie o teste do Pro.
 2. **Supabase:** no projeto da Vercel, *Storage* (ou *Integrations*) → **Supabase** → escolha o plano **Free**.
    A integração cria as variáveis `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` (o site aceita também os nomes `NEXT_PUBLIC_…`).
-3. **Banco:** no painel do Supabase, *SQL Editor* → cole e rode [`supabase/schema.sql`](supabase/schema.sql) , depois [`supabase/002_perfis.sql`](supabase/002_perfis.sql) , [`supabase/003_limite_identidades.sql`](supabase/003_limite_identidades.sql) [`supabase/004_mural.sql`](supabase/004_mural.sql), [`supabase/005_contas_18.sql`](supabase/005_contas_18.sql) e [`supabase/006_perfil_so_amigos.sql`](supabase/006_perfil_so_amigos.sql) (só acrescentam/ajustam; é seguro rodar de novo).
+3. **Banco:** no painel do Supabase, *SQL Editor* → cole e rode [`supabase/schema.sql`](supabase/schema.sql) , depois [`supabase/002_perfis.sql`](supabase/002_perfis.sql) , [`supabase/003_limite_identidades.sql`](supabase/003_limite_identidades.sql) [`supabase/004_mural.sql`](supabase/004_mural.sql), [`supabase/005_contas_18.sql`](supabase/005_contas_18.sql) [`supabase/006_perfil_so_amigos.sql`](supabase/006_perfil_so_amigos.sql) e [`supabase/007_compartilhar_e_erros.sql`](supabase/007_compartilhar_e_erros.sql) (só acrescentam/ajustam; é seguro rodar de novo).
 4. **Login:** no Supabase, *Authentication → URL Configuration*: em **Site URL** coloque o endereço da Vercel
    (ex.: `https://travelers-friend.vercel.app`) e adicione-o também em **Redirect URLs** (e `http://localhost:5173` para testar).
 5. **Cron (opcional):** crie a variável `CRON_SECRET` na Vercel com um texto aleatório; o `/api/cron` passa a aceitar só a Vercel.
@@ -164,3 +165,9 @@ Os preços, horários e datas são aproximados. Os itens marcados como `ilustrat
 - **Bloquear** vale para a conta inteira (todas as identidades dos dois lados) e desfaz a amizade; só quem bloqueou desbloqueia.
 - **Denúncias** vão para a tabela `denuncias`. Para moderar: Supabase → *Table Editor* → `denuncias` (filtre `estado = aberta`),
   veja `alvo_tipo`/`alvo_id`, remova o conteúdo se for o caso e mude o estado para `analisada` ou `removida`.
+
+## Erros do site
+
+Quando algo quebra no navegador de alguém, `js/erros.js` registra a mensagem, a página e o navegador (nada pessoal) na tabela `erros_site` do Supabase (Table Editor → erros_site). Erros repetidos só aumentam a coluna `vezes`.
+
+Resumo diário por e-mail (opcional): crie uma conta gratuita em [resend.com](https://resend.com) com o e-mail que vai receber os avisos, gere uma API key e cadastre na Vercel (Settings → Environment Variables) `RESEND_API_KEY` e `AVISO_EMAIL`. O cron diário (`api/cron.js`) manda o resumo quando houver erro nas últimas 24 h.
