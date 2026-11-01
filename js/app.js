@@ -12,6 +12,7 @@ import "./social/perfil.js"; // registra #/@apelido, #/perfil e #/perfil/editar
 import "./social/identidades.js"; // registra #/identidades, #/identidades/nova e #/identidades/editar/<id>
 import "./social/mural.js"; // registra #/@apelido/album/<id> e #/lembrancas/...; álbuns e recados no perfil
 import "./social/amigos.js"; // registra #/amigos
+import "./social/viagens.js"; // registra #/viagens (Minhas viagens)
 
 (function () {
   "use strict";

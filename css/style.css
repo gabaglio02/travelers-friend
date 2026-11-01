@@ -1179,3 +1179,12 @@ body:not(.landing):not(.v-social) .trip-setup { order: 3; flex-basis: 100%; }
   body.landing .top-right { position: static; width: 100%; justify-content: center; order: -1; }
   body.landing .top-nav { justify-content: center; }
 }
+
+/* ---------- Minhas viagens ---------- */
+.vg-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
+.vg-card { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap;
+  padding: var(--s-3) var(--s-4); border: 2px solid var(--line); border-radius: var(--radius); background: var(--paper); }
+.vg-card.on { border-color: var(--ink); }
+.vg-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.vg-quando { font-size: 12.5px; font-weight: var(--w-medium); }
+.vg-botoes { display: flex; gap: var(--s-2); flex-wrap: wrap; }

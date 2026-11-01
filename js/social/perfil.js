@@ -558,3 +558,30 @@ rota("/perfil/editar", async () => {
 contaPronta().then((conta) => conta.aoMudarUsuario(() => {
   if (document.body.classList.contains("v-social")) window.dispatchEvent(new HashChangeEvent("hashchange"));
 }));
+
+// ---------- Perfil criado junto com o cadastro ----------
+// O cadastro guarda nome, @ e privacidade nos dados da conta; na primeira entrada o perfil é criado aqui.
+let criandoPerfil = false;
+async function criarPerfilDoCadastro(user) {
+  const md = user && user.user_metadata;
+  if (!md || !md.perfil_apelido || md.perfil_criado || criandoPerfil) return;
+  criandoPerfil = true;
+  const conta = await contaPronta();
+  const marcar = () => conta.cliente().auth.updateUser({ data: { perfil_criado: true } }).catch(() => {});
+  try {
+    if (await minhaPrincipal()) { await marcar(); return; }
+    const p = await salvarIdentidade({
+      tipo: "principal", nome: (md.nome || md.perfil_apelido).slice(0, 60), apelido: md.perfil_apelido, status: "disponivel",
+      tema: { cor: "#ffe14d", estampa: "lisa", moldura: "circulo" }, destinos_desejados: [], maior_de_idade: true,
+      privacidade: { ...PRIVACIDADE_PADRAO, perfil: md.perfil_privacidade || "publico" }
+    });
+    await marcar();
+    toast(`Seu perfil @${p.apelido} está pronto!`);
+  } catch (err) {
+    if (/identidades_apelido_idx|duplicate key/i.test(String(err && err.message))) {
+      await marcar();
+      toast(`O @${md.perfil_apelido} já está em uso. Escolha outro em Meu perfil.`);
+    } else console.warn("[perfil] criar no primeiro acesso:", err);
+  } finally { criandoPerfil = false; }
+}
+contaPronta().then((conta) => { criarPerfilDoCadastro(conta.usuario()); conta.aoMudarUsuario(criarPerfilDoCadastro); });

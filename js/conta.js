@@ -64,7 +64,21 @@
     nome: () => nomeDe(user),
     aoMudarUsuario: (fn) => ouvintes.push(fn),
     abrirLogin: () => abrir(sb ? "entrar" : "info"),
-    viagemAtual: () => viagemId
+    viagemAtual: () => viagemId,
+    // Minhas viagens (js/social/viagens.js). Antes de trocar, salva a viagem aberta.
+    viagens: async () => { await listarViagens(); return viagens.slice(); },
+    abrirViagem: async (id) => { clearTimeout(salvarTimer); await salvarAgora(); await abrirViagem(id); },
+    novaViagem: async () => {
+      clearTimeout(salvarTimer); await salvarAgora();
+      const v = await criarViagem(TF.newState(), "Nova viagem");
+      await abrirViagem(v.id);
+    },
+    apagarViagem: async (id) => {
+      if (id === viagemId) throw new Error("Não dá para apagar a viagem aberta.");
+      const { error } = await sb.from("viagens").delete().eq("id", id);
+      if (error) throw error;
+      viagens = viagens.filter((v) => v.id !== id);
+    }
   };
   window.dispatchEvent(new Event("tf:conta"));
   const avisarMudanca = () => ouvintes.forEach((fn) => { try { fn(user); } catch (err) { console.warn(err); } });
@@ -114,13 +128,14 @@
   function nomePadrao(st) {
     return "São Paulo · " + TF.fmtShort(st.start) + " → " + TF.fmtShort(st.end);
   }
+  const CAMPOS_LISTA = "id, nome, atualizado_em, inicio:dados->>start, fim:dados->>end, cidade:dados->>city";
   async function listarViagens() {
-    const { data, error } = await sb.from("viagens").select("id, nome, atualizado_em").order("atualizado_em", { ascending: false });
+    const { data, error } = await sb.from("viagens").select(CAMPOS_LISTA).order("atualizado_em", { ascending: false });
     if (error) throw error;
     viagens = data || [];
   }
   async function criarViagem(dados, nome) {
-    const { data, error } = await sb.from("viagens").insert({ nome: nome || nomePadrao(dados), dados }).select("id, nome, atualizado_em").single();
+    const { data, error } = await sb.from("viagens").insert({ nome: nome || nomePadrao(dados), dados }).select(CAMPOS_LISTA).single();
     if (error) throw error;
     viagens.unshift(data);
     return data;
@@ -302,12 +317,19 @@
             <button type="button" class="reset" data-acc="esqueci">Esqueci minha senha</button></p>
         </form>`,
       criar: () => cabecalho("Criar conta") + `<form class="modal-body acc-form" data-form="criar">${msg()}
-          <label class="field"><span>Nome</span><input name="nome" autocomplete="name" maxlength="60" required></label>
+          <label class="field"><span>Nome (aparece no seu perfil)</span><input name="nome" autocomplete="name" maxlength="60" required></label>
+          <label class="field"><span>Seu @ (endereço do perfil)</span>
+            <span class="pf-handle">@<input name="apelido" maxlength="24" placeholder="seu_nome" autocomplete="off" autocapitalize="none" spellcheck="false" required
+              title="3 a 24 letras, números ou _"></span></label>
+          <label class="field"><span>Quem pode ver seu perfil</span>
+            <select name="visibilidade"><option value="publico">Público — qualquer pessoa com o link</option>
+              <option value="amigos">Só amigos — os outros só veem nome e foto</option><option value="privado">Só eu — ninguém encontra</option></select></label>
           <label class="field"><span>E-mail</span><input type="email" name="email" autocomplete="email" required></label>
           <label class="field"><span>Senha (mínimo 8 caracteres)</span><input type="password" name="senha" minlength="8" autocomplete="new-password" required></label>
           <label class="field"><span>Repita a senha</span><input type="password" name="senha2" minlength="8" autocomplete="new-password" required></label>
           <label class="check"><input type="checkbox" name="idade" required> Tenho 18 anos ou mais</label>
           <label class="check"><input type="checkbox" name="aceite" required> Li e aceito a <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade e as regras de uso</a></label>
+          <p class="small-text muted">Seu perfil fica pronto quando você entrar pela primeira vez. Dá para mudar tudo depois em Meu perfil.</p>
           <button class="btn" type="submit">Criar conta</button>
           <p class="small-text">Já tem conta? <button type="button" class="reset" data-acc="entrar">Entrar</button></p>
         </form>`,
@@ -463,10 +485,15 @@
         }
         case "criar": {
           if (f.senha !== f.senha2) throw new Error("As senhas não são iguais.");
+          const apelido = f.apelido.trim().replace(/^@/, "").toLowerCase();
+          if (!/^[a-z0-9_]{3,24}$/.test(apelido)) throw new Error("O @ precisa ter de 3 a 24 letras sem acento, números ou _ (sem espaços).");
           const { data, error } = await sb.auth.signUp({
             email: f.email.trim(), password: f.senha,
             // Registro do aceite (idade mínima e versão da política) junto da conta
-            options: { data: { nome: f.nome.trim(), idade_minima: 18, politica_aceita: "2026-10-31" }, emailRedirectTo: location.origin + location.pathname }
+            // e o perfil escolhido, criado na primeira entrada (js/social/perfil.js)
+            options: { data: { nome: f.nome.trim(), idade_minima: 18, politica_aceita: "2026-10-31",
+              perfil_apelido: apelido, perfil_privacidade: ["publico", "amigos", "privado"].includes(f.visibilidade) ? f.visibilidade : "publico" },
+              emailRedirectTo: location.origin + location.pathname }
           });
           if (error) throw error;
           if (!data.session) { aviso = "Conta criada! Enviamos um e-mail para " + f.email.trim() + ". Confirme pelo link e depois entre."; return abrir("entrar"); }
@@ -513,6 +540,13 @@
       // Mesmo se uma foto falhar no meio, mostra as que já subiram.
       if (form.dataset.form === "fotos") { try { await carregarFotos(); } catch (_) { /* ignora */ } }
       render();
+      // O formulário é redesenhado com a mensagem de erro: devolve o que foi digitado (menos senhas e arquivos).
+      const novo = document.querySelector(`#accountDialog form[data-form="${form.dataset.form}"]`);
+      if (novo) Object.entries(f).forEach(([k, v]) => {
+        const el = novo.elements[k];
+        if (!el || el.type === "password" || el.type === "file" || typeof v !== "string") return;
+        if (el.type === "checkbox") el.checked = true; else el.value = v;
+      });
     } finally {
       if (botao && botao.isConnected) { botao.disabled = false; botao.textContent = botao.dataset.txt; }
     }
