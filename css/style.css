@@ -1151,3 +1151,7 @@ body.landing .social { display: none; }
 .cost-scroll, #costDays { max-width: 100%; overflow-x: auto; }
 .cost-table.por-dia td:first-child { white-space: nowrap; font-size: 13px; }
 .cost-table.por-dia td:first-child small { white-space: normal; }
+
+/* Sugestões de restaurante no bloco de almoço/jantar */
+.meal-sug { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+.meal-sug .btn { white-space: normal; text-align: left; }

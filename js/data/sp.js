@@ -265,6 +265,71 @@ window.TF_CITIES.sp = {
       comoChegar: "Metrô Vila Madalena (Linha 2-Verde) ou Fradique Coutinho (Linha 4), 10 min a pé.",
       descricao: "Região boêmia com bares, botecos e música ao vivo."
     },
+    // Restaurantes para almoço e jantar (pesquisa de out/2026: Guia Michelin/Bib Gourmand, Guia da Semana, BaresSP,
+    // São Paulo Secreto). Preço = gasto médio por pessoa, estimado; horários mudam — por isso o aviso "confirmar".
+    {
+      id: "casaporco", nome: "A Casa do Porco", categoria: "gastronomia", bairro: "República",
+      lat: -23.5440, lng: -46.6435, preco: 140, precoNota: "gasto médio por pessoa (estimado)", idade: "Livre", duracao: 90,
+      horario: { abre: "12:00", fecha: "23:00", fechado: [] },
+      comoChegar: "Metrô República (Linhas 3-Vermelha e 4-Amarela), 5 min a pé.",
+      descricao: "Restaurante dedicado ao porco, dos chefs Jefferson e Janaína Rueda. Está entre os 50 melhores do mundo e tem o selo Bib Gourmand do Guia Michelin.",
+      confirmar: "Fila longa, principalmente no fim de semana; aos domingos fecha mais cedo. Confirme no site do restaurante."
+    },
+    {
+      id: "mancini", nome: "Famiglia Mancini", categoria: "gastronomia", bairro: "Bela Vista",
+      lat: -23.5508, lng: -46.6463, preco: 150, precoNota: "gasto médio por pessoa (estimado)", idade: "Livre", duracao: 90,
+      horario: { abre: "11:30", fecha: "23:59", fechado: [] },
+      comoChegar: "Metrô Anhangabaú (Linha 3-Vermelha), 10 min a pé até a Rua Avanhandava.",
+      descricao: "Cantina italiana clássica, de porções fartas para dividir, numa rua decorada e cheia de restaurantes.",
+      confirmar: "Costuma ter espera no jantar e no fim de semana. Confirme o horário antes de ir."
+    },
+    {
+      id: "hocca", nome: "Sanduíche de mortadela — Hocca Bar", categoria: "gastronomia", bairro: "Centro",
+      lat: -23.5418, lng: -46.6296, preco: 70, precoNota: "gasto médio por pessoa (estimado)", idade: "Livre", duracao: 60,
+      horario: { abre: "08:30", fecha: "18:00", fechado: [0] },
+      comoChegar: "Dentro do Mercado Municipal — Metrô São Bento (Linha 1-Azul), 10 min a pé.",
+      descricao: "O famoso sanduíche de mortadela do Mercadão, com o pastel de bacalhau como acompanhamento clássico.",
+      confirmar: "Confirme se abre aos domingos (o Mercadão abre, mas o horário das lojas varia)."
+    },
+    {
+      id: "pontochic", nome: "Ponto Chic (Largo do Paissandu)", categoria: "gastronomia", bairro: "Centro",
+      lat: -23.5428, lng: -46.6385, preco: 60, precoNota: "gasto médio por pessoa (estimado)", idade: "Livre", duracao: 60,
+      horario: { abre: "12:00", fecha: "20:00", fechado: [0] },
+      comoChegar: "Metrô São Bento (Linha 1-Azul) ou República (Linhas 3 e 4), 5 min a pé.",
+      descricao: "Bar fundado em 1922, onde nasceu o bauru: rosbife, queijo derretido, tomate e picles no pão francês.",
+      confirmar: "As unidades de Perdizes e do Paraíso abrem até mais tarde."
+    },
+    {
+      id: "aska", nome: "Aska Lamen", categoria: "gastronomia", bairro: "Liberdade",
+      lat: -23.5598, lng: -46.6352, preco: 60, precoNota: "gasto médio por pessoa (estimado)", idade: "Livre", duracao: 60,
+      horario: { abre: "11:00", fecha: "22:00", fechado: [] },
+      comoChegar: "Metrô Liberdade (Linha 1-Azul), 5 min a pé pela Rua Galvão Bueno.",
+      descricao: "Lámen tradicional e barato, famoso pelo shio lámen e pelas filas na calçada.",
+      confirmar: "Não aceita reserva; chegue cedo. Confirme dias e horários (pode fechar entre o almoço e o jantar)."
+    },
+    {
+      id: "baianeira", nome: "A Baianeira (MASP)", categoria: "gastronomia", bairro: "Bela Vista",
+      lat: -23.5614, lng: -46.6557, preco: 90, precoNota: "gasto médio por pessoa (estimado)", idade: "Livre", duracao: 75,
+      horario: { abre: "11:30", fecha: "17:00", fechado: [1] },
+      comoChegar: "Dentro do MASP — Metrô Trianon-MASP (Linha 2-Verde).",
+      descricao: "Cozinha mineira e baiana com selo Bib Gourmand do Guia Michelin. Dá para almoçar e visitar o museu no mesmo passeio.",
+      confirmar: "Funciona no horário do museu. Confirme antes de ir."
+    },
+    {
+      id: "bellapaulista", nome: "Bella Paulista (padaria 24 horas)", categoria: "gastronomia", bairro: "Consolação",
+      lat: -23.5555, lng: -46.6617, preco: 60, precoNota: "gasto médio por pessoa (estimado)", idade: "Livre", duracao: 60,
+      horario: { abre: "00:00", fecha: "23:59", fechado: [] },
+      comoChegar: "Metrô Consolação (Linha 2-Verde), 10 min a pé pela Rua Haddock Lobo.",
+      descricao: "Padaria e restaurante aberto 24 horas perto da Av. Paulista: pratos, lanches, pizzas e doces a qualquer hora."
+    },
+    {
+      id: "mocoto", nome: "Mocotó", categoria: "gastronomia", bairro: "Vila Medeiros",
+      lat: -23.4945, lng: -46.5863, preco: 90, precoNota: "gasto médio por pessoa (estimado)", idade: "Livre", duracao: 90,
+      horario: { abre: "12:00", fecha: "22:00", fechado: [] },
+      comoChegar: "Fica na Zona Norte, longe do centro: o mais prático é ir de app de transporte.",
+      descricao: "Cozinha sertaneja do chef Rodrigo Oliveira, com selo Bib Gourmand: dadinhos de tapioca, baião de dois e escondidinho.",
+      confirmar: "Aos domingos fecha à tarde. Confirme o horário no site do restaurante."
+    },
     {
       id: "bixiga", nome: "Cantinas do Bixiga", categoria: "gastronomia", bairro: "Bela Vista",
       lat: -23.5585, lng: -46.6470, preco: 90, precoNota: "gasto médio por pessoa", idade: "Livre", duracao: 120,
@@ -465,6 +530,14 @@ window.TF_CITIES.sp = {
 
     // ---------- Esportes e estádios ----------
     {
+      id: "jockey", nome: "Jockey Club de São Paulo", categoria: "esporte", bairro: "Cidade Jardim",
+      lat: -23.5855, lng: -46.7010, preco: 0, idade: "Livre", duracao: 180,
+      horario: { abre: "13:00", fecha: "18:00", fechado: [0, 1, 2, 3, 4, 5] },
+      comoChegar: "CPTM Cidade Jardim (Linha 9-Esmeralda) + 10 min a pé, ou app de transporte (entrada pela Av. Lineu de Paula Machado, 1263).",
+      descricao: "Hipódromo de 1941 com arquibancadas art déco. Aos sábados à tarde há corridas de cavalo com entrada gratuita; comida e bebida são pagas à parte.",
+      confirmar: "As corridas são alvo de uma disputa judicial com a Prefeitura desde 2024. Confirme a programação no site do Jockey antes de ir."
+    },
+    {
       id: "kart-interlagos", nome: "Kart de aluguel — Kartódromo de Interlagos", categoria: "esporte", bairro: "Interlagos",
       lat: -23.7020, lng: -46.6960, preco: 120, precoNota: "por bateria; estimado", idade: "12+", duracao: 90,
       horario: { abre: "10:00", fecha: "22:00", fechado: [1] },
@@ -541,6 +614,21 @@ window.TF_CITIES.sp = {
     },
 
     // ---------- Mais na capital ----------
+    {
+      id: "casadevidro", nome: "Casa de Vidro (Lina Bo Bardi)", categoria: "ponto", bairro: "Morumbi",
+      lat: -23.5960, lng: -46.7230, preco: 50, precoNota: "estimado", idade: "Livre", duracao: 90,
+      horario: { abre: "10:00", fecha: "16:00", fechado: [1, 2] },
+      comoChegar: "Metrô São Paulo-Morumbi (Linha 4-Amarela) + 10 min de app, ou ônibus.",
+      descricao: "Casa da arquiteta Lina Bo Bardi, de 1951, suspensa no meio da mata: uma das joias da arquitetura moderna brasileira.",
+      confirmar: "Visitas guiadas com agendamento pelo Instituto Bardi. Confirme dias, horários e valor antes de ir."
+    },
+    {
+      id: "manequinho", nome: "Viveiro Manequinho Lopes", categoria: "parque", bairro: "Ibirapuera",
+      lat: -23.5852, lng: -46.6600, preco: 0, idade: "Livre", duracao: 45,
+      horario: { abre: "08:00", fecha: "17:00", fechado: [] },
+      comoChegar: "Dentro do Parque Ibirapuera, perto do portão 7 (Av. República do Líbano).",
+      descricao: "Viveiro de mudas pouco conhecido dentro do Ibirapuera, com estufas, lagos e muito verde. Bom para emendar com o parque."
+    },
     {
       id: "copan", comida: true, nome: "Edifício Copan", categoria: "ponto", bairro: "República",
       lat: -23.5465, lng: -46.6445, preco: 0, idade: "Livre", duracao: 45,

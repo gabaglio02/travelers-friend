@@ -198,6 +198,8 @@ import "./social/amigos.js"; // registra #/amigos
     };
   }
   const servesFood = (p) => p.categoria === "gastronomia" || !!p.comida;
+  // Show tem horário de início do artista: a pessoa não muda (só o tempo que fica, se quiser).
+  const horaTravada = (p) => p.categoria === "show" && !!p.inicio;
 
   // Refeições ativas de um dia: o padrão da viagem com os ajustes feitos só nesse dia.
   function mealsFor(iso) {
@@ -218,8 +220,9 @@ import "./social/amigos.js"; // registra #/amigos
     const covered = {};
     meals.forEach((m) => {
       // O lugar precisa estar acontecendo perto da hora da refeição (começa até 1h depois e ainda não acabou).
-      const r = base.rows.find((r) => servesFood(r.place) && r.start <= m.at + 60 && r.end >= m.at + 15
-        && (!r.place.horario || r.start < closeMin(r.place))); // fechado não serve refeição
+      const r = base.rows.find((r) => servesFood(r.place) && r.item.refeicao === m.key)
+        || base.rows.find((r) => servesFood(r.place) && r.start <= m.at + 60 && r.end >= m.at + 15
+          && (!r.place.horario || r.start < closeMin(r.place))); // fechado não serve refeição
       if (r) covered[m.key] = r.item.uid;
     });
     const res = scheduleCore(iso, day.items.length ? meals.filter((m) => !covered[m.key]) : []);
@@ -256,8 +259,8 @@ import "./social/amigos.js"; // registra #/amigos
     for (const item of day.items) {
       const p = placeById(item.id);
       if (!p) continue;
-      // Horário de início: o escolhido pela pessoa vale mais que o oficial do evento.
-      const fixed = item.at ? toMin(item.at) : p.inicio ? toMin(p.inicio) : null;
+      // Horário de início: o escolhido pela pessoa vale mais que o oficial do evento (menos em show, que é fixo).
+      const fixed = item.at && !horaTravada(p) ? toMin(item.at) : p.inicio ? toMin(p.inicio) : null;
       const opens = fixed == null && p.horario ? toMin(p.horario.abre) : null;
       let adjusted = "";
       // Repete até não haver mais refeição para encaixar antes deste lugar.
@@ -308,7 +311,7 @@ import "./social/amigos.js"; // registra #/amigos
       if (p.horario && !p.inicio && startT >= closeMin(p)) warnings.push("Você chegaria às " + toHHMM(startT) + ", depois do fechamento (" + p.horario.fecha + ").");
       else if (p.horario && !p.inicio && endT > closeMin(p)) warnings.push("Fecha às " + p.horario.fecha + " — sobra " + fmtDur(Math.max(0, closeMin(p) - startT)) + " de visita.");
       if (state.youngest < ageMin(p.idade)) warnings.push("Classificação " + p.idade + " — acima da idade da pessoa mais nova do grupo.");
-      if (item.at && p.inicio && item.at !== p.inicio) warnings.push("O horário oficial de início é " + p.inicio + ".");
+      if (item.at && p.inicio && !horaTravada(p) && item.at !== p.inicio) warnings.push("O horário oficial de início é " + p.inicio + ".");
       if (item.at && p.horario && !p.inicio && fixed < toMin(p.horario.abre)) warnings.push("Abre às " + p.horario.abre + ".");
       const row = { item, place: p, leg, fromStay: !!startStay && prev === startStay ? startStay.nome : "", wait, start: startT, end: endT, price: priceOn(p, iso), warnings, adjusted };
       rows.push(row);
@@ -338,6 +341,15 @@ import "./social/amigos.js"; // registra #/amigos
     dayData(iso).items.push({ uid: uid(), id, dur: p.duracao });
     save();
     toast(p.nome + " → " + fmtDay(iso));
+    renderAll();
+  }
+  // Restaurante escolhido no bloco de uma refeição: entra no lugar dela (antes do próximo item do dia).
+  function comerEm(id, refeicao, antesUid) {
+    const p = placeById(id), items = dayData(state.activeDay).items;
+    const i = items.findIndex((x) => x.uid === antesUid);
+    items.splice(i < 0 ? items.length : i, 0, { uid: uid(), id, dur: p.duracao, refeicao });
+    save();
+    toast(MEALS[refeicao].label + " em " + p.nome);
     renderAll();
   }
   function removeItem(u) {
@@ -649,7 +661,24 @@ import "./social/amigos.js"; // registra #/amigos
           <div class="stay-leg">🏨 ${e.change ? "Indo para a nova hospedagem" : "Volta para"}: ${esc(e.stayName)} · chegada por volta das ${toHHMM(e.end)}</div>
           ${modesHtml(e.leg, "data-retmode")}
         </div></li>`;
-    const mealHtml = (e) => {
+    // Restaurantes abertos durante a refeição, perto do lugar anterior (ou do seguinte, ou da hospedagem).
+    const ondeComer = (e, idx) => {
+      if (e.m.key === "cafe") return "";
+      const stopAntes = entries.slice(0, idx).reverse().find((x) => x.kind === "stop");
+      const stopDepois = entries.slice(idx + 1).find((x) => x.kind === "stop");
+      const ref = (stopAntes || stopDepois)?.row.place || stayPlace(prevStayFor(state.activeDay));
+      if (!ref) return "";
+      const abertos = activePlaces().filter((p) => p.categoria === "gastronomia" && !inDay.has(p.id)
+        && happensOn(p, state.activeDay) && !isClosed(p, state.activeDay) && state.youngest >= ageMin(p.idade)
+        && (!p.horario || (toMin(p.horario.abre) <= e.start && closeMin(p) >= e.end)));
+      const perto = abertos.map((p) => ({ p, km: distanceKm(ref, p) })).sort((a, b) => a.km - b.km).slice(0, 3);
+      if (!perto.length) return "";
+      const antes = stopDepois ? stopDepois.row.item.uid : "";
+      return `<div class="meal-sug"><span class="muted small-text">Onde comer perto:</span>
+        ${perto.map(({ p, km }) => `<button class="btn ghost small" data-comer="${p.id}" data-refeicao="${e.m.key}" data-antes="${antes}"
+          title="${esc(p.descricao || "")}">${esc(p.nome)} · ${kmTxt(km)} · ${money(p.preco)}</button>`).join("")}</div>`;
+    };
+    const mealHtml = (e, idx) => {
       const m = e.m;
       return `<li class="stop meal">
           <div class="time">${toHHMM(e.start)}<small>${toHHMM(e.end)}</small></div>
@@ -670,6 +699,7 @@ import "./social/amigos.js"; // registra #/amigos
               ${e.note ? `<span class="muted small-text">${esc(e.note)}</span>` : ""}
             </div>
             ${e.warnings.map((w) => `<div class="warning">⚠ ${esc(w)}</div>`).join("")}
+            ${ondeComer(e, idx)}
           </div>
         </li>`;
     };
@@ -687,7 +717,7 @@ import "./social/amigos.js"; // registra #/amigos
       ${off.map((k) => `<button class="reset" data-mealon="${k}">voltar ${MEALS[k].label.toLowerCase()}</button>`).join(" ")}</div></li>` : "");
 
     function entradaHtml(e, idx) {
-      if (e.kind === "meal") return mealHtml(e);
+      if (e.kind === "meal") return mealHtml(e, idx);
       if (e.kind === "missed") return missedHtml(e);
       if (e.kind === "return") return returnHtml(e);
       const r = e.row, i = n++;
@@ -712,8 +742,10 @@ import "./social/amigos.js"; // registra #/amigos
                 <button class="icon-btn" data-dur="${r.item.uid}" data-step="15" title="+15 min">+</button>
                 ${changed ? `<button class="reset" data-resetdur="${r.item.uid}">padrão ${fmtDur(r.place.duracao)}</button>` : `<span class="muted small-text">tempo sugerido</span>`}
               </span>
-              <label class="start-at">início <input type="time" data-itemat="${r.item.uid}" value="${r.item.at || toHHMM(r.start)}" title="Escolha o horário de chegada"></label>
-              ${r.item.at ? `<button class="reset" data-itematreset="${r.item.uid}">${r.place.inicio ? "horário oficial " + r.place.inicio : "horário automático"}</button>` : ""}
+              ${horaTravada(r.place)
+                ? `<span class="start-at">início <b>${r.place.inicio}</b> <span class="muted small-text">horário do show</span></span>`
+                : `<label class="start-at">início <input type="time" data-itemat="${r.item.uid}" value="${r.item.at || toHHMM(r.start)}" title="Escolha o horário de chegada"></label>
+              ${r.item.at ? `<button class="reset" data-itematreset="${r.item.uid}">${r.place.inicio ? "horário oficial " + r.place.inicio : "horário automático"}</button>` : ""}`}
               <span class="tag ${r.price === 0 ? "free" : ""}">${money(r.price)}${r.price && state.people > 1 ? " × " + state.people : ""}</span>
               ${ageBadge(r.place.idade)}
             </div>
@@ -1511,6 +1543,7 @@ import "./social/amigos.js"; // registra #/amigos
       if ((el = t.closest("[data-combo]"))) { addCombo(+el.dataset.combo); return; }
       if ((el = t.closest("[data-combodetail]"))) { addCombo(+el.dataset.combodetail, $("#detailDay").value); $("#detail").close(); return; }
       if ((el = t.closest("[data-add]"))) { e.stopPropagation(); addToDay(el.dataset.add); return; }
+      if ((el = t.closest("[data-comer]"))) { comerEm(el.dataset.comer, el.dataset.refeicao, el.dataset.antes); return; }
       if ((el = t.closest("[data-adddetail]"))) { addToDay(el.dataset.adddetail, $("#detailDay").value); $("#detail").close(); return; }
       if (t.closest("[data-close]")) { $("#detail").close(); return; }
       if ((el = t.closest("[data-remove]"))) { removeItem(el.dataset.remove); return; }
