@@ -532,3 +532,71 @@ window.TF_CITIES.sp.fotosLocal = {
   "tomie": "tomie",
   "embuguacu": "v:embuguacu"
 };
+
+// Restaurantes (01/11/2026): só os que têm foto livre no Commons que mostra o próprio lugar ou o prato da casa.
+// Fotos do Google Maps não podem ser usadas (direitos dos donos e de quem fotografou; os links expiram).
+Object.assign(window.TF_CITIES.sp.fotos, {
+  "mancini": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/40/Famiglia_Mancini%2C_S%C3%A3o_Paulo%2C_Brazil.jpg/500px-Famiglia_Mancini%2C_S%C3%A3o_Paulo%2C_Brazil.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=57120100",
+    "autor": "Wilfredor",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "pontochic": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/30/Ponto_Chic_%28S%C3%A3o_Paulo%2C_SP%2C_Brasil%29_.jpg/500px-Ponto_Chic_%28S%C3%A3o_Paulo%2C_SP%2C_Brasil%29_.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=63536091",
+    "autor": "Eugenio Hansen, OFS",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "bellapaulista": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/aa/Bella_Paulista_-_Sao_Paulo_%284808712780%29.jpg/500px-Bella_Paulista_-_Sao_Paulo_%284808712780%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=63305239",
+    "autor": "Yusuke Kawasaki from Tokyo, Japan",
+    "licenca": "CC BY 2.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by/2.0"
+  },
+  "r-bar-brahma": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/22/Bar_Brahma_1.JPG/500px-Bar_Brahma_1.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=7064672",
+    "autor": "Dornicke",
+    "licenca": "CC BY-SA 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
+  "r-rong-he": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Macarrao_Apimentafo_Com_Frutos_Do_Mar_%40_Rong_He_%287192360992%29.jpg/500px-Macarrao_Apimentafo_Com_Frutos_Do_Mar_%40_Rong_He_%287192360992%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=101800959",
+    "autor": "Wagner Tamanaha from Sao Paulo, Brazil",
+    "licenca": "CC BY-SA 2.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+  },
+  "r-tangara-jean-georges": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/E_esse_%C3%A9_o_restaurante_assinado_pelo_chef_Jean-Georges_Vongerichten_do_Pal%C3%A1cio_Tangar%C3%A1_%2834141186981%29.jpg/500px-E_esse_%C3%A9_o_restaurante_assinado_pelo_chef_Jean-Georges_Vongerichten_do_Pal%C3%A1cio_Tangar%C3%A1_%2834141186981%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=63472543",
+    "autor": "Shoichi Iwashita",
+    "licenca": "CC BY 2.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by/2.0"
+  },
+  "r-degas-pompeia": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d9/Degas_Pomp%C3%A9ia_-_Av._Pomp%C3%A9ia_796_-_Pomp%C3%A9ia_-_panoramio.jpg/500px-Degas_Pomp%C3%A9ia_-_Av._Pomp%C3%A9ia_796_-_Pomp%C3%A9ia_-_panoramio.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=57256068",
+    "autor": "CORRETOR-CARVALHO",
+    "licenca": "CC BY-SA 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
+  "r-la-casserole": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/21/Restaurante_La_Casserole_%2815318066796%29.jpg/500px-Restaurante_La_Casserole_%2815318066796%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=101798061",
+    "autor": "Wagner Tamanaha from Sao Paulo, Brazil",
+    "licenca": "CC BY-SA 2.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+  },
+  "hocca": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/38/Sandu%C3%ADche_de_Mortadela_%28Mercado_Municipal_de_S%C3%A3o_Paulo%29.jpg/500px-Sandu%C3%ADche_de_Mortadela_%28Mercado_Municipal_de_S%C3%A3o_Paulo%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=128281951",
+    "autor": "Eugenio Hansen, OFS",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  }
+});
