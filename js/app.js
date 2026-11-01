@@ -19,10 +19,16 @@ import "./social/amigos.js"; // registra #/amigos
   // ---------- Deslocamento ----------
   // Opções possíveis entre dois lugares, com tempo (min) e custo total do grupo.
   // Estimativas por distância em linha reta; metrô/trem só quando os dois lados têm estação.
-  function transportOptions(a, b) {
+  // Ônibus municipais de SP são grátis aos domingos e no Natal, Ano-Novo e aniversário da cidade (Domingão Tarifa Zero).
+  // Não vale para metrô, trem nem ônibus intermunicipais (EMTU).
+  const FERIADOS_TARIFA_ZERO = ["12-25", "01-01", "01-25"];
+  const onibusGratis = (iso, a, b) => !!iso && city().id === "sp" && !a.municipio && !b.municipio
+    && (parseISO(iso).getDay() === 0 || FERIADOS_TARIFA_ZERO.includes(iso.slice(5)));
+  function transportOptions(a, b, iso) {
     const km = distanceKm(a, b);
     const far = km > 15; // acima disso o trajeto usa mais rodovia / trem e a velocidade média sobe
     const fare = city().tarifaTransporte * state.people;
+    const busGratis = onibusGratis(iso, a, b);
     const hasMetro = (p) => /Metrô/.test(p.comoChegar || "");
     const hasTrain = (p) => /CPTM|Trem Expresso/.test(p.comoChegar || "");
     const noPublic = /Não há transporte público direto/i.test((a.comoChegar || "") + (b.comoChegar || ""));
@@ -33,7 +39,8 @@ import "./social/amigos.js"; // registra #/amigos
       if (hasMetro(a) && hasMetro(b)) opts.push({ id: "metro", min: Math.round(10 + km * 1.3 / 30 * 60), cost: fare });
       if ((hasTrain(a) || hasTrain(b)) && (hasMetro(a) || hasTrain(a)) && (hasMetro(b) || hasTrain(b)))
         opts.push({ id: "trem", min: Math.round(14 + km * 1.3 / 35 * 60), cost: fare * (far ? 1.5 : 1) });
-      opts.push({ id: "onibus", min: Math.round((far ? 20 : 8) + km * 1.35 / (far ? 30 : 16) * 60), cost: fare * (far ? 2 : 1) });
+      opts.push({ id: "onibus", min: Math.round((far ? 20 : 8) + km * 1.35 / (far ? 30 : 16) * 60), cost: busGratis ? 0 : fare * (far ? 2 : 1),
+        note: busGratis ? "grátis hoje (Tarifa Zero nos ônibus municipais)" : "" });
     }
     if (km > 0.8 || !opts.length) {
       opts.push({ id: "carro", min: Math.round(5 + km * 1.4 / (far ? 45 : 20) * 60), cost: Math.round((6 + 2.4 * km * 1.4) * Math.ceil(state.people / 4)) });
@@ -71,8 +78,8 @@ import "./social/amigos.js"; // registra #/amigos
   }
 
   // Escolha automática conforme a preferência; "mode" força uma opção específica do trecho.
-  function legInfo(a, b, mode) {
-    const opts = transportOptions(a, b);
+  function legInfo(a, b, mode, iso) {
+    const opts = transportOptions(a, b, iso);
     const km = opts[0].km;
     const by = (id) => opts.find((o) => o.id === id);
     const fastest = (ids) => opts.filter((o) => ids.includes(o.id)).sort((x, y) => x.min - y.min)[0];
@@ -185,6 +192,17 @@ import "./social/amigos.js"; // registra #/amigos
   }
   // Lugares e eventos ainda válidos (eventos que já passaram somem).
   const activePlaces = () => city().lugares.filter((p) => !isPast(p));
+  // Exposição que acontece num lugar já cadastrado (ex.: MASP, IMS) não vira card próprio:
+  // aparece dentro do lugar, que é o que a pessoa visita (com o mesmo ingresso).
+  function casaDe(p) {
+    if (p.categoria !== "exposicao" || !p.local) return null;
+    const l = placeById(p.local);
+    return l && l.categoria !== "exposicao" && !hasDates(l) ? l : null;
+  }
+  const listaveis = () => activePlaces().filter((p) => !casaDe(p));
+  // Exposições em cartaz no lugar (em algum dia da viagem, ou num dia específico).
+  const emCartaz = (lugar, iso) => activePlaces().filter((x) => casaDe(x) === lugar
+    && (iso ? eventOn(x, iso) : tripDays().some((d) => eventOn(x, d))));
   function priceOn(place, iso) {
     return (place.gratisDias || []).includes(parseISO(iso).getDay()) ? 0 : place.preco;
   }
@@ -269,7 +287,7 @@ import "./social/amigos.js"; // registra #/amigos
         if (t > m.janela[1] && t >= m.at) { missMeal(m, "passou do horário"); continue; }
         // Já está na hora de comer.
         if (t >= m.at - 10) { t = placeMeal(m, t, delayNote(m, t)); continue; }
-        const legMin = prev ? legInfo(prev, p, item.mode).min : 0;
+        const legMin = prev ? legInfo(prev, p, item.mode, iso).min : 0;
         const arrive = t + legMin;
         const s0 = fixed != null ? Math.max(arrive, fixed) : opens != null ? Math.max(arrive, opens) : arrive;
         const e0 = s0 + item.dur;
@@ -295,7 +313,7 @@ import "./social/amigos.js"; // registra #/amigos
       }
       const warnings = [];
       let leg = null;
-      if (prev) { leg = legInfo(prev, p, item.mode); t += leg.min; }
+      if (prev) { leg = legInfo(prev, p, item.mode, iso); t += leg.min; }
       let wait = 0;
       if (fixed != null) {
         if (t < fixed) { wait = fixed - t; t = fixed; }
@@ -328,7 +346,7 @@ import "./social/amigos.js"; // registra #/amigos
     // Volta para a hospedagem no fim do dia.
     let ret = null;
     if (endStay && rows.length) {
-      ret = legInfo(rows[rows.length - 1].place, endStay, day.returnMode);
+      ret = legInfo(rows[rows.length - 1].place, endStay, day.returnMode, iso);
       entries.push({ kind: "return", leg: ret, stayName: endStay.nome, change: !!startStay && startStay !== endStay, start: t, end: t + ret.min });
       t += ret.min;
     }
@@ -390,7 +408,7 @@ import "./social/amigos.js"; // registra #/amigos
   function filtered() {
     const q = ui.q.trim().toLowerCase();
     const days = tripDays();
-    return activePlaces().filter((p) => {
+    return listaveis().filter((p) => {
       if (ui.kind === "lugar" && hasDates(p)) return false;
       if (ui.kind === "evento" && !hasDates(p)) return false;
       if (ui.where === "capital" && p.municipio) return false;
@@ -502,9 +520,14 @@ import "./social/amigos.js"; // registra #/amigos
     return `<div class="planned">✓ No roteiro: ${days.map(({ d, n }) => `Dia ${n} (${fmtDay(d)})`).join(", ")}</div>`;
   }
 
+  function expoNota(p) {
+    const ex = emCartaz(p);
+    return ex.length ? `<div class="expo-nota">🖼 ${ex.length === 1 ? "1 exposição" : ex.length + " exposições"} em cartaz na sua viagem</div>` : "";
+  }
+
   function renderList() {
     const list = filtered();
-    $("#resultCount").textContent = list.length + " de " + activePlaces().length;
+    $("#resultCount").textContent = list.length + " de " + listaveis().length;
     const nEvents = activePlaces().filter(hasDates).length;
     $("#agendaInfo").textContent = agendaLabel() + " · " + nEvents + " eventos e exposições por vir";
     // Contagem por tipo (respeitando os outros filtros) e quantos filtros extras estão ligados.
@@ -522,6 +545,7 @@ import "./social/amigos.js"; // registra #/amigos
           <div class="kicker">${esc(CATEGORIES[p.categoria])} · ${esc(placeLabel(p))}${p.ilustrativo ? " · exemplo" : ""}</div>
           <h4><button type="button" class="pcard-titulo" data-open="${p.id}">${esc(p.nome)}</button></h4>
           ${fatosHtml(p)}
+          ${expoNota(p)}
           ${plannedNote(p.id)}
         </div>
         <button class="pcard-add" data-add="${p.id}" title="${added ? "Adicionar outra vez ao dia selecionado" : "Adicionar ao dia selecionado"}" aria-label="Adicionar ${esc(p.nome)} ao roteiro">+</button>
@@ -750,6 +774,7 @@ import "./social/amigos.js"; // registra #/amigos
               ${ageBadge(r.place.idade)}
             </div>
             <div class="how">🚇 ${esc(r.place.comoChegar)}</div>
+            ${emCartaz(r.place, state.activeDay).length ? `<div class="how">🖼 Em cartaz neste dia: ${emCartaz(r.place, state.activeDay).map((x) => esc(x.nome)).join(" · ")}</div>` : ""}
             ${r.meals.map((m) => `<div class="meal-covered">${m.icon} ${m.label} aqui — o lugar serve comida, então a refeição separada saiu do roteiro.</div>`).join("")}
             ${r.adjusted ? `<div class="how">⏱ ${esc(r.adjusted)}</div>` : ""}
             ${r.warnings.map((w) => `<div class="warning">⚠ ${esc(w)}</div>`).join("")}
@@ -772,7 +797,7 @@ import "./social/amigos.js"; // registra #/amigos
     const fromStay = !refs.length && !!dayStay;
     if (fromStay) refs = [dayStay];
     const planned = allPlannedIds();
-    const cands = activePlaces().filter((p) =>
+    const cands = listaveis().filter((p) =>
       !planned.has(p.id) && happensOn(p, iso) && !isClosed(p, iso) && state.youngest >= ageMin(p.idade));
     let list;
     if (refs.length) {
@@ -1018,6 +1043,14 @@ import "./social/amigos.js"; // registra #/amigos
 
 
   // ---------- Detalhe ----------
+  // Exposições em cartaz no lugar durante a viagem (no detalhe).
+  function expoLista(p) {
+    const ex = emCartaz(p);
+    if (!ex.length) return "";
+    return `<div class="expo-lista"><b>🖼 Em cartaz na sua viagem</b><ul>${ex.map((x) => `<li><b>${esc(x.nome.replace(/\s*[—(-]\s*(MASP|IMS)\)?$/, ""))}</b>
+      <span class="muted small-text"> · ${esc(datesLabel(x, true))}${x.preco !== p.preco ? " · " + esc(money(x.preco)) : ""}</span>
+      ${x.descricao ? `<div class="small-text">${esc(x.descricao)}</div>` : ""}</li>`).join("")}</ul></div>`;
+  }
   function openDetail(id) {
     const p = placeById(id);
     const days = tripDays();
@@ -1053,6 +1086,7 @@ import "./social/amigos.js"; // registra #/amigos
       ${foto ? `<p class="photo-credit">${foto.doLocal ? "Foto do local" : "Foto"}: ${esc(foto.autor)} · <a href="${esc(foto.licencaUrl || foto.pagina)}" target="_blank" rel="noopener">${esc(foto.licenca)}</a> · <a href="${esc(foto.pagina)}" target="_blank" rel="noopener">Wikimedia Commons</a></p>` : ""}
       <div class="modal-body">
         <p style="margin:0">${esc(p.descricao)}</p>
+        ${expoLista(p)}
         <div class="facts">
           <div class="fact"><span>Valor ${selo(precoConfirmado(p), "confirmado", "estimado")}</span><b>${money(p.preco)}</b>${p.precoNota ? `<div class="small-text muted">${esc(p.precoNota)}</div>` : ""}
             ${p.gratisDias?.length ? `<div class="small-text">Grátis: ${p.gratisDias.map((d) => WEEKDAYS_FULL[d]).join(", ")}</div>` : ""}</div>

@@ -1155,3 +1155,8 @@ body.landing .social { display: none; }
 /* Sugestões de restaurante no bloco de almoço/jantar */
 .meal-sug { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
 .meal-sug .btn { white-space: normal; text-align: left; }
+
+/* Exposições dentro de um lugar (card e detalhe) */
+.expo-nota { font-size: 12.5px; margin-top: 4px; }
+.expo-lista { background: var(--paper-2); border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 10px 12px; }
+.expo-lista ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 6px; }
