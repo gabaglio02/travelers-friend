@@ -600,3 +600,153 @@ Object.assign(window.TF_CITIES.sp.fotos, {
     "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
   }
 });
+
+// Shoppings e galerias (01/11/2026): fotos livres do Commons que mostram o próprio lugar.
+Object.assign(window.TF_CITIES.sp.fotos, {
+  "c-shopping-metro-itaquera": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f3/Shopping_Metr%C3%B4_Itaquera_-_1.jpg/500px-Shopping_Metr%C3%B4_Itaquera_-_1.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=65964140",
+    "autor": "Ajmcbarreto",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "c-shopping-metro-tatuape": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/92/Shopping_Metr%C3%B4_Tatuap%C3%A9_-_Avenida_Radial_Leste%2C_esquina_com_a_Rua_Tuiuti_%28Integrado_%C3%A0_Esta%C3%A7%C3%A3o_Tatuap%C3%A9_do_Metr%C3%B4%29_-_panoramio.jpg/500px-Shopping_Metr%C3%B4_Tatuap%C3%A9_-_Avenida_Radial_Leste%2C_esquina_com_a_Rua_Tuiuti_%28Integrado_%C3%A0_Esta%C3%A7%C3%A3o_Tatuap%C3%A9_do_Metr%C3%B4%29_-_panoramio.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=58670012",
+    "autor": "CORRETOR-CARVALHO",
+    "licenca": "CC BY-SA 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
+  "c-shopping-eldorado": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/17/Shopping_Eldorado%2C_Sao_Paulo%2C_Brazil_2016_1.jpg/500px-Shopping_Eldorado%2C_Sao_Paulo%2C_Brazil_2016_1.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=53543157",
+    "autor": "Photograph by Mike Peel (www.mikepeel.net).",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "c-shopping-center-norte": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/65/Shopping_Center_Norte_01.jpg/500px-Shopping_Center_Norte_01.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=5317926",
+    "autor": "Delma Paz from São Paulo, Brasil",
+    "licenca": "CC BY 2.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by/2.0"
+  },
+  "c-galeria-do-rock": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/76/S%C3%A3o_Paulo_-_Galeria_do_Rock_%2814755167589%29.jpg/500px-S%C3%A3o_Paulo_-_Galeria_do_Rock_%2814755167589%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=68031478",
+    "autor": "Gerardo Lazzari from São Paulo, Brasil",
+    "licenca": "CC BY 2.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by/2.0"
+  },
+  "c-shopping-cidade-sao-paulo": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/80/Shopping_Cidade_S%C3%A3o_Paulo.jpg/500px-Shopping_Cidade_S%C3%A3o_Paulo.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=57973304",
+    "autor": "Wilfredor",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "c-grand-plaza-shopping": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/aa/Santo_Andr%C3%A9_%28S%C3%A3o_Paulo%29_-_Grand_Plaza_Shopping_0037.jpg/500px-Santo_Andr%C3%A9_%28S%C3%A3o_Paulo%29_-_Grand_Plaza_Shopping_0037.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=4240041",
+    "autor": "Juliocatao",
+    "licenca": "Public domain"
+  },
+  "c-shopping-analia-franco": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ac/Shopping_An%C3%A1lia_Franco_%C3%A0_noite.JPG/500px-Shopping_An%C3%A1lia_Franco_%C3%A0_noite.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=8379851",
+    "autor": "Lukaaz",
+    "licenca": "CC BY 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by/3.0"
+  },
+  "c-shopping-sp-market": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e0/Shopping_SP_Market_-_Avenida_das_Na%C3%A7%C3%B5es_Unidas%2C_22540_-_Jurubatuba_-_panoramio.jpg/500px-Shopping_SP_Market_-_Avenida_das_Na%C3%A7%C3%B5es_Unidas%2C_22540_-_Jurubatuba_-_panoramio.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=57974684",
+    "autor": "CORRETOR-CARVALHO",
+    "licenca": "CC BY-SA 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
+  "c-shopping-metro-tucuruvi": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/95/Shopping_METRO-TUCURUVI.jpg/500px-Shopping_METRO-TUCURUVI.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=39614819",
+    "autor": "",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "c-mooca-plaza-shopping": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/04/Mooca_Plaza_Shopping%2C_S%C3%A3o_Paulo%2C_Brasil_-_panoramio.jpg/500px-Mooca_Plaza_Shopping%2C_S%C3%A3o_Paulo%2C_Brasil_-_panoramio.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=58942588",
+    "autor": "CORRETOR-CARVALHO",
+    "licenca": "CC BY-SA 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
+  "c-shopping-west-plaza": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f6/Shopping_West_Plaza_-_Avenida_Ant%C3%A1rtica%2C_380_-_Barra_Funda_-_panoramio.jpg/500px-Shopping_West_Plaza_-_Avenida_Ant%C3%A1rtica%2C_380_-_Barra_Funda_-_panoramio.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=57256133",
+    "autor": "CORRETOR-CARVALHO",
+    "licenca": "CC BY-SA 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
+  "c-maua-plaza-shopping": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c6/Mau%C3%A1_Plaza_Shopping.jpg/500px-Mau%C3%A1_Plaza_Shopping.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=46309912",
+    "autor": "Alessandro José Padin Ferreira",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "c-shopping-frei-caneca": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8c/Shopping_Frei_Caneca_-_panoramio.jpg/500px-Shopping_Frei_Caneca_-_panoramio.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=57131836",
+    "autor": "CORRETOR-CARVALHO",
+    "licenca": "CC BY-SA 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
+  "c-shopping-iguatemi": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/be/Shopping-IguatemiSP.webp/500px-Shopping-IguatemiSP.webp?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=133742704",
+    "autor": "Fernando Moraes",
+    "licenca": "CC BY 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by/4.0"
+  },
+  "c-conjunto-nacional": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c1/Facade_of_the_Conjunto_Nacional_cropped_version.jpg/500px-Facade_of_the_Conjunto_Nacional_cropped_version.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=35128571",
+    "autor": "Wilfredor",
+    "licenca": "CC0",
+    "licencaUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+  },
+  "c-shopping-cidade-jardim": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/da/Shopping_Cidade_Jardim.jpg/500px-Shopping_Cidade_Jardim.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=6054892",
+    "autor": "Lukaaz - Marcelo",
+    "licenca": "CC BY 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by/3.0"
+  },
+  "c-central-plaza-shopping": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/64/Central_Plaza_Shopping_-_Avenida_Dr._Francisco_Mesquita%2C_1000_-_panoramio.jpg/500px-Central_Plaza_Shopping_-_Avenida_Dr._Francisco_Mesquita%2C_1000_-_panoramio.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=58941862",
+    "autor": "CORRETOR-CARVALHO",
+    "licenca": "CC BY-SA 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
+  "c-galeria-metropole": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7f/S%C3%A3o_Paulo_-_Galeria_Metr%C3%B3pole_%283%29.jpg/500px-S%C3%A3o_Paulo_-_Galeria_Metr%C3%B3pole_%283%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=131256998",
+    "autor": "Sintegrity",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "c-plaza-shopping-carapicuiba": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a0/Plaza_Shopping_Carapicu%C3%ADba.png/500px-Plaza_Shopping_Carapicu%C3%ADba.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=53071230",
+    "autor": "Brazilianboy94",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "c-butanta-shopping": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f7/Shopping_Butant%C3%A3_-_panoramio.jpg/500px-Shopping_Butant%C3%A3_-_panoramio.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=54680948",
+    "autor": "enioprado",
+    "licenca": "CC BY-SA 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  }
+});

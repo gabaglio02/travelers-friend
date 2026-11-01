@@ -411,7 +411,7 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
     const q = ui.q.trim().toLowerCase();
     const days = tripDays();
     return listaveis().filter((p) => {
-      if (p.restaurante && !q && !ui.cats.has("gastronomia")) return false;
+      if ((p.restaurante || p.secundario) && !q && !ui.cats.has(p.categoria)) return false;
       if (ui.kind === "lugar" && hasDates(p)) return false;
       if (ui.kind === "evento" && !hasDates(p)) return false;
       if (ui.where === "capital" && p.municipio) return false;
@@ -523,6 +523,13 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
     return `<div class="planned">✓ No roteiro: ${days.map(({ d, n }) => `Dia ${n} (${fmtDay(d)})`).join(", ")}</div>`;
   }
 
+  // Restaurantes dentro de um shopping/galeria (campo "local" de sp-restaurantes.js), os mais bem avaliados primeiro.
+  const restDentro = (lugar) => activePlaces().filter((r) => r.local === lugar.id).sort((a, b) => b.nota - a.nota || b.avaliacoes - a.avaliacoes);
+  function dentroNota(p) {
+    if (p.categoria !== "compras") return "";
+    const r = restDentro(p).length, l = (p.lojasRoupa || []).length;
+    return r || l ? `<div class="expo-nota">${r ? "🍽 " + r + (r === 1 ? " restaurante" : " restaurantes") : ""}${r && l ? " · " : ""}${l ? "👕 lojas de roupa" : ""} aqui dentro</div>` : "";
+  }
   function expoNota(p) {
     const ex = emCartaz(p);
     return ex.length ? `<div class="expo-nota">🖼 ${ex.length === 1 ? "1 exposição" : ex.length + " exposições"} em cartaz na sua viagem</div>` : "";
@@ -530,11 +537,13 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
 
   function renderList() {
     const list = filtered();
-    $("#resultCount").textContent = list.length + " de " + listaveis().filter((p) => !p.restaurante || ui.cats.has("gastronomia") || ui.q.trim()).length;
+    $("#resultCount").textContent = list.length + " de " + listaveis().filter((p) => !(p.restaurante || p.secundario) || ui.cats.has(p.categoria) || ui.q.trim()).length;
     const nRest = activePlaces().filter((p) => p.restaurante).length;
+    const nCompras = activePlaces().filter((p) => p.categoria === "compras").length;
     const nEvents = activePlaces().filter(hasDates).length;
     $("#agendaInfo").textContent = agendaLabel() + " · " + nEvents + " eventos e exposições por vir"
-      + (nRest && !ui.cats.has("gastronomia") ? " · " + nRest + " restaurantes no filtro Gastronomia" : "");
+      + (nRest && !ui.cats.has("gastronomia") ? " · " + nRest + " restaurantes no filtro Gastronomia" : "")
+      + (nCompras && !ui.cats.has("compras") ? " · " + nCompras + " shoppings e galerias em Compras" : "");
     // Contagem por tipo (respeitando os outros filtros) e quantos filtros extras estão ligados.
     const kindAntes = ui.kind;
     ["", "lugar", "evento"].forEach((k) => { ui.kind = k; const n = filtered().length; const el = $("#kindCount" + ({ "": "All", lugar: "Lugar", evento: "Evento" })[k]); if (el) el.textContent = n; });
@@ -551,6 +560,7 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
           <h4><button type="button" class="pcard-titulo" data-open="${p.id}">${esc(p.nome)}</button></h4>
           ${fatosHtml(p)}
           ${expoNota(p)}
+          ${dentroNota(p)}
           ${plannedNote(p.id)}
         </div>
         <button class="pcard-add" data-add="${p.id}" title="${added ? "Adicionar outra vez ao dia selecionado" : "Adicionar ao dia selecionado"}" aria-label="Adicionar ${esc(p.nome)} ao roteiro">+</button>
@@ -701,7 +711,7 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
         && happensOn(p, state.activeDay) && !isClosed(p, state.activeDay) && state.youngest >= ageMin(p.idade)
         && (!p.horario || (toMin(p.horario.abre) <= e.start && closeMin(p) >= e.end)));
       // Até 3 km. Cada 0,1 de nota acima de 4,4 "vale" 300 m: um lugar ótimo um pouco mais longe passa na frente.
-      const perto = abertos.map((p) => ({ p, km: distanceKm(ref, p) })).filter((x) => x.km <= 3)
+      const perto = abertos.map((p) => ({ p, km: p.local && p.local === ref.id ? 0 : distanceKm(ref, p) })).filter((x) => x.km <= 3)
         .sort((a, b) => (a.km - ((a.p.nota || 4.5) - 4.4) * 3) - (b.km - ((b.p.nota || 4.5) - 4.4) * 3)).slice(0, 3);
       if (!perto.length) return "";
       const antes = stopDepois ? stopDepois.row.item.uid : "";
@@ -804,7 +814,7 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
     const fromStay = !refs.length && !!dayStay;
     if (fromStay) refs = [dayStay];
     const planned = allPlannedIds();
-    const cands = listaveis().filter((p) => !p.restaurante &&
+    const cands = listaveis().filter((p) => !p.restaurante && !p.secundario &&
       !planned.has(p.id) && happensOn(p, iso) && !isClosed(p, iso) && state.youngest >= ageMin(p.idade));
     let list;
     if (refs.length) {
@@ -1050,6 +1060,18 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
 
 
   // ---------- Detalhe ----------
+  // Shopping: restaurantes e lojas de roupa de dentro. Restaurante de shopping: em qual ele fica.
+  function dentroLista(p) {
+    if (p.local && placeById(p.local)) return `<p class="small-text" style="margin:0">🛍️ Fica dentro do <button class="link" data-open="${p.local}">${esc(placeById(p.local).nome)}</button>.</p>`;
+    if (p.categoria !== "compras") return "";
+    const rs = restDentro(p), lojas = p.lojasRoupa || [];
+    if (!rs.length && !lojas.length) return "";
+    return `<div class="expo-lista">
+      ${rs.length ? `<b>🍽 Para comer aqui dentro</b><ul>${rs.slice(0, 12).map((r) => `<li><button class="link" data-open="${r.id}">${esc(r.nome)}</button>
+        <span class="muted small-text"> · ★ ${String(r.nota).replace(".", ",")} · ${esc(money(r.preco))}</span></li>`).join("")}</ul>` : ""}
+      ${lojas.length ? `<b style="display:block;margin-top:${rs.length ? "10px" : "0"}">👕 Lojas de roupa</b><p class="small-text" style="margin:4px 0 0">${lojas.map(esc).join(" · ")}</p>` : ""}
+    </div>`;
+  }
   // Exposições em cartaz no lugar durante a viagem (no detalhe).
   function expoLista(p) {
     const ex = emCartaz(p);
@@ -1094,6 +1116,7 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
       <div class="modal-body">
         <p style="margin:0">${esc(p.descricao)}</p>
         ${expoLista(p)}
+        ${dentroLista(p)}
         <div class="facts">
           <div class="fact"><span>Valor ${selo(precoConfirmado(p), "confirmado", "estimado")}</span><b>${money(p.preco)}</b>${p.precoNota ? `<div class="small-text muted">${esc(p.precoNota)}</div>` : ""}
             ${p.gratisDias?.length ? `<div class="small-text">Grátis: ${p.gratisDias.map((d) => WEEKDAYS_FULL[d]).join(", ")}</div>` : ""}</div>

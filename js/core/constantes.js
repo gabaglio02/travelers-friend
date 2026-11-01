@@ -16,6 +16,7 @@ export const CATEGORIES = {
   teatro: "Teatro & concertos",
   festival: "Festivais",
   gastronomia: "Gastronomia",
+  compras: "Compras & shoppings",
   noite: "Bares & noite",
   exposicao: "Exposições temporárias",
   trilha: "Trilhas & natureza",
@@ -62,5 +63,5 @@ export const MEALS = {
 // Ilustração de cada categoria (usada quando o lugar não tem foto livre).
 export const CAT_ICON = {
   ponto: "📍", museu: "🏛️", parque: "🌳", show: "🎤", teatro: "🎭", festival: "🎪",
-  gastronomia: "🍽️", noite: "🍸", exposicao: "🖼️", trilha: "🥾", esporte: "⚽"
+  gastronomia: "🍽️", compras: "🛍️", noite: "🍸", exposicao: "🖼️", trilha: "🥾", esporte: "⚽"
 };

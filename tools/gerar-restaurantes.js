@@ -3,10 +3,14 @@
 // coleta.json: lista de { q, nome, lat, lng, nota, n, tipo, end, desc, h24 } (resultados de buscas "restaurantes bem avaliados <bairro>").
 const fs = require("fs"), path = require("path");
 const raiz = process.argv[2];
-const brutos = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+// Um ou mais arquivos de coleta; os de dentro dos shoppings (tools/gerar-compras.js) trazem "local".
+const brutos = process.argv.slice(3).flatMap((a) => JSON.parse(fs.readFileSync(a, "utf8")));
+const vistos = new Set();
+brutos.sort((a, b) => (b.local ? 1 : 0) - (a.local ? 1 : 0)); // o registro "de dentro" do shopping vence o da busca por bairro
 global.window = {};
 require(path.join(raiz, "js/data/sp.js"));
 require(path.join(raiz, "js/data/sp-eventos.js"));
+if (fs.existsSync(path.join(raiz, "js/data/sp-compras.js"))) require(path.join(raiz, "js/data/sp-compras.js"));
 const lugares = window.TF_CITIES.sp.lugares;
 const atracoes = lugares.filter((p) => p.categoria !== "gastronomia" && p.lat && !/a confirmar|secreto/i.test(p.bairro || ""));
 const km = (a, b) => { const t = (x) => x * Math.PI / 180; const d = Math.sin(t(b.lat - a.lat) / 2) ** 2 + Math.cos(t(a.lat)) * Math.cos(t(b.lat)) * Math.sin(t(b.lng - a.lng) / 2) ** 2; return 12742 * Math.asin(Math.sqrt(d)); };
@@ -48,7 +52,11 @@ const usados = new Set(lugares.map((p) => p.id));
 const saida = [];
 for (const r of brutos) {
   const pequenaCidade = /Paranapiacaba|Pirapora|Perus|Jaragu|Trememb|Jabaquara/.test(r.q);
-  const bom = r.nota >= 4.5 || (r.nota >= 4.4 && r.n >= 1500) || (pequenaCidade && r.nota >= 4.3);
+  // Dentro de shopping (praça de alimentação): 4,3+ com 100+ avaliações.
+  const bom = r.nota >= 4.5 || (r.nota >= 4.4 && r.n >= 1500) || (pequenaCidade && r.nota >= 4.3) || (r.local && r.nota >= 4.3 && r.n >= 100);
+  const chave = sem(r.nome) + "|" + r.lat.toFixed(3);
+  if (vistos.has(chave)) continue;
+  vistos.add(chave);
   if (!bom) continue;
   if (jaTem.some((n) => sem(r.nome).includes(n.split(" (")[0]) || n.includes(sem(r.nome)))) continue;
   // Perto de alguma atração do site (até 3 km).
@@ -68,7 +76,7 @@ for (const r of brutos) {
     horario: r.h24 ? { abre: "00:00", fecha: "23:59", fechado: [] } : { abre: pf.h[0], fecha: pf.h[1], fechado: [] },
     comoChegar: (endereco ? endereco + " — " : "") + (comTransporte ? "perto do " + estacao(comTransporte.p.comoChegar) + "." : "app de transporte ou ônibus."),
     descricao: `${r.tipo}${r.desc ? " — " + r.desc.replace(/\.$/, "") : ""}. Nota ${fmtNota(r.nota)} no Google Maps (${fmtN(r.n)} avaliações).`,
-    nota: r.nota, avaliacoes: r.n
+    nota: r.nota, avaliacoes: r.n, ...(r.local ? { local: r.local } : {})
   });
 }
 saida.sort((a, b) => a.bairro.localeCompare(b.bairro) || b.nota - a.nota);

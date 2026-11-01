@@ -175,3 +175,9 @@ Resumo diário por e-mail (opcional): crie uma conta gratuita em [resend.com](ht
 ## Restaurantes
 
 `js/data/sp-restaurantes.js` tem ~430 restaurantes bem avaliados (nota 4,5+ no Google Maps, ou 4,4 com 1.500+ avaliações) a até 3 km das atrações. É gerado por `tools/gerar-restaurantes.js` a partir de uma coleta de buscas "restaurantes bem avaliados <bairro>" no Google Maps — não edite à mão. No Explorar eles aparecem pelo filtro Gastronomia ou pela busca; no roteiro, em "Onde comer perto" (até 3 km, priorizando os mais bem avaliados).
+
+## Compras (shoppings, galerias e outlets)
+
+`js/data/sp-compras.js` tem ~110 shoppings, galerias de roupas e outlets (nota 4,2+ e 500+ avaliações no Google Maps; galerias 4,1+ e 300+). Os mais conhecidos aparecem no "Tudo" do Explorar; os outros, pelo filtro Compras ou pela busca. Cada um mostra as lojas de roupa e os restaurantes de dentro (os restaurantes ficam em `sp-restaurantes.js` com o campo `local`).
+
+Para refazer: colete no Google Maps ("shopping center", "galeria de roupas", "outlet"; e, para cada um, "restaurantes no <shopping>" e "lojas de roupa no <shopping>"), rode `node tools/gerar-compras.js <projeto> compras.json dentro.json rest-dentro.json` e depois `node tools/gerar-restaurantes.js <projeto> restaurantes.json rest-dentro.json`. Bairro e cidade vêm do OpenStreetMap (com cache).
