@@ -171,3 +171,7 @@ Os preços, horários e datas são aproximados. Os itens marcados como `ilustrat
 Quando algo quebra no navegador de alguém, `js/erros.js` registra a mensagem, a página e o navegador (nada pessoal) na tabela `erros_site` do Supabase (Table Editor → erros_site). Erros repetidos só aumentam a coluna `vezes`.
 
 Resumo diário por e-mail (opcional): crie uma conta gratuita em [resend.com](https://resend.com) com o e-mail que vai receber os avisos, gere uma API key e cadastre na Vercel (Settings → Environment Variables) `RESEND_API_KEY` e `AVISO_EMAIL`. O cron diário (`api/cron.js`) manda o resumo quando houver erro nas últimas 24 h.
+
+## Restaurantes
+
+`js/data/sp-restaurantes.js` tem ~430 restaurantes bem avaliados (nota 4,5+ no Google Maps, ou 4,4 com 1.500+ avaliações) a até 3 km das atrações. É gerado por `tools/gerar-restaurantes.js` a partir de uma coleta de buscas "restaurantes bem avaliados <bairro>" no Google Maps — não edite à mão. No Explorar eles aparecem pelo filtro Gastronomia ou pela busca; no roteiro, em "Onde comer perto" (até 3 km, priorizando os mais bem avaliados).

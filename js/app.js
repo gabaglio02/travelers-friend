@@ -411,6 +411,7 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
     const q = ui.q.trim().toLowerCase();
     const days = tripDays();
     return listaveis().filter((p) => {
+      if (p.restaurante && !q && !ui.cats.has("gastronomia")) return false;
       if (ui.kind === "lugar" && hasDates(p)) return false;
       if (ui.kind === "evento" && !hasDates(p)) return false;
       if (ui.where === "capital" && p.municipio) return false;
@@ -493,7 +494,7 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
     return `<div class="facts-line">
         ${precoHtml(p, iso)}
         <span class="f-dur">${fmtDur(p.duracao)}</span>
-        ${ageBadge(p.idade)}
+        ${p.nota ? `<span class="f-nota" title="Nota no Google Maps (${p.avaliacoes.toLocaleString("pt-BR")} avaliações)">★ ${String(p.nota).replace(".", ",")}</span>` : ageBadge(p.idade)}
       </div>
       ${disp.txt ? `<div class="avail ${disp.cls}">${esc(disp.txt)}</div>` : ""}`;
   }
@@ -529,9 +530,11 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
 
   function renderList() {
     const list = filtered();
-    $("#resultCount").textContent = list.length + " de " + listaveis().length;
+    $("#resultCount").textContent = list.length + " de " + listaveis().filter((p) => !p.restaurante || ui.cats.has("gastronomia") || ui.q.trim()).length;
+    const nRest = activePlaces().filter((p) => p.restaurante).length;
     const nEvents = activePlaces().filter(hasDates).length;
-    $("#agendaInfo").textContent = agendaLabel() + " · " + nEvents + " eventos e exposições por vir";
+    $("#agendaInfo").textContent = agendaLabel() + " · " + nEvents + " eventos e exposições por vir"
+      + (nRest && !ui.cats.has("gastronomia") ? " · " + nRest + " restaurantes no filtro Gastronomia" : "");
     // Contagem por tipo (respeitando os outros filtros) e quantos filtros extras estão ligados.
     const kindAntes = ui.kind;
     ["", "lugar", "evento"].forEach((k) => { ui.kind = k; const n = filtered().length; const el = $("#kindCount" + ({ "": "All", lugar: "Lugar", evento: "Evento" })[k]); if (el) el.textContent = n; });
@@ -697,12 +700,14 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
       const abertos = activePlaces().filter((p) => p.categoria === "gastronomia" && !inDay.has(p.id)
         && happensOn(p, state.activeDay) && !isClosed(p, state.activeDay) && state.youngest >= ageMin(p.idade)
         && (!p.horario || (toMin(p.horario.abre) <= e.start && closeMin(p) >= e.end)));
-      const perto = abertos.map((p) => ({ p, km: distanceKm(ref, p) })).sort((a, b) => a.km - b.km).slice(0, 3);
+      // Até 3 km. Cada 0,1 de nota acima de 4,4 "vale" 300 m: um lugar ótimo um pouco mais longe passa na frente.
+      const perto = abertos.map((p) => ({ p, km: distanceKm(ref, p) })).filter((x) => x.km <= 3)
+        .sort((a, b) => (a.km - ((a.p.nota || 4.5) - 4.4) * 3) - (b.km - ((b.p.nota || 4.5) - 4.4) * 3)).slice(0, 3);
       if (!perto.length) return "";
       const antes = stopDepois ? stopDepois.row.item.uid : "";
       return `<div class="meal-sug"><span class="muted small-text">Onde comer perto:</span>
         ${perto.map(({ p, km }) => `<button class="btn ghost small" data-comer="${p.id}" data-refeicao="${e.m.key}" data-antes="${antes}"
-          title="${esc(p.descricao || "")}">${esc(p.nome)} · ${kmTxt(km)} · ${money(p.preco)}</button>`).join("")}</div>`;
+          title="${esc(p.descricao || "")}">${esc(p.nome)} · ${kmTxt(km)}${p.nota ? " · ★ " + String(p.nota).replace(".", ",") : ""} · ${money(p.preco)}</button>`).join("")}</div>`;
     };
     const mealHtml = (e, idx) => {
       const m = e.m;
@@ -799,7 +804,7 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
     const fromStay = !refs.length && !!dayStay;
     if (fromStay) refs = [dayStay];
     const planned = allPlannedIds();
-    const cands = listaveis().filter((p) =>
+    const cands = listaveis().filter((p) => !p.restaurante &&
       !planned.has(p.id) && happensOn(p, iso) && !isClosed(p, iso) && state.youngest >= ageMin(p.idade));
     let list;
     if (refs.length) {
