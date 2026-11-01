@@ -19,9 +19,9 @@ export async function atualizarAvisoAmigos() {
     const conta = await contaPronta();
     if (!conta.cliente() || !conta.usuario()) { el.hidden = true; return; }
     const n = (await M.minhasAmizades()).filter((a) => a.estado === "pendente" && !a.enviado).length;
-    el.textContent = n;
+    el.textContent = n > 99 ? "99+" : n;
     el.hidden = !n;
-    el.setAttribute("aria-label", `${n} pedido(s) de amizade`);
+    el.setAttribute("aria-label", n === 1 ? "1 pedido de amizade" : `${n > 99 ? "mais de 99" : n} pedidos de amizade`);
   } catch (_) { el.hidden = true; } // banco ainda sem a 004: sem contador
 }
 contaPronta().then((conta) => { atualizarAvisoAmigos(); conta.aoMudarUsuario(atualizarAvisoAmigos); });

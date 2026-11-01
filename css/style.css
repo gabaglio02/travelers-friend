@@ -534,10 +534,10 @@ body.landing #ageBadge { display: none; }
 .account-btn:hover { background: var(--paper); color: var(--ink); }
 .account-btn.logged { background: var(--accent); color: var(--ink); border-color: var(--accent); }
 .account-btn small { font-family: var(--mono); font-size: 11px; opacity: .8; }
-body.landing .account-btn { position: absolute; top: 16px; right: 16px; }
+body.landing .top-right { position: absolute; top: 16px; right: 16px; }
 @media (max-width: 820px) {
   body:not(.landing) .brand { order: -2; }
-  body:not(.landing) .account-btn { order: -1; margin-left: auto; }
+
 }
 
 .acc-form { display: flex; flex-direction: column; gap: 10px; }
@@ -797,7 +797,7 @@ body.landing .account-btn { position: absolute; top: 16px; right: 16px; }
 .top-nav { display: none; gap: var(--s-4); align-items: center; }
 .top-nav a { color: var(--paper); text-decoration: none; font-size: var(--t-sm); opacity: .8; }
 .top-nav a:hover { opacity: 1; text-decoration: underline; }
-body.v-social .top-nav { display: flex; margin-left: auto; }
+
 body.v-social .trip-setup, body.v-social .layout, body.v-social .mobile-tabs { display: none !important; }
 body.v-social .topbar { align-items: center; }
 body.landing .social { display: none; }
@@ -915,7 +915,7 @@ body.landing .social { display: none; }
   .pf-visitados li { grid-template-columns: 56px 1fr; }
   .pf-visitados li > .link { grid-column: 2; justify-self: start; }
   .top-nav { gap: var(--s-3); }
-  body.v-social .account-btn { order: 0; margin-left: 0; }
+
 }
 
 /* =====================================================================
@@ -1160,3 +1160,22 @@ body.landing .social { display: none; }
 .expo-nota { font-size: 12.5px; margin-top: 4px; }
 .expo-lista { background: var(--paper-2); border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 10px 12px; }
 .expo-lista ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 6px; }
+
+/* ---------- Menu do topo (introdução, planejador e páginas sociais) ---------- */
+.top-right { display: flex; align-items: center; gap: var(--s-5); margin-left: auto; }
+.top-nav { display: flex; flex-wrap: wrap; }
+.top-nav a { position: relative; }
+/* Pedidos de amizade: bolinha amarela no canto inferior direito de "Amigos" (até "99+") */
+.top-nav .nav-badge { position: absolute; right: -14px; bottom: -11px; margin: 0; min-width: 19px; height: 19px;
+  border: 2px solid var(--ink); font-family: var(--mono); font-size: 10.5px; }
+.top-nav .nav-badge[hidden] { display: none; }
+/* Planejador: marca, menu e conta na primeira linha; a busca da viagem embaixo, na largura toda */
+body:not(.landing):not(.v-social) .topbar { align-items: center; row-gap: 12px; }
+body:not(.landing):not(.v-social) .trip-setup { order: 3; flex-basis: 100%; }
+@media (max-width: 820px) {
+  .topbar .top-right { flex-wrap: wrap; justify-content: flex-end; gap: var(--s-3); }
+  .top-nav { gap: var(--s-2) var(--s-3); justify-content: flex-end; padding-right: 16px; } /* espaço para a bolinha "99+" */
+  /* Introdução no celular: menu e conta numa faixa no alto, sem cobrir o logo */
+  body.landing .top-right { position: static; width: 100%; justify-content: center; order: -1; }
+  body.landing .top-nav { justify-content: center; }
+}
