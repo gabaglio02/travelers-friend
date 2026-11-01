@@ -217,7 +217,7 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
       jantar: { on: true, at: "19:30", dur: 75 }
     };
   }
-  const servesFood = (p) => p.categoria === "gastronomia" || !!p.comida;
+  const servesFood = (p) => p.categoria === "gastronomia" || !!p.comida || (p.categoria === "compras" && restDentro(p).length > 0);
   // Show tem horário de início do artista: a pessoa não muda (só o tempo que fica, se quiser).
   const horaTravada = (p) => p.categoria === "show" && !!p.inicio;
 
@@ -705,7 +705,8 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
       if (e.m.key === "cafe") return "";
       const stopAntes = entries.slice(0, idx).reverse().find((x) => x.kind === "stop");
       const stopDepois = entries.slice(idx + 1).find((x) => x.kind === "stop");
-      const ref = (stopAntes || stopDepois)?.row.place || stayPlace(prevStayFor(state.activeDay));
+      const ref = [stopAntes, stopDepois].map((x) => x && x.row.place).find((p) => p && p.categoria === "compras" && restDentro(p).length)
+        || (stopAntes || stopDepois)?.row.place || stayPlace(prevStayFor(state.activeDay));
       if (!ref) return "";
       const abertos = activePlaces().filter((p) => p.categoria === "gastronomia" && !inDay.has(p.id)
         && happensOn(p, state.activeDay) && !isClosed(p, state.activeDay) && state.youngest >= ageMin(p.idade)
@@ -717,7 +718,7 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
       const antes = stopDepois ? stopDepois.row.item.uid : "";
       return `<div class="meal-sug"><span class="muted small-text">Onde comer perto:</span>
         ${perto.map(({ p, km }) => `<button class="btn ghost small" data-comer="${p.id}" data-refeicao="${e.m.key}" data-antes="${antes}"
-          title="${esc(p.descricao || "")}">${esc(p.nome)} · ${kmTxt(km)}${p.nota ? " · ★ " + String(p.nota).replace(".", ",") : ""} · ${money(p.preco)}</button>`).join("")}</div>`;
+          title="${esc(p.descricao || "")}">${esc(p.nome)} · ${p.local && p.local === ref.id ? "aqui dentro" : kmTxt(km)}${p.nota ? " · ★ " + String(p.nota).replace(".", ",") : ""} · ${money(p.preco)}</button>`).join("")}</div>`;
     };
     const mealHtml = (e, idx) => {
       const m = e.m;
@@ -792,7 +793,11 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
             </div>
             <div class="how">🚇 ${esc(r.place.comoChegar)}</div>
             ${emCartaz(r.place, state.activeDay).length ? `<div class="how">🖼 Em cartaz neste dia: ${emCartaz(r.place, state.activeDay).map((x) => esc(x.nome)).join(" · ")}</div>` : ""}
-            ${r.meals.map((m) => `<div class="meal-covered">${m.icon} ${m.label} aqui — o lugar serve comida, então a refeição separada saiu do roteiro.</div>`).join("")}
+            ${r.meals.map((m) => r.place.categoria === "compras"
+              ? `<div class="meal-covered">${m.icon} ${m.label} aqui dentro — o shopping tem restaurantes:</div>
+                 <div class="meal-sug">${restDentro(r.place).filter((x) => !x.horario || (toMin(x.horario.abre) <= m.at && closeMin(x) >= m.at + m.dur)).slice(0, 3)
+                   .map((x) => `<button class="btn ghost small" data-open="${x.id}" title="${esc(x.descricao || "")}">${esc(x.nome)} · ★ ${String(x.nota).replace(".", ",")} · ${money(x.preco)}</button>`).join("")}</div>`
+              : `<div class="meal-covered">${m.icon} ${m.label} aqui — o lugar serve comida, então a refeição separada saiu do roteiro.</div>`).join("")}
             ${r.adjusted ? `<div class="how">⏱ ${esc(r.adjusted)}</div>` : ""}
             ${r.warnings.map((w) => `<div class="warning">⚠ ${esc(w)}</div>`).join("")}
             ${r.place.confirmar ? `<div class="how">ℹ ${esc(r.place.confirmar)}</div>` : ""}

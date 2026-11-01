@@ -91,7 +91,14 @@ for (const c of brutos.sort((a, b) => b.n - a.n)) {
     ...(DESTAQUE.test(c.nome) ? {} : { secundario: true })
   });
   // Restaurantes de dentro: vão para o gerador de restaurantes com "local" = este shopping.
-  d.rest.forEach((r) => restDentro.push({ q: c.nome, nome: r.nome, lat: +r.lat.toFixed(5), lng: +r.lng.toFixed(5), nota: r.nota, n: r.n,
+  // O Maps às vezes devolve o próprio shopping ("Shopping Iguatemi São Paulo") ou cola o nome dele no do restaurante
+  // ("Shopping Eldorado Outback"): tira o nome do shopping do começo e descarta o que sobrar vazio.
+  const semShopping = (n) => {
+    const ini = new RegExp("^(shopping\\s+)?" + nucleo.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/ /g, "\\s*") + "(\\s*shopping)?(\\s+s[aã]o paulo)?[\\s:–—-]*", "i");
+    const m = sem(n).match(ini);
+    return (m ? n.slice(m[0].length) : n).split(/ · | \| /)[0].trim();
+  };
+  d.rest.filter((r) => semShopping(r.nome).length > 2 && !/^shopping\b/i.test(semShopping(r.nome))).forEach((r) => restDentro.push({ q: c.nome, nome: semShopping(r.nome), lat: +r.lat.toFixed(5), lng: +r.lng.toFixed(5), nota: r.nota, n: r.n,
     tipo: r.tipo.split(" · ")[0].trim(), end: r.tipo.split(" · ").slice(2).join(" · ").trim(), desc: "", h24: 0, local: id }));
 }
 const js = `/*
