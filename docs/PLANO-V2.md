@@ -1,7 +1,7 @@
 # Traveler's Friend v2 — auditoria e plano
 
 Branch de trabalho: `nova-versao` · Backup da versão no ar: tag `v1.0` (bf0d998).
-Status: **Etapas 0 a 5 concluídas** na branch `nova-versao` (com `002`, `003` e `004` rodados no Supabase; `005` — contas só 18+ — criado em 31/10/2026). Falta só a checklist da seção 6 para publicar na `main`.
+Status: **Etapas 0 a 5 concluídas** na branch `nova-versao` (com `002`, `003` e `004` rodados no Supabase; `005` — contas só 18+ — rodado em 31/10/2026). Falta só a checklist da seção 6 para publicar na `main`.
 
 ---
 
