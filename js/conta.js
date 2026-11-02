@@ -447,7 +447,11 @@
         case "abrir": await abrirViagem(el.dataset.id); return abrir("conta");
         case "renomear": aviso = el.dataset.id + "|"; return abrir("renomear");
         case "apagar-viagem": {
-          const { error } = await sb.from("viagens").delete().eq("id", el.dataset.id);
+          // Mesma confirmação da página Minhas viagens (js/social/viagens.js).
+          const { confirmar } = await import(new URL("js/social/confirmar.js", document.baseURI).href);
+          const nome = (viagens.find((v) => v.id === el.dataset.id) || {}).nome || "esta viagem";
+          if (!(await confirmar({ titulo: `Apagar “${nome}”?`, texto: "O roteiro dessa viagem some para sempre. As fotos e lembranças continuam.", botao: "Apagar viagem", perigo: true }))) return;
+          const { error }= await sb.from("viagens").delete().eq("id", el.dataset.id);
           if (error) throw error;
           viagens = viagens.filter((v) => v.id !== el.dataset.id);
           TF.toast("Viagem apagada");
