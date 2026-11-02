@@ -52,6 +52,8 @@
       comoChegar: "Teatro Padre Bento (Guarulhos) — ônibus intermunicipal a partir do Metrô Armênia/Tucuruvi, ou app." },
     embuguacu: { bairro: "Centro", municipio: "Embu-Guaçu", lat: -23.8320, lng: -46.8120,
       comoChegar: "Centro de Embu-Guaçu — carro ou app (~1h do centro de SP)." },
+    "local-chicomendes": { bairro: "São José", municipio: "São Caetano do Sul", lat: -23.6325, lng: -46.5731,
+      comoChegar: "Espaço Verde Chico Mendes (Av. Fernando Simonsen, 566) — CPTM São Caetano (Linha 10-Turquesa) + app ou ônibus." },
     "local-paranapiacaba": { bairro: "Paranapiacaba", municipio: "Santo André", lat: -23.7782, lng: -46.3018,
       comoChegar: "Vila de Paranapiacaba — CPTM Rio Grande da Serra (Linha 10) + ônibus, ou carro/app (~1h20 do centro de SP)." }
   };
@@ -172,6 +174,13 @@
       periodo: { de: "2026-11-28", ate: "2027-01-03" }, inicio: undefined, horario: { abre: "18:00", fecha: "22:00", fechado: [] },
       descricao: "Decoração e iluminação de Natal no centro da cidade.", confirmar: "Informação de calendário antigo — confirme com a prefeitura.",
       fonte: "https://www.turismo.gov.br/agenda-eventos/views/calendario.php" }),
+    // ---------- São Caetano do Sul (out/2026 a jan/2027) ----------
+    ev({ id: "ev-fotos-scs", nome: "Cenários, histórias e memórias: São Caetano em fotografias", categoria: "exposicao", local: "local-chicomendes",
+      preco: 0, precoEstimado: true, idade: "Livre", duracao: 45, inicio: undefined,
+      periodo: { de: "2026-10-02", ate: "2027-01-31" }, horario: { abre: "07:00", fecha: "19:00", fechado: [] },
+      descricao: "Mostra de fotos históricas da cidade, da Fundação Pró-Memória, no salão expositivo do Espaço Verde Chico Mendes.",
+      confirmar: "A divulgação não cita ingresso; confirme no local.",
+      fonte: "https://www.dgabc.com.br/Noticia/4349949/mostra-reune-fotos-historicas-de-sao-caetano-a-partir-de-sexta-2" }),
     // ---------- Paranapiacaba (dez/2026) ----------
     ev({ id: "ev-medieval-parana", nome: "Festival Medieval de Paranapiacaba", categoria: "festival", local: "local-paranapiacaba", preco: 0, idade: "Livre",
       datas: ["2026-12-05", "2026-12-06"], inicio: "10:00", duracao: 240, horario: { abre: "10:00", fecha: "17:00", fechado: [] },

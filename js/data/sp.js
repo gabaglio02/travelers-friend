@@ -749,6 +749,31 @@ window.TF_CITIES.sp = {
       confirmar: "De terça a sexta abre mais cedo (8h); confirme pelo telefone da Cultura da cidade."
     },
     {
+      id: "parque-grecco", nome: "Parque Pérola da Serra (Ribeirão Pires)", categoria: "parque", bairro: "Jardim Pastoril",
+      municipio: "Ribeirão Pires", lat: -23.7113, lng: -46.4082, preco: 0, idade: "Livre", duracao: 90,
+      horario: { abre: "08:00", fecha: "17:00", fechado: [1] },
+      comoChegar: "Rua Diamantino de Oliveira, 220 — CPTM Ribeirão Pires (Linha 10-Turquesa) + app, ou carro (~50 min do centro de SP).",
+      descricao: "Parque Luiz Carlos Grecco: 36 mil m² de mata com trilhas circulares, parquinho, gruta e esculturas ao ar livre.",
+      tags: ["crianças"]
+    },
+    {
+      id: "parque-estoril", nome: "Parque Estoril e Zoológico (São Bernardo)", categoria: "parque", bairro: "Riacho Grande",
+      municipio: "São Bernardo do Campo", lat: -23.7731, lng: -46.5143, preco: 5, precoNota: "as fontes divergem (de grátis a R$ 15)", idade: "Livre", duracao: 180,
+      horario: { abre: "09:00", fecha: "17:00", fechado: [1, 2] },
+      comoChegar: "Rua Portugal, 1.100, às margens da Represa Billings — carro ou app pela Rod. Anchieta (~50 min do centro de SP).",
+      descricao: "Parque à beira da Billings com zoológico municipal, pedalinho e muito verde para passar o dia.",
+      confirmar: "As fontes divergem sobre os dias (terça ou quarta a domingo) e o valor; confirme com a prefeitura de São Bernardo.",
+      tags: ["crianças"]
+    },
+    {
+      id: "museu-scs", nome: "Museu Histórico Municipal de São Caetano", categoria: "museu", bairro: "Fundação",
+      municipio: "São Caetano do Sul", lat: -23.6029, lng: -46.5759, preco: 0, precoNota: "segundo guias", precoEstimado: true, idade: "Livre", duracao: 60,
+      horario: { abre: "08:00", fecha: "17:00", fechado: [0] },
+      comoChegar: "Rua Maximiliano Lorenzini, 122 — CPTM São Caetano (Linha 10-Turquesa) + app ou ônibus.",
+      descricao: "Museu com a história da cidade, mantido pela Fundação Pró-Memória de São Caetano.",
+      confirmar: "Aos sábados abre só das 9h às 13h; confirme com a Fundação Pró-Memória."
+    },
+    {
       id: "pirapora", nome: "Santuário de Pirapora do Bom Jesus", categoria: "ponto", bairro: "Centro",
       municipio: "Pirapora do Bom Jesus", lat: -23.3970, lng: -47.0000, preco: 0, idade: "Livre", duracao: 90,
       horario: { abre: "07:00", fecha: "18:00", fechado: [] },
@@ -1093,6 +1118,9 @@ window.TF_CITIES.sp = {
       "Calendário da vila: Festival do Cambuci (abril), Convenção de Bruxas e Magos (fim de maio), Festival de Inverno (fim de julho e início de agosto) e, em dezembro, Festival Medieval e Feira de Oratórios e Presépios.",
       "Os museus (Castelo, Funicular, Casa Fox) abrem principalmente aos fins de semana e feriados.",
       "Reserve o Expresso Turístico com antecedência — esgota rápido."],
+    "parque-grecco": ["No centro de Ribeirão Pires fica a Vila do Doce, com lojas de chocolate, bares e restaurantes.",
+      "O Festival do Chocolate da cidade costuma acontecer no inverno, em julho."],
+    "parque-estoril": ["Dá para combinar com um almoço de frango com polenta na volta, na Rota do Frango, também em São Bernardo."],
     "museu-castelo": ["A subida é curta, mas íngreme: vá com calçado firme.", "A vista da vila lá de cima é melhor sem neblina, no começo da tarde."],
     embu: ["A feira é maior aos domingos; chegue antes das 11h.", "Prove os restaurantes de comida caseira no centrinho.",
       "Em dezembro costuma ter o Natal Iluminado no centro histórico; confira a programação da prefeitura."],
