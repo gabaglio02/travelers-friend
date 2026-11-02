@@ -1,9 +1,11 @@
 /*
- * Ajuda (#/ajuda): perguntas frequentes, em blocos que abrem e fecham.
+ * Ajuda (#/ajuda): perguntas frequentes, em blocos que abrem e fecham, e a caixa de perguntas.
  * Conteúdo fixo; cada resposta descreve o que o site faz hoje.
+ * A caixa grava pela função enviar_pergunta (supabase/008_perguntas.sql); ninguém lê as perguntas pelo site.
  */
 import { rota } from "../core/router.js";
 import { esc } from "../core/util.js";
+import { contaPronta } from "../dados/perfis.js";
 import { mostrar } from "./perfil.js";
 
 const CONTATO = "travelersfriend.contato@gmail.com";
@@ -63,7 +65,53 @@ rota("/ajuda", () => {
         <h3>${esc(b.titulo)}</h3>
         ${b.perguntas.map(([p, r]) => `<details class="faq"><summary>${esc(p)}</summary><p>${esc(r)}</p></details>`).join("")}
       </section>`).join("")}
-      <p class="muted small-text">Não achou sua dúvida? Escreva para <a href="mailto:${CONTATO}">${CONTATO}</a>.
-        Veja também a <a href="privacidade.html">Política de Privacidade</a>.</p>
+      <section class="pf-bloco" id="caixaPerguntas">
+        <h3>Não achou sua dúvida?</h3>
+        <form class="pf-form acc-form" data-pergunta>
+          <label class="field"><span>Sua pergunta</span>
+            <textarea name="texto" rows="4" minlength="10" maxlength="1000" required></textarea></label>
+          <label class="field"><span>Seu e-mail (opcional, só se quiser resposta)</span>
+            <input type="email" name="email" maxlength="200" autocomplete="email"></label>
+          <p class="small-text muted">Lemos todas. As mais comuns viram resposta aqui na Ajuda. Não escreva dados pessoais na pergunta.
+            Veja a <a href="privacidade.html">Política de Privacidade</a>.</p>
+          <p class="acc-msg" data-pergunta-msg hidden></p>
+          <button class="btn" type="submit">Enviar pergunta</button>
+        </form>
+      </section>
+      <p class="muted small-text">Também dá para escrever para <a href="mailto:${CONTATO}">${CONTATO}</a>.</p>
     </section>`);
+  // Com conta, já sugere o e-mail dela (a pessoa pode apagar).
+  contaPronta().then((conta) => {
+    const u = conta.usuario(), campo = document.querySelector("#caixaPerguntas [name=email]");
+    if (u && u.email && campo && !campo.value) campo.value = u.email;
+  }).catch(() => {});
+});
+
+function avisoErro(err) {
+  const m = String((err && err.message) || err || "");
+  if (/pergunta_curta/.test(m)) return "Escreva pelo menos 10 caracteres.";
+  if (/pergunta_longa/.test(m)) return "A pergunta pode ter até 1000 caracteres.";
+  if (/email_invalido/.test(m)) return "Confira o e-mail (ou deixe em branco).";
+  if (/limite_perguntas/.test(m)) return "Muitas perguntas agora. Tente de novo mais tarde.";
+  if (/enviar_pergunta|PGRST202|function/i.test(m)) return `A caixa de perguntas ainda não está ativa. Escreva para ${CONTATO}.`;
+  return "Não foi possível enviar agora (sem conexão?). Tente de novo em instantes.";
+}
+
+document.addEventListener("submit", async (e) => {
+  const form = e.target.closest("#socialView form[data-pergunta]");
+  if (!form) return;
+  e.preventDefault();
+  const msg = form.querySelector("[data-pergunta-msg]"), botao = form.querySelector("button[type=submit]");
+  const mostrarMsg = (t) => { msg.textContent = t; msg.hidden = false; };
+  botao.disabled = true;
+  try {
+    const conta = await contaPronta();
+    const sb = conta.cliente();
+    if (!sb) { mostrarMsg(`A caixa de perguntas ainda não está ativa. Escreva para ${CONTATO}.`); return; }
+    const { error } = await sb.rpc("enviar_pergunta", { p_texto: form.texto.value, p_email: form.email.value || null });
+    if (error) throw error;
+    form.texto.value = "";
+    mostrarMsg("Pergunta enviada. Obrigado!" + (form.email.value ? " Se precisar, respondemos por e-mail." : ""));
+  } catch (err) { mostrarMsg(avisoErro(err)); }
+  finally { botao.disabled = false; }
 });

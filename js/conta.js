@@ -513,7 +513,7 @@
             email: f.email.trim(), password: f.senha,
             // Registro do aceite (idade mínima e versão da política) junto da conta
             // e o perfil escolhido, criado na primeira entrada (js/social/perfil.js)
-            options: { data: { nome: f.nome.trim(), idade_minima: 18, politica_aceita: "2026-10-31",
+            options: { data: { nome: f.nome.trim(), idade_minima: 18, politica_aceita: "2026-11-02",
               perfil_apelido: apelido, perfil_privacidade: ["publico", "amigos", "privado"].includes(f.visibilidade) ? f.visibilidade : "publico" },
               emailRedirectTo: location.origin + location.pathname }
           });

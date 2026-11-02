@@ -35,10 +35,11 @@ Abrindo o `index.html` direto no navegador o site também funciona, mas só com 
 - `supabase/005_contas_18.sql`: contas só para maiores de 18 (toda identidade passa a ser 18+)
 - `supabase/006_perfil_so_amigos.sql`: perfil "Só amigos" mostra um cartão para pedir amizade; "Só eu" não recebe pedidos
 - `supabase/007_compartilhar_e_erros.sql`: roteiros compartilhados por link (#/r/<código>) e registro de erros do site (tabela `erros_site`)
+- `supabase/008_perguntas.sql`: caixa de perguntas da Ajuda (tabela `perguntas`, só pela função `enviar_pergunta`; ninguém lê pelo site)
 - `supabase/testes/`: testes do SQL num Postgres local (PGlite)
 - `js/dados/perfis.js`: leitura e gravação de perfis no Supabase
 - `js/social/perfil.js`: páginas `#/@apelido`, `#/perfil` e `#/perfil/editar`
-- `js/social/ajuda.js`: página `#/ajuda` (perguntas frequentes, conteúdo fixo)
+- `js/social/ajuda.js`: página `#/ajuda` (perguntas frequentes, conteúdo fixo, e caixa de perguntas)
 - `privacidade.html`: política de privacidade
 - `data/`: banco da agenda gerado pelo servidor (pode apagar para recomeçar)
 

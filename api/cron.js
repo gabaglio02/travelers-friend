@@ -1,5 +1,5 @@
 // Vercel Cron (vercel.json): atualiza a agenda dos próximos meses uma vez por dia
-// e, se configurado, manda por e-mail o resumo dos erros do site (server/avisos.js).
+// e, se configurado, manda por e-mail o resumo dos erros do site e das perguntas novas (server/avisos.js).
 // Com a variável CRON_SECRET definida, a Vercel manda "Authorization: Bearer <CRON_SECRET>"
 // e qualquer outra chamada é recusada.
 const agenda = require("../server/agenda");
