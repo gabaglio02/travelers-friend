@@ -823,12 +823,13 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
       !planned.has(p.id) && happensOn(p, iso) && !isClosed(p, iso) && state.youngest >= ageMin(p.idade));
     let list;
     if (refs.length) {
-      // Mesmo nível de prioridade (eventos do dia → grátis → resto), mas dentro do nível o mais perto vem antes.
+      // Mesmo nível de prioridade (eventos do dia → grátis só hoje → sempre grátis → resto), mas dentro do nível o mais perto vem antes.
+      // Só "Perto de <item>" (item tocado no roteiro) corta pela distância; os destaques do dia valem para a cidade toda.
       list = cands.map((p) => {
         let km = Infinity, from = null;
         refs.forEach((r) => { const d = distanceKm(r, p); if (d < km) { km = d; from = r; } });
         return { p, km, from };
-      }).filter(({ p, km, from }) => km <= (p.municipio || from.municipio ? PERTO_KM.grande : PERTO_KM.capital)).sort((a, b) => highlightTier(b.p, iso) - highlightTier(a.p, iso) || a.km - b.km);
+      }).filter(({ p, km, from }) => !anchor || km <= (p.municipio || from.municipio ? PERTO_KM.grande : PERTO_KM.capital)).sort((a, b) => highlightTier(b.p, iso) - highlightTier(a.p, iso) || a.km - b.km);
     } else {
       list = cands.filter((p) => highlightTier(p, iso) >= 1 || p.destaque)
         .sort((a, b) => highlightScore(b, iso) - highlightScore(a, iso))
@@ -857,10 +858,9 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
     if (!state.activeDay) { $("#recs").innerHTML = ""; return []; }
     const livres = temposLivres(state.activeDay);
     const { anchor, hasRefs, fromStay, list } = recommendations();
-    $("#recsTitle").textContent = (anchor ? "Perto de " + anchor.nome
-      : fromStay ? "Destaques perto da hospedagem"
-      : hasRefs ? "Destaques perto do seu roteiro"
-      : "Destaques para " + fmtDay(state.activeDay)) + " · eventos do dia primeiro, depois grátis";
+    $("#recsTitle").textContent = anchor ? "Perto de " + anchor.nome + " · até " + (anchor.municipio ? PERTO_KM.grande : PERTO_KM.capital) + " km"
+      : "Destaques para " + fmtDay(state.activeDay) + " · eventos do dia, depois grátis só hoje e sempre grátis"
+        + (fromStay ? " · mais perto da hospedagem antes" : hasRefs ? " · mais perto do roteiro antes" : "");
     $("#recs").innerHTML = list.length ? list.map(({ p, km, from }) => {
       let dist = "";
       if (km !== null) {
@@ -876,8 +876,8 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
         ${(() => { const h = livres.length ? cabeNoLivre(p, livres) : null; return h != null ? `<span class="fit">✓ Cabe no tempo livre, a partir das ${toHHMM(h)}</span>` : ""; })()}
         <button class="btn small" data-add="${p.id}">+ Adicionar</button>
       </div>`;
-    }).join("") : hasRefs
-      ? `<p class="muted">Nada a até ${PERTO_KM.capital} km${anchor ? " de " + esc(anchor.nome) : fromStay ? " da hospedagem" : " do roteiro deste dia"} (${PERTO_KM.grande} km na Grande SP). Veja mais opções no Explorar.</p>`
+    }).join("") : anchor
+      ? `<p class="muted">Nada a até ${PERTO_KM.capital} km de ${esc(anchor.nome)} (${PERTO_KM.grande} km na Grande SP). Toque nele de novo para ver os destaques do dia, ou veja o Explorar.</p>`
       : `<p class="muted">Sem recomendações para este dia.</p>`;
     return list;
   }
