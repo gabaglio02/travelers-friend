@@ -40,6 +40,11 @@ const BLOCOS = [
       "pela distância. Hospedagem e alimentação usam os valores que você informar em Custos. Confira sempre no site oficial do lugar."],
     ["Por que um evento aparece como \"a confirmar\" ou \"exemplo\"?",
       "\"A confirmar\" tem data real, mas horário ou preço ainda podem mudar. \"Exemplo\" é ilustrativo: mostra o tipo de programa, não um evento marcado."],
+    ["Como funciona o carro alugado?",
+      "Em Custos, escolha \"Carro alugado\" em Deslocamento preferido e ajuste a diária, a gasolina, o consumo e o estacionamento. " +
+      "No Roteiro, cada dia tem a opção \"Com carro alugado neste dia\": vem marcada em todos os dias, desmarque onde não for usar " +
+      "(um dia marcado conta a diária mesmo sem lugares no roteiro). O combustível entra em Deslocamento, pela distância de cada trecho; " +
+      "diária e estacionamento aparecem em \"Carro alugado\". Cada carro leva até 5 pessoas."],
     ["Como funciona o orçamento?",
       "Em Custos, informe quanto o grupo pode gastar. O site compara com o total previsto e mostra quanto sobra ou quanto passa."]
   ] },

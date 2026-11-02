@@ -1237,6 +1237,13 @@ body:not(.landing):not(.v-social) .trip-setup { order: 3; flex-basis: 100%; }
   body.landing .top-nav { justify-content: center; }
 }
 
+/* ---------- Aviso de mudança na Política de Privacidade (js/aviso-politica.js) ---------- */
+.aviso-politica { display: flex; align-items: center; justify-content: center; gap: var(--s-3); flex-wrap: wrap;
+  padding: var(--s-2) var(--s-4); background: var(--accent); color: var(--accent-ink); font-size: var(--t-sm); text-align: center; }
+.aviso-politica p { margin: 0; line-height: var(--lh-base); }
+.aviso-politica a { color: var(--accent-ink); font-weight: var(--w-bold); }
+.aviso-politica .btn { background: var(--ink); color: var(--paper); }
+
 /* ---------- Ajuda (perguntas frequentes) ---------- */
 .ajuda { display: grid; gap: var(--s-4); }
 .ajuda .pf-bloco h3 { margin-bottom: var(--s-2); }
