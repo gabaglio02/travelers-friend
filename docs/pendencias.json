@@ -1,0 +1,349 @@
+{
+  "atualizadoEm": "2026-11-02",
+  "grupos": [
+    {
+      "titulo": "1. Guias das prefeituras (Paranapiacaba, Embu, Guararema, Mogi, Santana de Parnaíba, Osasco)",
+      "itens": [
+        {
+          "oque": "Casa Fox (Casa da Família Ferroviária)",
+          "cidade": "Santo André (Paranapiacaba)",
+          "motivo": "Abre aos fins de semana, mas não achei preço confiável.",
+          "paraEntrar": "Preço atual (portal de turismo de Santo André ou telefone do CIT da vila)."
+        },
+        {
+          "oque": "Novem'Berr Paranapiacaba (7 e 8/11/2026)",
+          "cidade": "Santo André (Paranapiacaba)",
+          "motivo": "Só aparece numa agenda criada em 2025; não ficou claro que tipo de evento é nem a classificação etária.",
+          "paraEntrar": "Divulgação oficial com programação e idade mínima."
+        },
+        {
+          "oque": "Festival do Cambuci, Convenção de Bruxas e Magos, Festival de Inverno",
+          "cidade": "Santo André (Paranapiacaba)",
+          "motivo": "As edições de 2026 já passaram (abril, maio e julho/agosto) e as de 2027 não têm data. Entraram como dica no detalhe da vila.",
+          "paraEntrar": "Datas de 2027 divulgadas."
+        },
+        {
+          "oque": "Trem turístico (maria-fumaça)",
+          "cidade": "Guararema",
+          "motivo": "O site oficial não informa dias, horários nem preço; os guias trazem horários antigos. Entrou como dica.",
+          "paraEntrar": "Preço e horários atuais no site do trem."
+        },
+        {
+          "oque": "Natal de Guararema 2026",
+          "cidade": "Guararema",
+          "motivo": "Só achei a edição de 2025 (dezembro a janeiro).",
+          "paraEntrar": "Programação de 2026 da prefeitura."
+        },
+        {
+          "oque": "Natal Iluminado 2026",
+          "cidade": "Embu das Artes",
+          "motivo": "Programação de 2026 ainda não divulgada; edições anteriores começaram no início de dezembro. Entrou como dica.",
+          "paraEntrar": "Programação oficial (costuma sair no fim de novembro)."
+        },
+        {
+          "oque": "Feira de Artes e Artesanato",
+          "cidade": "Embu das Artes",
+          "motivo": "Já está dentro do item \"Embu das Artes — centro histórico e feira\". As fontes divergem no horário (10h ou 11h às 17h).",
+          "paraEntrar": "Nada: só ajustar o horário quando houver fonte oficial."
+        },
+        {
+          "oque": "Theatro Vasques",
+          "cidade": "Mogi das Cruzes",
+          "motivo": "Teatro histórico no centro, mas sem horário de visitação.",
+          "paraEntrar": "Horário de visita ou programação."
+        },
+        {
+          "oque": "Casarão do Carmo / Museu Visconde de Mauá",
+          "cidade": "Mogi das Cruzes",
+          "motivo": "Visita só com agendamento, sem horário fixo.",
+          "paraEntrar": "Horário de visitação aberto ao público."
+        },
+        {
+          "oque": "Akimatsuri (festival japonês)",
+          "cidade": "Mogi das Cruzes",
+          "motivo": "Acontece em abril; a edição de 2026 já passou e a de 2027 não tem data.",
+          "paraEntrar": "Data de 2027."
+        },
+        {
+          "oque": "Orquidário Oriental, Parque Natural Francisco Affonso de Mello, Expresso Turístico",
+          "cidade": "Mogi das Cruzes",
+          "motivo": "Citados nos guias, mas não pesquisei a fundo.",
+          "paraEntrar": "Pesquisa própria de cada um."
+        },
+        {
+          "oque": "Feira de Artes e Artesanato (domingos)",
+          "cidade": "Santana de Parnaíba",
+          "motivo": "Horário diverge entre as fontes (10h ou 11h às 17h).",
+          "paraEntrar": "Horário oficial."
+        },
+        {
+          "oque": "Museu Parnaibano de Música, Casarão Monsenhor Paulo Florêncio, Igreja Matriz de Sant'Ana",
+          "cidade": "Santana de Parnaíba",
+          "motivo": "Citados nos roteiros do centro histórico, sem horário.",
+          "paraEntrar": "Horários de visitação."
+        },
+        {
+          "oque": "Museu Dimitri Sensaud de Lavaud",
+          "cidade": "Osasco",
+          "motivo": "Um estudo diz que está parcialmente fechado desde 2017; nenhuma fonte traz horário.",
+          "paraEntrar": "Confirmação de que está aberto e o horário."
+        },
+        {
+          "oque": "Museu Histórico Bradesco, Parque Chico Mendes (Osasco)",
+          "cidade": "Osasco",
+          "motivo": "Apareceram nos resultados, mas não pesquisei.",
+          "paraEntrar": "Pesquisa própria."
+        },
+        {
+          "oque": "Jundiaí (cidade inteira)",
+          "cidade": "Jundiaí",
+          "motivo": "Não faz parte da Grande SP oficial. Aguardando sua decisão de incluir como \"arredores\".",
+          "paraEntrar": "Sua decisão."
+        }
+      ]
+    },
+    {
+      "titulo": "2. Mais cidades (Ribeirão Pires, Salesópolis, Mairiporã, Cotia, São Bernardo, São Caetano, Guarulhos)",
+      "itens": [
+        {
+          "oque": "Vila do Doce",
+          "cidade": "Ribeirão Pires",
+          "motivo": "Rua de lojas de chocolate e restaurantes; só uma fonte sem data, dizendo \"24h\". Entrou como dica.",
+          "paraEntrar": "Horário confiável das lojas."
+        },
+        {
+          "oque": "Mirante Santo Antônio",
+          "cidade": "Ribeirão Pires",
+          "motivo": "Mirante com vista da Billings, sem horário.",
+          "paraEntrar": "Horário ou confirmação de acesso livre."
+        },
+        {
+          "oque": "Mirante da Torre do Relógio",
+          "cidade": "Ribeirão Pires",
+          "motivo": "Visita monitorada, com agendamento e grupos de até 10 pessoas.",
+          "paraEntrar": "Forma de agendamento e dias."
+        },
+        {
+          "oque": "Torre de Miroku",
+          "cidade": "Ribeirão Pires",
+          "motivo": "Atração particular, só com visita agendada.",
+          "paraEntrar": "Preço e dias de visita."
+        },
+        {
+          "oque": "Capela do Pilar, Capela Santa Cruz, Parque Oriental, Jardim Japonês, Complexo Ayrton Senna",
+          "cidade": "Ribeirão Pires",
+          "motivo": "Horários vêm de uma lista sem data.",
+          "paraEntrar": "Fonte oficial ou recente."
+        },
+        {
+          "oque": "Festival do Chocolate",
+          "cidade": "Ribeirão Pires",
+          "motivo": "Costuma ser em julho; sem data de 2027. Entrou como dica.",
+          "paraEntrar": "Data de 2027."
+        },
+        {
+          "oque": "Museu da Energia (Usina Parque)",
+          "cidade": "Salesópolis",
+          "motivo": "Só achei horário numa programação antiga.",
+          "paraEntrar": "Horário atual."
+        },
+        {
+          "oque": "Barragem de Ponte Nova",
+          "cidade": "Salesópolis",
+          "motivo": "Citada como atração, sem horário nem forma de acesso.",
+          "paraEntrar": "Acesso e horário."
+        },
+        {
+          "oque": "Cachoeira do Ponto e Cachoeira do Tobogã",
+          "cidade": "Salesópolis",
+          "motivo": "Cachoeiras naturais; ficaram para a parte de trilhas e cachoeiras.",
+          "paraEntrar": "Avaliação de acesso e segurança (próxima etapa)."
+        },
+        {
+          "oque": "Cachoeira dos Pretos",
+          "cidade": "Joanópolis",
+          "motivo": "Apareceu na pesquisa, mas fica em Joanópolis, fora da Grande SP.",
+          "paraEntrar": "—"
+        },
+        {
+          "oque": "Represa, Mirante da Lagoa, Cachoeira do Elefante",
+          "cidade": "Mairiporã",
+          "motivo": "Só menções genéricas, sem endereço nem horário.",
+          "paraEntrar": "Fonte com acesso e horário."
+        },
+        {
+          "oque": "Parque Estadual do Morro Grande (antiga reserva)",
+          "cidade": "Cotia",
+          "motivo": "Virou parque estadual em novembro de 2025, mas um guia diz que está fechado para visitas.",
+          "paraEntrar": "Confirmação de que abriu à visitação."
+        },
+        {
+          "oque": "Parque Jequitibá e Parque Teresa Maia",
+          "cidade": "Cotia",
+          "motivo": "Dados de 2022; o Jequitibá cobra entrada, mas sem valor.",
+          "paraEntrar": "Horários e preço atuais."
+        },
+        {
+          "oque": "Bichomania, Cachoeiras Furquim e Rincão, Sítio do Padre Inácio (IPHAN)",
+          "cidade": "Cotia",
+          "motivo": "Fonte em inglês sem data ou sem horário.",
+          "paraEntrar": "Fonte recente com horário e preço."
+        },
+        {
+          "oque": "Pavilhão Vera Cruz",
+          "cidade": "São Bernardo do Campo",
+          "motivo": "Estúdios de TV, sem visitação ao público.",
+          "paraEntrar": "—"
+        },
+        {
+          "oque": "Prainha do Riacho Grande / turismo náutico na Billings",
+          "cidade": "São Bernardo do Campo",
+          "motivo": "Só menção genérica.",
+          "paraEntrar": "Fonte com acesso e serviços."
+        },
+        {
+          "oque": "Pinacoteca Municipal",
+          "cidade": "São Caetano do Sul",
+          "motivo": "Sem horário; um guia cita R$ 15 a R$ 30, sem data.",
+          "paraEntrar": "Horário e preço oficiais."
+        },
+        {
+          "oque": "Espaço Verde Chico Mendes (o parque)",
+          "cidade": "São Caetano do Sul",
+          "motivo": "Horários divergem muito (5h–21h, 6h–22h, 8h–20h). Entrou só a mostra de fotos que fica lá.",
+          "paraEntrar": "Horário oficial do parque."
+        },
+        {
+          "oque": "Museu Histórico Municipal",
+          "cidade": "Guarulhos",
+          "motivo": "Duas fontes com endereços diferentes.",
+          "paraEntrar": "Endereço e horário oficiais."
+        },
+        {
+          "oque": "Lago dos Patos",
+          "cidade": "Guarulhos",
+          "motivo": "Aberto todos os dias, mas sem horário.",
+          "paraEntrar": "Horário."
+        },
+        {
+          "oque": "Parque Estadual de Itaberaba",
+          "cidade": "Guarulhos e região",
+          "motivo": "Sem entrada ou estrutura de visitação encontrada.",
+          "paraEntrar": "Informação de visitação."
+        }
+      ]
+    },
+    {
+      "titulo": "3. Ainda mais cidades (Carapicuíba, Santo André, Itapecerica, Suzano, Biritiba Mirim, Santa Isabel)",
+      "itens": [
+        {
+          "oque": "Museu de Santo André Dr. Octaviano Armando Gaiarsa",
+          "cidade": "Santo André",
+          "motivo": "Fechado para reforma, com entrega prevista para abril de 2027.",
+          "paraEntrar": "Reabertura."
+        },
+        {
+          "oque": "Parque do Pedroso",
+          "cidade": "Santo André",
+          "motivo": "Não apareceu nos resultados da pesquisa.",
+          "paraEntrar": "Nova pesquisa."
+        },
+        {
+          "oque": "Parque do Povo (Roberto Nasraui)",
+          "cidade": "Itapecerica da Serra",
+          "motivo": "Horário (ter a dom, 7h–17h) só numa matéria sem data.",
+          "paraEntrar": "Fonte recente."
+        },
+        {
+          "oque": "Parque Ecológico da Represinha, Igreja N. S. da Conceição",
+          "cidade": "Itapecerica da Serra",
+          "motivo": "Endereço e telefone, sem horário.",
+          "paraEntrar": "Horário."
+        },
+        {
+          "oque": "Suzano Music Festival",
+          "cidade": "Suzano",
+          "motivo": "Foi em abril de 2026; sem data de 2027.",
+          "paraEntrar": "Data de 2027."
+        },
+        {
+          "oque": "Cachoeira do Poço Verde, Pedra do Sapo, Pedra Grande, Picos Itatinga e Garrafão, Represa dos Andes, Fonte N. S. Aparecida",
+          "cidade": "Biritiba Mirim",
+          "motivo": "Só aparecem em projetos de lei, sem acesso nem horário.",
+          "paraEntrar": "Fonte de turismo com acesso e segurança."
+        },
+        {
+          "oque": "Festa de Santa Cruz (maio) e Santa Cruzinha (setembro)",
+          "cidade": "Carapicuíba",
+          "motivo": "Sem data de 2027. Entraram como dica da Aldeia.",
+          "paraEntrar": "Datas de 2027."
+        },
+        {
+          "oque": "Atrações de Santa Isabel",
+          "cidade": "Santa Isabel",
+          "motivo": "Nada encontrado.",
+          "paraEntrar": "Nova pesquisa."
+        }
+      ]
+    },
+    {
+      "titulo": "4. Trilhas, cachoeiras e esportes",
+      "itens": [
+        {
+          "oque": "Cachoeiras de Marsilac e Parelheiros (Marsilac, Sagui, Manacás, Onça, Lontra) e Trilha Interparques",
+          "cidade": "São Paulo (extremo sul)",
+          "motivo": "As fontes se contradizem: umas exigem monitor com agendamento (grupos de até 8), outra diz que não precisa de guia e cobra a partir de R$ 30.",
+          "paraEntrar": "Regras e preços oficiais do Polo de Ecoturismo ou da SPTuris."
+        },
+        {
+          "oque": "Cachoeira do Tobogã",
+          "cidade": "Salesópolis",
+          "motivo": "Cachoeira natural sem estrutura; acesso difícil, sem sinal de celular e sem informação de segurança.",
+          "paraEntrar": "Fonte de turismo com acesso seguro (e talvez guia)."
+        },
+        {
+          "oque": "Cachoeira do Ponto",
+          "cidade": "Salesópolis",
+          "motivo": "Só uma menção (\"7 km do centro, fácil acesso\"), sem endereço nem condições.",
+          "paraEntrar": "Endereço, acesso e se é área pública ou particular."
+        },
+        {
+          "oque": "Núcleo Águas Claras (Cantareira)",
+          "cidade": "São Paulo",
+          "motivo": "Divide a portaria com o Núcleo Pedra Grande, que já está no site; horário só de blog.",
+          "paraEntrar": "Pode virar dica do item da Pedra Grande."
+        },
+        {
+          "oque": "Campos de paintball (Adrena, Mega Play, Delta 1, Kamikasi, Centurion, Paintball da Ilha)",
+          "cidade": "São Paulo e região",
+          "motivo": "Só preços antigos (2017) ou genéricos (R$ 50 a R$ 80) e nenhuma regra de idade mínima.",
+          "paraEntrar": "Preço, endereço e idade mínima atuais de cada campo."
+        },
+        {
+          "oque": "Campos de airsoft (Galpão Airsoft e outros)",
+          "cidade": "São Paulo e Guarulhos",
+          "motivo": "Preços antigos, sem regra de idade; e há um projeto de lei estadual de 2024 para proibir réplicas de armas, sem saber se foi aprovado.",
+          "paraEntrar": "Situação da lei, preços e idade mínima (no site, sempre 18+)."
+        },
+        {
+          "oque": "Pista de skate do Parque Chácara do Jockey",
+          "cidade": "São Paulo",
+          "motivo": "Horário diverge (6h–18h ou 6h–20h) e o parque não aparece no mapa usado pelo site.",
+          "paraEntrar": "Coordenadas e horário oficial."
+        },
+        {
+          "oque": "Pista de skate da Praça Roosevelt (como item próprio)",
+          "cidade": "São Paulo",
+          "motivo": "A praça já está no site como passeio da noite; a pista entrou como dica dela.",
+          "paraEntrar": "—"
+        },
+        {
+          "oque": "Centros esportivos da prefeitura",
+          "cidade": "São Paulo",
+          "motivo": "Não pesquisados nesta rodada.",
+          "paraEntrar": "Pesquisa própria (lista oficial da Secretaria de Esportes)."
+        }
+      ]
+    }
+  ]
+}
