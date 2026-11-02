@@ -1,0 +1,7 @@
+await new Promise(r=>setTimeout(r,2500));
+const feed=document.querySelector('div[role=feed]');
+for(let i=0;i<3&&feed;i++){feed.scrollTop=feed.scrollHeight;await new Promise(r=>setTimeout(r,1300));}
+const Q=decodeURIComponent(location.pathname.split('/search/')[1]||'').split('/')[0].replace(/\+/g,' ');
+const out=[...document.querySelectorAll('a[href*="/maps/place/"]')].map(a=>{const card=a.closest('div[jsaction]')?.parentElement||a.parentElement;const m=a.href.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);const t=card.innerText.split('\n').map(s=>s.trim()).filter(Boolean);const rl=t.find(s=>/^\d,\d\(/.test(s))||'';const r=rl.match(/^(\d,\d)\(([\d.]+)\)/);const tipo=t.find(s=>s.includes(' · '))||'';return {q:Q,nome:a.getAttribute('aria-label'),lat:m&&+m[1],lng:m&&+m[2],nota:r?+r[1].replace(',','.'):0,n:r?+r[2].replace(/\./g,''):0,tipo,extra:t.slice(2).join(' | ').slice(0,220)};}).filter(x=>x.lat&&x.nota>=4.4&&x.n>=200);
+const all=JSON.parse(localStorage.tfcoleta||'[]');out.forEach(o=>{if(!all.some(a=>a.nome===o.nome))all.push(o);});localStorage.tfcoleta=JSON.stringify(all);
+Q+': '+out.length+' ('+all.length+' total) — '+out.map(o=>o.nome+' '+o.nota).join('; ')

@@ -409,6 +409,53 @@
           "paraEntrar": "Foto da fachada cedida pelo próprio lugar."
         }
       ]
+    },
+    {
+      "titulo": "6. Restaurantes (coleta de 02/11/2026 no Google Maps)",
+      "itens": [
+        {
+          "oque": "Deck Cantareira, Tasquinha da Serra, Duana, Vila Cantareira, Frutta e Crema, Ora Pois! e Valle da Serra",
+          "cidade": "Mairiporã / Serra da Cantareira",
+          "motivo": "Bem avaliados, mas a 4–5 km dos núcleos Pedra Grande e Engordador, além do raio de 3 km que o site usa.",
+          "paraEntrar": "Cadastrar uma atração na própria Serra da Cantareira (lado de Mairiporã) ou aceitar um raio maior ali."
+        },
+        {
+          "oque": "Restaurante da Marlene e Bom Prato Parelheiros",
+          "cidade": "São Paulo (Parelheiros)",
+          "motivo": "Ficam a uns 18 km do Mirante do Curucutu; não há restaurante bem avaliado perto do mirante.",
+          "paraEntrar": "Atração em Parelheiros (ex.: polo de ecoturismo) ou restaurante perto do Curucutu."
+        },
+        {
+          "oque": "Restaurantes perto do Núcleo Cabuçu",
+          "cidade": "Guarulhos",
+          "motivo": "A busca não achou restaurante bem avaliado a até 3 km da entrada do núcleo.",
+          "paraEntrar": "Nova busca com outro termo, ou indicação local."
+        },
+        {
+          "oque": "Quintal do Nhangussu e Vicino - Cucina & Vino",
+          "cidade": "Guarulhos",
+          "motivo": "Bem avaliados, mas longe de qualquer atração do site.",
+          "paraEntrar": "Atração perto deles."
+        },
+        {
+          "oque": "Içá Restaurante e Restaurante Taga",
+          "cidade": "Suzano / Ribeirão Pires",
+          "motivo": "Bem avaliados, mas fora do raio de 3 km das atrações.",
+          "paraEntrar": "Atração perto deles."
+        },
+        {
+          "oque": "Tilápia zero 4",
+          "cidade": "Guarulhos",
+          "motivo": "Apareceu na busca de restaurantes, mas é casa noturna.",
+          "paraEntrar": "—"
+        },
+        {
+          "oque": "Empório Serra à Vista",
+          "cidade": "Fora da Grande SP",
+          "motivo": "Apareceu na busca da Cantareira, mas fica em outra região do estado.",
+          "paraEntrar": "—"
+        }
+      ]
     }
   ]
 }

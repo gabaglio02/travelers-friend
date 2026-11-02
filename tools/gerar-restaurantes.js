@@ -45,7 +45,9 @@ const ROTULOS = { "Pacaembu Higienópolis": "Higienópolis", "Avenida Paulista":
   "Santana Zona Norte": "Santana", "Armênia Canindé": "Armênia", "centro de Guarulhos": "Centro",
   "Riacho Grande São Bernardo do Campo": "Riacho Grande", "centro Embu das Artes": "Centro", "Granja Viana Cotia": "Granja Viana",
   "centro histórico Santana de Parnaíba": "Centro histórico", "Mairiporã Serra da Cantareira": "Mairiporã",
-  "Paranapiacaba Santo André": "Paranapiacaba", "Jabaquara Água Funda": "Jabaquara" };
+  "Paranapiacaba Santo André": "Paranapiacaba", "Jabaquara Água Funda": "Jabaquara",
+  // Coleta de 02/11/2026 (perto dos lugares novos da Fase 2)
+  "Cabuçu Guarulhos": "Cabuçu", "Cantareira Tremembé": "Serra da Cantareira", "Marsilac Parelheiros": "Parelheiros" };
 const rotulo = (q) => { const c = q.replace(/ São Paulo$/, "").trim(); return ROTULOS[c] || c; };
 
 const usados = new Set(lugares.map((p) => p.id));
@@ -63,7 +65,8 @@ for (const r of brutos) {
   const viz = atracoes.map((p) => ({ p, d: km(r, p) })).sort((a, b) => a.d - b.d);
   if (!viz.length || viz[0].d > 3) continue;
   const prox = viz[0].p;
-  const comTransporte = viz.find((v) => v.d <= 1 && estacao(v.p.comoChegar));
+  // Só vale estação que fica perto de verdade: "Metrô X + app/ônibus" quer dizer que ainda falta um trecho.
+  const comTransporte = viz.find((v) => v.d <= 1 && estacao(v.p.comoChegar) && !/\+\s*(app|ônibus)|ônibus ou app a partir/i.test(v.p.comoChegar));
   const pf = perfil(r.tipo);
   let id = "r-" + slug(r.nome); let k = 2; while (usados.has(id)) id = "r-" + slug(r.nome) + "-" + k++;
   usados.add(id);
@@ -81,7 +84,7 @@ for (const r of brutos) {
 }
 saida.sort((a, b) => a.bairro.localeCompare(b.bairro) || b.nota - a.nota);
 const js = `/*
- * Restaurantes bem avaliados perto das atrações (gerado a partir de buscas no Google Maps em 01/11/2026).
+ * Restaurantes bem avaliados perto das atrações (gerado a partir de buscas no Google Maps em 01 e 02/11/2026).
  * Critério: nota 4,5 ou mais (ou 4,4 com 1.500+ avaliações), pelo menos 200 avaliações (80 em cidades pequenas)
  * e até 3 km de alguma atração do site. Preço, duração e horário são estimativas pelo tipo de cozinha.
  * Para atualizar: refaça a coleta e rode o gerador (ver README). Não edite à mão.
