@@ -38,6 +38,7 @@ Abrindo o `index.html` direto no navegador o site também funciona, mas só com 
 - `supabase/testes/`: testes do SQL num Postgres local (PGlite)
 - `js/dados/perfis.js`: leitura e gravação de perfis no Supabase
 - `js/social/perfil.js`: páginas `#/@apelido`, `#/perfil` e `#/perfil/editar`
+- `js/social/ajuda.js`: página `#/ajuda` (perguntas frequentes, conteúdo fixo)
 - `privacidade.html`: política de privacidade
 - `data/`: banco da agenda gerado pelo servidor (pode apagar para recomeçar)
 

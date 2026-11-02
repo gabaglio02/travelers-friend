@@ -14,6 +14,7 @@ import "./social/mural.js"; // registra #/@apelido/album/<id> e #/lembrancas/...
 import "./social/amigos.js"; // registra #/amigos
 import "./social/viagens.js"; // registra #/viagens (Minhas viagens)
 import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<código>
+import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
 
 (function () {
   "use strict";

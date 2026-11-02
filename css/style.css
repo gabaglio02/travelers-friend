@@ -1200,6 +1200,13 @@ body:not(.landing):not(.v-social) .trip-setup { order: 3; flex-basis: 100%; }
   body.landing .top-nav { justify-content: center; }
 }
 
+/* ---------- Ajuda (perguntas frequentes) ---------- */
+.ajuda { display: grid; gap: var(--s-4); }
+.ajuda .pf-bloco h3 { margin-bottom: var(--s-2); }
+.faq { border-top: 1.5px solid var(--soft-line); }
+.faq summary { cursor: pointer; padding: var(--s-3) 0; font-weight: var(--w-bold); }
+.faq p { margin: 0 0 var(--s-3); line-height: var(--lh-base); max-width: 70ch; }
+
 /* ---------- Minhas viagens ---------- */
 .vg-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
 .vg-card { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap;
