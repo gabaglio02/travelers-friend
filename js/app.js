@@ -1,7 +1,7 @@
 /* Traveler's Friend — planejador (Explorar · Roteiro · Custos). Módulo ES; usa Leaflet (global L). */
 import {
   CITY_OPTIONS, CATEGORIES, AGE_OPTIONS, MONTHS, WEEKDAYS, WEEKDAYS_FULL,
-  STORAGE_KEY, MAX_DAYS, WALK_LIMIT_KM, PERTO_KM, MODES, MEALS, CAT_ICON
+  STORAGE_KEY, MAX_DAYS, WALK_LIMIT_KM, PERTO, MODES, MEALS, CAT_ICON
 } from "./core/constantes.js";
 import {
   $, esc, money, moneyExact, toMin, toHHMM, fmtDur, parseDur, parseISO, toISO, fmtDay, fmtShort,
@@ -26,9 +26,13 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
   const FERIADOS_TARIFA_ZERO = ["12-25", "01-01", "01-25"];
   const onibusGratis = (iso, a, b) => !!iso && city().id === "sp" && !a.municipio && !b.municipio
     && (parseISO(iso).getDay() === 0 || FERIADOS_TARIFA_ZERO.includes(iso.slice(5)));
+  // Tempo de um trecho: os primeiros 15 km na velocidade urbana e só o que passar disso na de rodovia,
+  // para o tempo sempre crescer com a distância.
+  const minTrecho = (km, fator, urbana, rodovia) => (Math.min(km, 15) / urbana + Math.max(0, km - 15) / rodovia) * fator * 60;
   function transportOptions(a, b, iso) {
     const km = distanceKm(a, b);
-    const far = km > 15; // acima disso o trajeto usa mais rodovia / trem e a velocidade média sobe
+    const far = km > 15; // acima disso o trajeto usa mais rodovia / trem (tarifas intermunicipais)
+    const foraDaCapital = !!(a.municipio && b.municipio); // menos trânsito: a velocidade urbana sobe
     const fare = city().tarifaTransporte * state.people;
     const busGratis = onibusGratis(iso, a, b);
     const hasMetro = (p) => /Metrô/.test(p.comoChegar || "");
@@ -41,11 +45,11 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
       if (hasMetro(a) && hasMetro(b)) opts.push({ id: "metro", min: Math.round(10 + km * 1.3 / 30 * 60), cost: fare });
       if ((hasTrain(a) || hasTrain(b)) && (hasMetro(a) || hasTrain(a)) && (hasMetro(b) || hasTrain(b)))
         opts.push({ id: "trem", min: Math.round(14 + km * 1.3 / 35 * 60), cost: fare * (far ? 1.5 : 1) });
-      opts.push({ id: "onibus", min: Math.round((far ? 20 : 8) + km * 1.35 / (far ? 30 : 16) * 60), cost: busGratis ? 0 : fare * (far ? 2 : 1),
+      opts.push({ id: "onibus", min: Math.round(8 + minTrecho(km, 1.35, foraDaCapital ? 20 : 16, 30)), cost: busGratis ? 0 : fare * (far ? 2 : 1),
         note: busGratis ? "grátis hoje (Tarifa Zero nos ônibus municipais)" : "" });
     }
     if (km > 0.8 || !opts.length) {
-      opts.push({ id: "carro", min: Math.round(5 + km * 1.4 / (far ? 45 : 20) * 60), cost: Math.round((6 + 2.4 * km * 1.4) * Math.ceil(state.people / 4)) });
+      opts.push({ id: "carro", min: Math.round(5 + minTrecho(km, 1.4, foraDaCapital ? 30 : 20, 45)), cost: Math.round((6 + 2.4 * km * 1.4) * Math.ceil(state.people / 4)) });
     }
     return opts.map((o) => ({ ...o, km }));
   }
@@ -829,7 +833,8 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
         let km = Infinity, from = null;
         refs.forEach((r) => { const d = distanceKm(r, p); if (d < km) { km = d; from = r; } });
         return { p, km, from };
-      }).filter(({ p, km, from }) => !anchor || km <= (p.municipio || from.municipio ? PERTO_KM.grande : PERTO_KM.capital)).sort((a, b) => highlightTier(b.p, iso) - highlightTier(a.p, iso) || a.km - b.km);
+      }).filter(({ p, km, from }) => !anchor || (p.municipio || from.municipio
+        ? legInfo(from, p, null, iso).min <= PERTO.foraMin : km <= PERTO.capitalKm)).sort((a, b) => highlightTier(b.p, iso) - highlightTier(a.p, iso) || a.km - b.km);
     } else {
       list = cands.filter((p) => highlightTier(p, iso) >= 1 || p.destaque)
         .sort((a, b) => highlightScore(b, iso) - highlightScore(a, iso))
@@ -858,7 +863,8 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
     if (!state.activeDay) { $("#recs").innerHTML = ""; return []; }
     const livres = temposLivres(state.activeDay);
     const { anchor, hasRefs, fromStay, list } = recommendations();
-    $("#recsTitle").textContent = anchor ? "Perto de " + anchor.nome + " · até " + (anchor.municipio ? PERTO_KM.grande : PERTO_KM.capital) + " km"
+    const raio = anchor && (anchor.municipio ? "até " + PERTO.foraMin + " min" : "até " + PERTO.capitalKm + " km");
+    $("#recsTitle").textContent = anchor ? "Perto de " + anchor.nome + " · " + raio
       : "Destaques para " + fmtDay(state.activeDay) + " · eventos do dia, depois grátis só hoje e sempre grátis"
         + (fromStay ? " · mais perto da hospedagem antes" : hasRefs ? " · mais perto do roteiro antes" : "");
     $("#recs").innerHTML = list.length ? list.map(({ p, km, from }) => {
@@ -877,7 +883,7 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
         <button class="btn small" data-add="${p.id}">+ Adicionar</button>
       </div>`;
     }).join("") : anchor
-      ? `<p class="muted">Nada a até ${PERTO_KM.capital} km de ${esc(anchor.nome)} (${PERTO_KM.grande} km na Grande SP). Toque nele de novo para ver os destaques do dia, ou veja o Explorar.</p>`
+      ? `<p class="muted">Nada ${raio} de ${esc(anchor.nome)}. Toque nele de novo para ver os destaques do dia, ou veja o Explorar.</p>`
       : `<p class="muted">Sem recomendações para este dia.</p>`;
     return list;
   }
