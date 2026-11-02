@@ -506,6 +506,11 @@ body.landing .como-usar span { font-size: var(--t-sm); line-height: var(--lh-bas
 .day-stay { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 10px; font-size: 13px; font-weight: 500; }
 .day-stay select { padding: 5px 8px; border: 2px solid var(--line); border-radius: var(--radius); }
 .stay-costs { display: flex; flex-direction: column; gap: 6px; text-transform: none; letter-spacing: 0; }
+.stay-cost-item { display: flex; flex-direction: column; gap: 4px; padding-bottom: 6px; border-bottom: 1.5px solid var(--soft-line); }
+.stay-cost-item .stay-form { margin-top: 2px; }
+.stay-addr { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; color: var(--ink); }
+.stay-addr .warning { color: var(--warn); }
+.stay-addr .reset { background: none; border: 0; padding: 0; font: inherit; color: var(--ink); text-decoration: underline; cursor: pointer; }
 .stay-cost { display: flex; gap: 6px; align-items: center; }
 .stay-cost input[type="text"] { flex: 1; min-width: 0; padding: 6px 8px; border: 2px solid var(--line); border-radius: var(--radius); font-size: 13px; }
 .stay-cost label { display: inline-flex; gap: 4px; align-items: center; font-size: 13px; color: var(--ink); }

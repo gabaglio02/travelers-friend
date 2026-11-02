@@ -1349,6 +1349,12 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
   const NOMINATIM = "https://nominatim.openstreetmap.org";
   const shortLabel = (name) => name.split(",").slice(0, 3).join(",").trim();
   let stayHits = [];
+  // A mesma busca de endereço serve ao Roteiro (nova hospedagem) e a Custos (endereço de uma hospedagem já criada).
+  // stayAlvo = id da hospedagem que está sendo localizada pelo painel de Custos; null = busca do Roteiro.
+  let stayAlvo = null, stayQ = "";
+  const stayResultsEl = () => stayAlvo ? $(`[data-stayresults="${stayAlvo}"]`) : $("#stayResults");
+  const hitsHtml = () => stayHits.map((h, i) =>
+    `<li><button type="button" data-stayhit="${i}">📍 ${esc(h.display_name)}</button></li>`).join("");
 
   const newStayId = () => "s" + Date.now().toString(36);
 
@@ -1379,17 +1385,35 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
       $("#dayStay").innerHTML = `<option value="">Padrão${def ? " — " + esc(def.label) : ""}</option>` +
         stays.map((st) => `<option value="${st.id}" ${st.id === own ? "selected" : ""}>${esc(st.label)}</option>`).join("");
     }
-    $("#stayResults").innerHTML = stayHits.map((h, i) =>
-      `<li><button type="button" data-stayhit="${i}">📍 ${esc(h.display_name)}</button></li>`).join("");
+    $("#stayResults").innerHTML = stayAlvo ? "" : hitsHtml();
     renderStayCosts();
   }
-  // Valores por noite de cada hospedagem, no painel de custos.
+  // Valores por noite de cada hospedagem, no painel de custos, com o endereço (sem ele, a hospedagem fica fora dos trajetos).
   function renderStayCosts() {
     $("#stayCosts").innerHTML = state.stays.map((st) => `
-      <div class="stay-cost">
-        <input type="text" data-staylabel="${st.id}" value="${esc(st.label)}" aria-label="Nome da hospedagem">
-        <label>R$ <input type="number" min="0" step="10" data-stayprice="${st.id}" value="${stayPrice(st)}" aria-label="Valor por noite"></label>
+      <div class="stay-cost-item">
+        <div class="stay-cost">
+          <input type="text" data-staylabel="${st.id}" value="${esc(st.label)}" aria-label="Nome da hospedagem">
+          <label>R$ <input type="number" min="0" step="10" data-stayprice="${st.id}" value="${stayPrice(st)}" aria-label="Valor por noite"></label>
+        </div>
+        <div class="stay-addr small-text">
+          ${st.lat == null ? `<span class="warning">📍 Sem endereço: fica fora dos trajetos do roteiro.</span>` : `<span class="muted">📍 Endereço no mapa</span>`}
+          <button type="button" class="reset" data-staylocate="${st.id}">${st.lat == null ? "buscar endereço" : "trocar endereço"}</button>
+        </div>
+        ${stayAlvo === st.id ? `
+          <form class="stay-form" data-stayform="${st.id}">
+            <input type="search" value="${esc(stayQ)}" placeholder="Endereço, hotel ou bairro" aria-label="Endereço de ${esc(st.label)}">
+            <button type="submit" class="btn small">Buscar</button>
+            <button type="button" class="btn ghost small" data-staycancel>Cancelar</button>
+          </form>
+          <ul class="stay-results" data-stayresults="${st.id}">${hitsHtml()}</ul>` : ""}
       </div>`).join("");
+  }
+  // Abre (ou fecha) a busca de endereço de uma hospedagem no painel de Custos.
+  function locateStay(id) {
+    stayAlvo = id; stayQ = ""; stayHits = [];
+    renderStay();
+    if (id) { const f = $(`[data-stayform="${id}"] input`); if (f) f.focus(); }
   }
   // Adiciona uma hospedagem (a primeira vira a padrão) ou atualiza a localização de uma existente.
   function addStay(data, targetId) {
@@ -1411,18 +1435,21 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     if (state.stayDefault === id) state.stayDefault = state.stays[0] ? state.stays[0].id : null;
     save(); renderStay(); renderAll();
   }
-  async function searchStay(q) {
+  async function searchStay(q, alvo = null) {
     if (!q.trim()) return;
-    $("#stayResults").innerHTML = `<li class="muted small-text">Buscando…</li>`;
+    stayAlvo = alvo; stayQ = q;
+    if (!alvo) renderStayCosts(); // fecha uma busca aberta em Custos
+    const out = () => stayResultsEl() || { set innerHTML(_) {} };
+    out().innerHTML = `<li class="muted small-text">Buscando…</li>`;
     try {
       // Limitado à região metropolitana de SP.
       const params = new URLSearchParams({ q, format: "jsonv2", countrycodes: "br", viewbox: "-47.3,-23.1,-45.6,-24.1", bounded: "1", limit: "6", "accept-language": "pt-BR" });
       const res = await fetch(NOMINATIM + "/search?" + params);
       stayHits = res.ok ? await res.json() : [];
       renderStay();
-      if (!stayHits.length) $("#stayResults").innerHTML = `<li class="muted small-text">Nada encontrado. Tente rua + número + bairro, ou marque no mapa.</li>`;
+      if (!stayHits.length) out().innerHTML = `<li class="muted small-text">Nada encontrado. Tente rua + número + bairro, ou marque no mapa${alvo ? " (no Roteiro)" : ""}.</li>`;
     } catch (_) {
-      $("#stayResults").innerHTML = `<li class="warning">Não foi possível buscar agora (sem conexão?). Use "Marcar no mapa".</li>`;
+      out().innerHTML = `<li class="warning">Não foi possível buscar agora (sem conexão?). Use "Marcar no mapa"${alvo ? ", no Roteiro" : ""}.</li>`;
     }
   }
   function pickStayOnMap(targetId) {
@@ -1482,7 +1509,14 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     }
     $("#stayForm").addEventListener("submit", (e) => { e.preventDefault(); searchStay($("#stayQuery").value); });
     $("#stayPick").addEventListener("click", () => pickStayOnMap());
-    $("#stayAddPrice").addEventListener("click", () => addStay({ label: "Hospedagem " + (state.stays.length + 1) }));
+    // Hospedagem criada em Custos já abre a busca de endereço.
+    $("#stayAddPrice").addEventListener("click", () => locateStay(addStay({ label: "Hospedagem " + (state.stays.length + 1) }).id));
+    $("#stayCosts").addEventListener("submit", (e) => {
+      const f = e.target.closest("[data-stayform]");
+      if (!f) return;
+      e.preventDefault();
+      searchStay(f.querySelector("input").value, f.dataset.stayform);
+    });
     $("#dayStay").addEventListener("change", (e) => {
       const d = dayData(state.activeDay);
       if (e.target.value) d.stayId = e.target.value; else delete d.stayId;
@@ -1597,9 +1631,19 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
       if ((el = t.closest("[data-mealatreset]"))) { delete dayMeal(el.dataset.mealatreset).at; save(); renderAll(); return; }
       if ((el = t.closest("[data-stayhit]"))) {
         const h = stayHits[+el.dataset.stayhit];
-        if (h) addStay({ label: shortLabel(h.display_name), lat: +(+h.lat).toFixed(5), lng: +(+h.lon).toFixed(5) });
+        if (!h) return;
+        const pos = { lat: +(+h.lat).toFixed(5), lng: +(+h.lon).toFixed(5) };
+        const alvo = stayAlvo && stayById(stayAlvo);
+        stayAlvo = null;
+        if (alvo) {
+          // Hospedagem de Custos: guarda o nome que a pessoa deu, a não ser que ainda seja o automático.
+          if (/^(Hospedagem \d+|Ponto marcado no mapa)$/.test(alvo.label)) pos.label = shortLabel(h.display_name);
+          addStay(pos, alvo.id);
+        } else addStay({ label: shortLabel(h.display_name), ...pos });
         return;
       }
+      if ((el = t.closest("[data-staylocate]"))) { locateStay(stayAlvo === el.dataset.staylocate ? null : el.dataset.staylocate); return; }
+      if ((el = t.closest("[data-staycancel]"))) { locateStay(null); return; }
       if ((el = t.closest("[data-staypick]"))) { pickStayOnMap(el.dataset.staypick); return; }
       if ((el = t.closest("[data-staydefault]"))) { state.stayDefault = el.dataset.staydefault; save(); renderStay(); renderAll(); return; }
       if ((el = t.closest("[data-stayremove]"))) { removeStay(el.dataset.stayremove); return; }
