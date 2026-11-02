@@ -749,6 +749,23 @@ window.TF_CITIES.sp = {
       confirmar: "De terça a sexta abre mais cedo (8h); confirme pelo telefone da Cultura da cidade."
     },
     {
+      id: "aldeia-carapicuiba", nome: "Aldeia de Carapicuíba", categoria: "ponto", bairro: "Aldeia",
+      municipio: "Carapicuíba", lat: -23.5695, lng: -46.8312, preco: 0, idade: "Livre", duracao: 60,
+      horario: { abre: "09:00", fecha: "17:00", fechado: [] },
+      comoChegar: "CPTM Carapicuíba (Linha 8-Diamante) + app (~10 min), ou carro (~40 min do centro de SP).",
+      descricao: "Aldeia jesuítica do fim do séc. XVI, tombada pelo IPHAN, com casas de taipa em volta de uma praça e da capela.",
+      confirmar: "Horário de guias de turismo; confirme com a prefeitura de Carapicuíba."
+    },
+    {
+      id: "parque-max-feffer", nome: "Parque Max Feffer (Suzano)", categoria: "parque", bairro: "Jardim Imperador",
+      municipio: "Suzano", lat: -23.5324, lng: -46.3239, preco: 0, idade: "Livre", duracao: 90,
+      horario: { abre: "06:00", fecha: "18:00", fechado: [] },
+      comoChegar: "Av. Senador Roberto Simonsen, 90 — CPTM Suzano (Linha 11-Coral) + app, ou carro (~1h do centro de SP).",
+      descricao: "Grande parque da cidade, com áreas de lazer ao ar livre e o Viveiro Municipal; recebe eventos e festivais.",
+      confirmar: "Uma fonte diz que fecha às 22h; as demais, às 18h.",
+      tags: ["crianças"]
+    },
+    {
       id: "parque-grecco", nome: "Parque Pérola da Serra (Ribeirão Pires)", categoria: "parque", bairro: "Jardim Pastoril",
       municipio: "Ribeirão Pires", lat: -23.7113, lng: -46.4082, preco: 0, idade: "Livre", duracao: 90,
       horario: { abre: "08:00", fecha: "17:00", fechado: [1] },
@@ -1118,6 +1135,8 @@ window.TF_CITIES.sp = {
       "Calendário da vila: Festival do Cambuci (abril), Convenção de Bruxas e Magos (fim de maio), Festival de Inverno (fim de julho e início de agosto) e, em dezembro, Festival Medieval e Feira de Oratórios e Presépios.",
       "Os museus (Castelo, Funicular, Casa Fox) abrem principalmente aos fins de semana e feriados.",
       "Reserve o Expresso Turístico com antecedência — esgota rápido."],
+    "aldeia-carapicuiba": ["No início de maio acontece a tradicional Festa de Santa Cruz, com a Dança de Santa Cruz na praça da aldeia, de graça.",
+      "Em setembro há a Festa de Santa Cruzinha, menor, no mesmo lugar."],
     "parque-grecco": ["No centro de Ribeirão Pires fica a Vila do Doce, com lojas de chocolate, bares e restaurantes.",
       "O Festival do Chocolate da cidade costuma acontecer no inverno, em julho."],
     "parque-estoril": ["Dá para combinar com um almoço de frango com polenta na volta, na Rota do Frango, também em São Bernardo."],
