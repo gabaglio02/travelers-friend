@@ -357,31 +357,43 @@
             ${viagens.length ? `<button class="btn ghost" data-acc="importar-nao">Abrir minha viagem mais recente</button>`
               : `<button class="btn ghost" data-acc="importar-zero">Começar uma viagem nova</button>`}
           </div></div>`,
-      conta: () => cabecalho(esc(nomeDe(user))) + `<div class="modal-body">${msg()}
-          <p class="small-text muted">${esc(user.email)}</p>
-          <h4 class="acc-h">Minhas viagens</h4>
-          <ul class="acc-trips">${viagens.map((v) => `
-            <li class="${v.id === viagemId ? "on" : ""}">
-              <span class="acc-trip-name">${v.id === viagemId ? "▶ " : ""}${esc(v.nome)}</span>
-              <span class="acc-trip-actions">
-                ${v.id === viagemId ? `<span class="tag">aberta</span>` : `<button class="reset" data-acc="abrir" data-id="${v.id}">abrir</button>`}
-                <button class="reset" data-acc="renomear" data-id="${v.id}">renomear</button>
-                ${v.id === viagemId ? "" : `<button class="reset" data-acc="apagar-viagem" data-id="${v.id}">apagar</button>`}
-              </span>
-            </li>`).join("") || `<li class="muted">Nenhuma viagem salva.</li>`}
+      conta: () => {
+        // Atalhos em cartões: ícone, nome e para que serve.
+        const atalho = (ico, nome, txt, attrs) => `<li><${attrs.href ? "a" : "button"} class="acc-tile" ${Object.entries(attrs).map(([k, v]) => `${k}="${v}"`).join(" ")}>
+            <span class="acc-tile-ico" aria-hidden="true">${ico}</span><b>${nome}</b><small>${txt}</small></${attrs.href ? "a" : "button"}></li>`;
+        return `<div class="modal-head acc-head">
+            <div class="acc-id"><span class="acc-avatar" aria-hidden="true">${esc((nomeDe(user) || "?").trim().charAt(0).toUpperCase())}</span>
+              <div><h3>${esc(nomeDe(user))}</h3><span class="small-text">${esc(user.email)}</span></div></div>
+            <button class="icon-btn" data-acc="fechar" title="Fechar">×</button></div>
+          <div class="modal-body acc-conta">${msg()}
+          <section class="acc-sec">
+            <div class="acc-sec-head"><h4>Minhas viagens <small class="muted">${viagens.length}</small></h4>
+              <button class="btn small" data-acc="nova-viagem">+ Nova viagem</button></div>
+            <ul class="acc-trips">${viagens.map((v) => `
+              <li class="${v.id === viagemId ? "on" : ""}">
+                <span class="acc-trip-name">${esc(v.nome)}${v.id === viagemId ? ` <span class="tag">aberta</span>` : ""}</span>
+                <span class="acc-trip-actions">
+                  ${v.id === viagemId ? "" : `<button class="btn ghost small" data-acc="abrir" data-id="${v.id}">Abrir</button>`}
+                  <button class="reset" data-acc="renomear" data-id="${v.id}">renomear</button>
+                  ${v.id === viagemId ? "" : `<button class="reset" data-acc="apagar-viagem" data-id="${v.id}">apagar</button>`}
+                </span>
+              </li>`).join("") || `<li class="muted">Nenhuma viagem salva.</li>`}
+            </ul>
+          </section>
+          <ul class="acc-tiles">
+            ${atalho("👤", "Meu perfil", "foto, capa e quem pode ver", { href: "#/perfil", "data-acc": "fechar" })}
+            ${atalho("📷", "Minhas fotos", "só você vê", { type: "button", "data-acc": "fotos" })}
+            ${atalho("👥", "Amigos", "pedidos e amizades", { href: "#/amigos", "data-acc": "fechar" })}
+            ${atalho("🎭", "Identidades", "seus perfis extras", { href: "#/identidades", "data-acc": "fechar" })}
+            ${atalho("🧳", "Todas as viagens", "por vir e antigas", { href: "#/viagens", "data-acc": "fechar" })}
+            ${atalho("❓", "Ajuda", "perguntas frequentes", { href: "#/ajuda", "data-acc": "fechar" })}
           </ul>
-          <div class="modal-actions">
-            <button class="btn ghost small" data-acc="nova-viagem">+ Nova viagem</button>
-            <a class="btn small" href="#/perfil" data-acc="fechar">👤 Meu perfil</a>
-            <a class="btn ghost small" href="#/identidades" data-acc="fechar">🎭 Identidades</a>
-            <a class="btn ghost small" href="#/amigos" data-acc="fechar">👥 Amigos</a>
-            <button class="btn ghost small" data-acc="fotos">📷 Minhas fotos</button>
-          </div>
           <div class="modal-actions acc-foot">
-            <button class="btn small" data-acc="sair">Sair</button>
+            <button class="btn ghost small" data-acc="sair">Sair</button>
             <button class="reset" data-acc="excluir">Excluir minha conta</button>
           </div>
-        </div>`,
+        </div>`;
+      },
       renomear: () => {
         const v = viagens.find((x) => x.id === aviso.split("|")[0]) || {};
         return cabecalho("Renomear viagem") + `<form class="modal-body acc-form" data-form="renomear" data-id="${v.id}">

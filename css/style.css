@@ -572,6 +572,32 @@ body.landing .top-right { position: absolute; top: 16px; right: 16px; }
 .acc-trips li.on { border-color: var(--ink); background: var(--paper-2); }
 .acc-trip-name { font-weight: 500; }
 .acc-trip-actions { margin-left: auto; display: inline-flex; gap: 10px; align-items: center; }
+/* Tela "conta": cabeçalho com inicial, viagens em cartões e atalhos em grade */
+.acc-head { align-items: center; }
+.acc-id { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
+.acc-id > div { min-width: 0; overflow-wrap: anywhere; }
+.acc-id .small-text { color: #cfcfcf; }
+.acc-avatar { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--r-pill);
+  background: var(--accent); color: var(--accent-ink); font-size: var(--t-xl); font-weight: var(--w-bold); }
+.acc-conta { gap: var(--s-4); }
+.acc-sec { display: flex; flex-direction: column; gap: var(--s-2); }
+.acc-sec-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+.acc-sec-head h4 { margin: 0; font-size: var(--t-md); }
+.acc-sec-head small { font-family: var(--mono); font-size: var(--t-xs); }
+.acc-conta .acc-trips li { padding: var(--s-2) var(--s-3); }
+.acc-conta .reset { background: none; border: 0; padding: 0; font: inherit; font-size: var(--t-sm); color: var(--muted);
+  text-decoration: underline; cursor: pointer; }
+.acc-conta .reset:hover { color: var(--ink); }
+.acc-conta .acc-foot .reset:hover { color: var(--danger); }
+.acc-tiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s-2); }
+.acc-tile { display: grid; grid-template-columns: auto 1fr; column-gap: var(--s-2); align-items: center; width: 100%; height: 100%;
+  padding: var(--s-2) var(--s-3); border: 2px solid var(--line); border-radius: var(--radius); background: var(--paper);
+  color: var(--ink); font: inherit; text-align: left; text-decoration: none; cursor: pointer;
+  transition: transform var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease); }
+.acc-tile:hover, .acc-tile:focus-visible { transform: translate(-2px, -2px); box-shadow: var(--shadow-hard); }
+.acc-tile-ico { grid-row: span 2; font-size: 20px; }
+.acc-tile b { font-size: var(--t-sm); }
+.acc-tile small { font-size: var(--t-xs); color: var(--muted); }
 .acc-foot { justify-content: space-between; border-top: 1.5px solid var(--soft-line); padding-top: 12px; }
 .btn.danger { background: #b91c1c; border-color: #b91c1c; }
 .acc-quota { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
