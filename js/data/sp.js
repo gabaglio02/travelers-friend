@@ -505,6 +505,31 @@ window.TF_CITIES.sp = {
       nivel: "moderada"
     },
     {
+      id: "cantareira-engordador", nome: "Cantareira — Núcleo Engordador (cachoeira)", categoria: "trilha", bairro: "Tremembé",
+      lat: -23.3933, lng: -46.5873, preco: 20, precoNota: "estimado; as fontes divergem", idade: "Livre", duracao: 240,
+      horario: { abre: "08:00", fecha: "17:00", fechado: [1, 2, 3, 4, 5] },
+      comoChegar: "Entrada pela Av. Cel. Sezefredo Fagundes, no Tremembé — Metrô Tucuruvi (Linha 1-Azul) + app (~25 min).",
+      descricao: "Núcleo do Parque Estadual da Cantareira com trilha em Mata Atlântica até a Cachoeira do Engordador.",
+      nivel: "moderada",
+      confirmar: "Abre aos sábados, domingos e feriados e não abre em dias de chuva; a trilha da cachoeira tem horário de acesso mais curto. Confirme pelo (11) 2995-3254."
+    },
+    {
+      id: "cantareira-cabucu", nome: "Cantareira — Núcleo Cabuçu", categoria: "trilha", bairro: "Cabuçu",
+      municipio: "Guarulhos", lat: -23.4040, lng: -46.5350, preco: 20, precoNota: "estimado; as fontes divergem", idade: "Livre", duracao: 180,
+      horario: { abre: "08:00", fecha: "16:00", fechado: [1, 2] },
+      comoChegar: "Estrada do Cabuçu, em Guarulhos — carro ou app (~50 min do centro de SP).",
+      descricao: "Núcleo do Parque Estadual da Cantareira em Guarulhos, com trilhas na Mata Atlântica.",
+      confirmar: "Horário de um guia de trilhas; confirme pelo (11) 2406-8429."
+    },
+    {
+      id: "curucutu", nome: "Mirante do Curucutu (Serra do Mar)", categoria: "trilha", bairro: "Marsilac",
+      lat: -23.9861, lng: -46.7426, preco: 0, precoNota: "com agendamento", idade: "Livre", duracao: 240,
+      horario: { abre: "08:00", fecha: "16:00", fechado: [1, 2] },
+      comoChegar: "Estrada da Bela Vista, 7.090, no extremo sul da capital — carro ou app (~1h30 do centro). Não há transporte público direto.",
+      descricao: "Núcleo Curucutu do Parque Estadual da Serra do Mar: trilha até um mirante de onde se vê o mar, ainda dentro da cidade de São Paulo.",
+      confirmar: "Agendamento obrigatório no site da Fundação Florestal; confirme o horário e se a trilha exige guia."
+    },
+    {
       id: "horto", nome: "Horto Florestal", categoria: "trilha", bairro: "Tremembé",
       lat: -23.4590, lng: -46.6350, preco: 0, idade: "Livre", duracao: 120,
       horario: { abre: "06:00", fecha: "18:00", fechado: [] },
@@ -561,6 +586,14 @@ window.TF_CITIES.sp = {
       comoChegar: "Região de Pinheiros — Metrô Faria Lima ou Pinheiros (Linha 4-Amarela).",
       descricao: "Campos society com grama sintética para alugar por hora. Ideal para grupos.",
       ilustrativo: true
+    },
+    {
+      id: "casa-pedra", nome: "Casa de Pedra — escalada indoor", categoria: "esporte", bairro: "Pompeia",
+      lat: -23.5304, lng: -46.6785, preco: 80, precoNota: "day use; sapatilha e cadeirinha à parte", idade: "Livre", duracao: 120,
+      horario: { abre: "13:00", fecha: "21:00", fechado: [] },
+      comoChegar: "Rua Venâncio Aires, 31 — ônibus ou app a partir do Metrô Palmeiras-Barra Funda (Linha 3-Vermelha), ~10 min.",
+      descricao: "Um dos maiores ginásios de escalada da América do Sul, com paredes para quem nunca escalou e para quem já escala.",
+      confirmar: "Nos dias úteis abre das 6h às 22h (13h às 21h nos fins de semana); os valores do day use divergem entre as fontes (R$ 55 a R$ 80)."
     },
     {
       id: "nubanktour", nome: "Tour no Nubank Parque (Palmeiras)", categoria: "esporte", bairro: "Água Branca",
@@ -1135,6 +1168,8 @@ window.TF_CITIES.sp = {
       "Calendário da vila: Festival do Cambuci (abril), Convenção de Bruxas e Magos (fim de maio), Festival de Inverno (fim de julho e início de agosto) e, em dezembro, Festival Medieval e Feira de Oratórios e Presépios.",
       "Os museus (Castelo, Funicular, Casa Fox) abrem principalmente aos fins de semana e feriados.",
       "Reserve o Expresso Turístico com antecedência — esgota rápido."],
+    roosevelt: ["A praça tem uma pista de skate pública e gratuita, inaugurada em 2014."],
+    curucutu: ["Faça o agendamento antes de sair: sem ele, a entrada não é garantida.", "Em dia de neblina o mar pode não aparecer do mirante."],
     "aldeia-carapicuiba": ["No início de maio acontece a tradicional Festa de Santa Cruz, com a Dança de Santa Cruz na praça da aldeia, de graça.",
       "Em setembro há a Festa de Santa Cruzinha, menor, no mesmo lugar."],
     "parque-grecco": ["No centro de Ribeirão Pires fica a Vila do Doce, com lojas de chocolate, bares e restaurantes.",
