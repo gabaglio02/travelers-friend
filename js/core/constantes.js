@@ -41,6 +41,8 @@ export const WEEKDAYS_FULL = ["domingo", "segunda", "terça", "quarta", "quinta"
 export const STORAGE_KEY = "travelerfriend:v1";
 export const MAX_DAYS = 21;
 export const WALK_LIMIT_KM = 1.2;
+// Distância máxima para uma recomendação contar como "perto" (a Grande SP é mais espalhada).
+export const PERTO_KM = { capital: 3, grande: 8 };
 
 // Meios de transporte entre lugares do roteiro.
 export const MODES = {

@@ -1,7 +1,7 @@
 /* Traveler's Friend — planejador (Explorar · Roteiro · Custos). Módulo ES; usa Leaflet (global L). */
 import {
   CITY_OPTIONS, CATEGORIES, AGE_OPTIONS, MONTHS, WEEKDAYS, WEEKDAYS_FULL,
-  STORAGE_KEY, MAX_DAYS, WALK_LIMIT_KM, MODES, MEALS, CAT_ICON
+  STORAGE_KEY, MAX_DAYS, WALK_LIMIT_KM, PERTO_KM, MODES, MEALS, CAT_ICON
 } from "./core/constantes.js";
 import {
   $, esc, money, moneyExact, toMin, toHHMM, fmtDur, parseDur, parseISO, toISO, fmtDay, fmtShort,
@@ -828,7 +828,7 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
         let km = Infinity, from = null;
         refs.forEach((r) => { const d = distanceKm(r, p); if (d < km) { km = d; from = r; } });
         return { p, km, from };
-      }).sort((a, b) => highlightTier(b.p, iso) - highlightTier(a.p, iso) || a.km - b.km);
+      }).filter(({ p, km, from }) => km <= (p.municipio || from.municipio ? PERTO_KM.grande : PERTO_KM.capital)).sort((a, b) => highlightTier(b.p, iso) - highlightTier(a.p, iso) || a.km - b.km);
     } else {
       list = cands.filter((p) => highlightTier(p, iso) >= 1 || p.destaque)
         .sort((a, b) => highlightScore(b, iso) - highlightScore(a, iso))
@@ -876,7 +876,9 @@ import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<c�
         ${(() => { const h = livres.length ? cabeNoLivre(p, livres) : null; return h != null ? `<span class="fit">✓ Cabe no tempo livre, a partir das ${toHHMM(h)}</span>` : ""; })()}
         <button class="btn small" data-add="${p.id}">+ Adicionar</button>
       </div>`;
-    }).join("") : `<p class="muted">Sem recomendações para este dia.</p>`;
+    }).join("") : hasRefs
+      ? `<p class="muted">Nada a até ${PERTO_KM.capital} km${anchor ? " de " + esc(anchor.nome) : fromStay ? " da hospedagem" : " do roteiro deste dia"} (${PERTO_KM.grande} km na Grande SP). Veja mais opções no Explorar.</p>`
+      : `<p class="muted">Sem recomendações para este dia.</p>`;
     return list;
   }
 
