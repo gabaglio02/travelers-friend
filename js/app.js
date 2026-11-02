@@ -478,7 +478,8 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     return ref && F[ref] ? { ...F[ref], doLocal: true } : null;
   }
   // Preço confirmado = entrada gratuita conhecida ou valor marcado como confirmado na base; o resto é estimativa.
-  const precoConfirmado = (p) => !!p.precoConfirmado || (p.preco === 0 && !p.ilustrativo);
+  // Grátis conta como confirmado, a não ser que o dado diga que é estimado (precoEstimado: ex. "grátis nas edições anteriores").
+  const precoConfirmado = (p) => !!p.precoConfirmado || (p.preco === 0 && !p.ilustrativo && !p.precoEstimado);
   // Data confirmada = evento com fonte e sem aviso de dúvida sobre o dia.
   const dataConfirmada = (p) => hasDates(p) && !!p.fonte && !/(data|dia|diverg)/i.test(p.confirmar || "");
 

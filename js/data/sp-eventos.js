@@ -10,6 +10,7 @@
  *  datas    lista de dias (AAAA-MM-DD) — evento único ou com poucas datas
  *  periodo  { de, ate } — evento temporário (exposição, temporada); "ate" pode ser null
  *  fonte    link de onde a data foi verificada
+ *  precoEstimado  true quando preco 0 não está confirmado (ex.: grátis nas edições anteriores)
  */
 (function () {
   const ATUALIZADO_EM = "2026-10-28";
@@ -50,7 +51,9 @@
     padrebento: { bairro: "Centro", municipio: "Guarulhos", lat: -23.4680, lng: -46.5330,
       comoChegar: "Teatro Padre Bento (Guarulhos) — ônibus intermunicipal a partir do Metrô Armênia/Tucuruvi, ou app." },
     embuguacu: { bairro: "Centro", municipio: "Embu-Guaçu", lat: -23.8320, lng: -46.8120,
-      comoChegar: "Centro de Embu-Guaçu — carro ou app (~1h do centro de SP)." }
+      comoChegar: "Centro de Embu-Guaçu — carro ou app (~1h do centro de SP)." },
+    "local-paranapiacaba": { bairro: "Paranapiacaba", municipio: "Santo André", lat: -23.7782, lng: -46.3018,
+      comoChegar: "Vila de Paranapiacaba — CPTM Rio Grande da Serra (Linha 10) + ônibus, ou carro/app (~1h20 do centro de SP)." }
   };
 
   const CONFIRMAR = "Confirme data, horário e valores no site oficial de venda.";
@@ -168,7 +171,19 @@
     ev({ id: "ev-natal-embuguacu", nome: "Natal Iluminado de Embu-Guaçu", categoria: "festival", local: "embuguacu", preco: 0, idade: "Livre", duracao: 120,
       periodo: { de: "2026-11-28", ate: "2027-01-03" }, inicio: undefined, horario: { abre: "18:00", fecha: "22:00", fechado: [] },
       descricao: "Decoração e iluminação de Natal no centro da cidade.", confirmar: "Informação de calendário antigo — confirme com a prefeitura.",
-      fonte: "https://www.turismo.gov.br/agenda-eventos/views/calendario.php" })
+      fonte: "https://www.turismo.gov.br/agenda-eventos/views/calendario.php" }),
+    // ---------- Paranapiacaba (dez/2026) ----------
+    ev({ id: "ev-medieval-parana", nome: "Festival Medieval de Paranapiacaba", categoria: "festival", local: "local-paranapiacaba", preco: 0, idade: "Livre",
+      datas: ["2026-12-05", "2026-12-06"], inicio: "10:00", duracao: 240, horario: { abre: "10:00", fecha: "17:00", fechado: [] },
+      descricao: "2ª edição do festival com temática medieval na vila ferroviária. Entrada gratuita.",
+      confirmar: "Datas de uma agenda de eventos; horário ainda não divulgado — confirme com a prefeitura de Santo André.",
+      fonte: "https://saopauloparacriancas.com.br/?p=288343" }),
+    ev({ id: "ev-fopp-parana", nome: "Feira de Oratórios e Presépios de Paranapiacaba", categoria: "festival", local: "local-paranapiacaba", preco: 0,
+      precoNota: "gratuita nas edições anteriores", precoEstimado: true, idade: "Livre",
+      datas: ["2026-12-12", "2026-12-13"], inicio: "10:00", duracao: 180, horario: { abre: "10:00", fecha: "17:00", fechado: [] },
+      descricao: "17ª edição: artesanato de oratórios e presépios, com programação cultural de Natal na vila.",
+      confirmar: "Datas de uma agenda de eventos; horário ainda não divulgado — confirme com a organização (FOPP).",
+      fonte: "https://saopauloparacriancas.com.br/?p=288343" })
   ];
 
   const sp = window.TF_CITIES.sp;

@@ -677,6 +677,23 @@ window.TF_CITIES.sp = {
       descricao: "Trilhas na Mata Atlântica com cachoeiras e poços.",
       nivel: "moderada", confirmar: "As trilhas só podem ser feitas com monitor — agende antes."
     },
+    // Museus da vila (portal de turismo de Santo André e imprensa local, nov/2026)
+    {
+      id: "museu-castelo", nome: "Museu Castelo (Paranapiacaba)", categoria: "museu", bairro: "Paranapiacaba",
+      municipio: "Santo André", lat: -23.7781, lng: -46.3008, preco: 12, precoNota: "inteira; visita guiada", idade: "Livre", duracao: 60,
+      horario: { abre: "10:00", fecha: "15:30", fechado: [1, 2, 3, 4, 5] },
+      comoChegar: "No alto do morro da Parte Baixa da vila, subida a pé a partir do Pátio Ferroviário.",
+      descricao: "Antiga casa do engenheiro-chefe da ferrovia inglesa, com vista da vila e móveis, quadros e relógios de época.",
+      confirmar: "Abre aos sábados, domingos e feriados (em janeiro também às sextas). Confirme no Centro de Informações Turísticas da vila."
+    },
+    {
+      id: "museu-funicular", nome: "Museu do Sistema Funicular (Paranapiacaba)", categoria: "museu", bairro: "Paranapiacaba",
+      municipio: "Santo André", lat: -23.7792, lng: -46.3030, preco: 10, precoNota: "estimado", idade: "Livre", duracao: 60,
+      horario: { abre: "10:00", fecha: "16:00", fechado: [1, 2, 3, 4, 5] },
+      comoChegar: "No Pátio Ferroviário da vila, perto da estação e do relógio.",
+      descricao: "Locomotivas, vagões e as máquinas do sistema de cabos que levava os trens serra abaixo até Santos, mantidos pela ABPF.",
+      confirmar: "Abre aos sábados, domingos e feriados; confirme o valor na entrada."
+    },
     {
       id: "caminhosmar", nome: "Caminhos do Mar (Estrada Velha de Santos)", categoria: "trilha", bairro: "Riacho Grande",
       municipio: "São Bernardo do Campo", lat: -23.8000, lng: -46.4900, preco: 60, precoNota: "estimado", idade: "Livre", duracao: 300,
@@ -701,6 +718,14 @@ window.TF_CITIES.sp = {
       destaque: true
     },
     {
+      id: "embu-arte-sacra", nome: "Museu de Arte Sacra dos Jesuítas (Embu)", categoria: "museu", bairro: "Centro",
+      municipio: "Embu das Artes", lat: -23.6495, lng: -46.8516, preco: 20, precoNota: "inteira; meia R$ 10; até 7 anos grátis", idade: "Livre", duracao: 60,
+      horario: { abre: "09:00", fecha: "17:00", fechado: [1] },
+      comoChegar: "Largo dos Jesuítas, ao lado da igreja, no centro histórico de Embu.",
+      descricao: "Museu no antigo convento jesuíta do período colonial, ao lado da igreja, com acervo de arte sacra.",
+      confirmar: "Fecha das 12h às 13h; confirme horário e preço pelo telefone do museu."
+    },
+    {
       id: "cemucam", nome: "Parque Cemucam", categoria: "parque", bairro: "Granja Viana",
       municipio: "Cotia", lat: -23.6290, lng: -46.8930, preco: 0, idade: "Livre", duracao: 120,
       horario: { abre: "07:00", fecha: "17:00", fechado: [] },
@@ -714,6 +739,14 @@ window.TF_CITIES.sp = {
       horario: { abre: "09:00", fecha: "18:00", fechado: [] },
       comoChegar: "CPTM Barueri (Linha 8-Diamante) + ônibus, ou app (~50 min).",
       descricao: "Um dos conjuntos coloniais mais preservados do estado, com casarões dos séculos XVII a XIX."
+    },
+    {
+      id: "casa-anhanguera", nome: "Museu Casa do Anhanguera", categoria: "museu", bairro: "Centro",
+      municipio: "Santana de Parnaíba", lat: -23.4456, lng: -46.9143, preco: 0, precoNota: "segundo guias de turismo", precoEstimado: true, idade: "Livre", duracao: 45,
+      horario: { abre: "11:00", fecha: "17:00", fechado: [1] },
+      comoChegar: "Largo da Matriz, no centro histórico de Santana de Parnaíba.",
+      descricao: "Casa bandeirista do séc. XVII, tombada pelo IPHAN em 1958, hoje museu histórico da cidade.",
+      confirmar: "De terça a sexta abre mais cedo (8h); confirme pelo telefone da Cultura da cidade."
     },
     {
       id: "pirapora", nome: "Santuário de Pirapora do Bom Jesus", categoria: "ponto", bairro: "Centro",
@@ -1056,10 +1089,17 @@ window.TF_CITIES.sp = {
     "jogo-spcor": ["Clássico com torcida única: vá com a camisa do mandante ou neutra.", "Ingressos costumam esgotar para sócios — compre cedo."],
     liberdade: ["A feira da Praça da Liberdade funciona aos sábados e domingos.", "Experimente o taiyaki e os lámen da região."],
     batman: ["Melhor luz para fotos no fim da tarde.", "Os grafites mudam com frequência."],
-    paranapiacaba: ["Leve agasalho: a neblina e o frio são comuns mesmo no verão.", "Em julho acontece o Festival de Inverno de Paranapiacaba.", "Reserve o Expresso Turístico com antecedência — esgota rápido."],
-    embu: ["A feira é maior aos domingos; chegue antes das 11h.", "Prove os restaurantes de comida caseira no centrinho."],
+    paranapiacaba: ["Leve agasalho: a neblina e o frio são comuns mesmo no verão.",
+      "Calendário da vila: Festival do Cambuci (abril), Convenção de Bruxas e Magos (fim de maio), Festival de Inverno (fim de julho e início de agosto) e, em dezembro, Festival Medieval e Feira de Oratórios e Presépios.",
+      "Os museus (Castelo, Funicular, Casa Fox) abrem principalmente aos fins de semana e feriados.",
+      "Reserve o Expresso Turístico com antecedência — esgota rápido."],
+    "museu-castelo": ["A subida é curta, mas íngreme: vá com calçado firme.", "A vista da vila lá de cima é melhor sem neblina, no começo da tarde."],
+    embu: ["A feira é maior aos domingos; chegue antes das 11h.", "Prove os restaurantes de comida caseira no centrinho.",
+      "Em dezembro costuma ter o Natal Iluminado no centro histórico; confira a programação da prefeitura."],
     juquery: ["O pôr do sol do Pico do Juquery é o ponto alto — chegue umas 2h antes.", "Pouca sombra: leve chapéu e água."],
-    guararema: ["Dá para ir de trem turístico em datas especiais — consulte a CPTM.", "A Ilha Grande tem tirolesa e passeios de caiaque."],
+    guararema: ["O trem turístico (maria-fumaça) vai da estação central até a Vila Luís Carlos, 14 km ida e volta, nos fins de semana e feriados — compre em tremdeguararema.com.br.",
+      "A Vila Luís Carlos, de 1914, tem cafés, bares e artesanato em volta da estação.",
+      "A Ilha Grande tem tirolesa e passeios de caiaque."],
     dedge: ["Leve documento com foto: a entrada é só para maiores de 18.", "Nome na lista costuma dar desconto — veja nas redes da festa.", "O metrô fecha à meia-noite e reabre às 4h40; combine a volta antes."],
     mamba: ["Os ingressos saem em lotes e esgotam rápido.", "Festas costumam ir até de manhã: leve água e combine ponto de encontro."],
     baixoaugusta: ["Movimento forte de quinta a sábado, a partir das 22h.", "Fique atento aos pertences na saída das casas."],
