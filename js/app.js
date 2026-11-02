@@ -49,11 +49,25 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
       opts.push({ id: "onibus", min: Math.round(8 + minTrecho(km, 1.35, foraDaCapital ? 20 : 16, 30)), cost: busGratis ? 0 : fare * (far ? 2 : 1),
         note: busGratis ? "grátis hoje (Tarifa Zero nos ônibus municipais)" : "" });
     }
+    const carroMin = Math.round(5 + minTrecho(km, 1.4, foraDaCapital ? 30 : 20, 45));
     if (km > 0.8 || !opts.length) {
-      opts.push({ id: "carro", min: Math.round(5 + minTrecho(km, 1.4, foraDaCapital ? 30 : 20, 45)), cost: Math.round((6 + 2.4 * km * 1.4) * Math.ceil(state.people / 4)) });
+      opts.push({ id: "carro", min: carroMin, cost: Math.round((6 + 2.4 * km * 1.4) * Math.ceil(state.people / 4)) });
+    }
+    // Carro alugado: no trecho entra só o combustível; diária e estacionamento são por dia, em Custos.
+    if (comCarro(iso) && km > 0.3) {
+      const c = state.carro;
+      opts.push({ id: "alugado", min: carroMin, cost: Math.round(km * 1.4 / (c.consumo || 12) * c.combustivel * carrosDoGrupo() * 100) / 100,
+        note: "combustível; diária e estacionamento entram em Custos" });
     }
     return opts.map((o) => ({ ...o, km }));
   }
+
+  // ---------- Carro alugado ----------
+  // Vale nos dias marcados (todos, até a pessoa desmarcar algum no Roteiro). Até 5 pessoas por carro.
+  // Nos dias sem carro, os trechos seguem o transporte público.
+  const comCarro = (iso) => state.transport === "alugado" && !!iso && !(state.days[iso] || {}).semCarro;
+  const carrosDoGrupo = () => Math.max(1, Math.ceil(state.people / 5));
+  const diariaCarro = () => state.carro.diaria != null ? state.carro.diaria : (city().carroDiaria || 200);
 
   // ---------- Hospedagens ----------
   // A viagem pode ter várias hospedagens (com endereço opcional e valor por noite).
@@ -93,6 +107,7 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     let chosen = mode && by(mode);
     if (!chosen) {
       if (km <= WALK_LIMIT_KM && by("pe")) chosen = by("pe");
+      else if (comCarro(iso)) chosen = by("alugado");
       else if (state.transport === "app") chosen = by("carro");
       else if (state.transport === "ativo" && km <= 5) chosen = by("bike") || by("pe");
       chosen = chosen || fastest(["metro", "trem", "onibus"]) || by("carro") || opts[0];
@@ -111,6 +126,8 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     return {
       city: "sp", start: toISO(s), end: toISO(e), people: 2, youngest: 18,
       hotel: 250, food: 120, transport: "publico",
+      // diaria null = valor da cidade (city().carroDiaria)
+      carro: { diaria: null, combustivel: 6.3, consumo: 12, estacionamento: 0 },
       days: {}, activeDay: toISO(s)
     };
   }
@@ -118,6 +135,7 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
   // Completa uma viagem salva com os campos que versões antigas do site não tinham.
   function normalizeState(s) {
     s = Object.assign(defaultState(), s);
+    s.carro = Object.assign(defaultState().carro, s.carro || {});
     // Horários padrão das refeições.
     s.meals = Object.assign(defaultMeals(), s.meals || {});
     s.stays = s.stays || [];
@@ -584,6 +602,8 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
         <b>Dia ${i + 1}</b><small>${fmtDay(d)} · ${n} ${n === 1 ? "item" : "itens"}</small></button>`;
     }).join("") || `<p class="muted">Escolha as datas de ida e volta.</p>`;
     if (state.activeDay) $("#dayStart").value = dayData(state.activeDay).start;
+    $("#dayCarRow").hidden = state.transport !== "alugado" || !state.activeDay;
+    $("#dayCar").checked = comCarro(state.activeDay);
   }
 
   // ---------- Render: timeline ----------
@@ -977,7 +997,8 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     { k: "hosp", nome: "Hospedagem", cor: "#2a78d6", origem: "seu valor" },
     { k: "comida", nome: "Alimentação", cor: "#eb6834", origem: "seu valor" },
     { k: "ingressos", nome: "Ingressos e entradas", cor: "#1baf7a", origem: "" },
-    { k: "transp", nome: "Deslocamento", cor: "#eda100", origem: "estimado" }
+    { k: "transp", nome: "Deslocamento", cor: "#eda100", origem: "estimado" },
+    { k: "carro", nome: "Carro alugado", cor: "#e87ba4", origem: "diária e estacionamento" }
   ];
   function calcularCustos() {
     const days = tripDays(), n = Math.max(1, state.people);
@@ -995,8 +1016,11 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
       transp += tr;
       const st = i < nights ? stayFor(d) : null;
       const noite = i < nights ? stayPrice(st) : 0;
-      return { d, i, n: rows.length, ing, tr, noite, comida: state.food * state.people };
+      const carro = comCarro(d) ? (diariaCarro() + state.carro.estacionamento) * carrosDoGrupo() : 0;
+      return { d, i, n: rows.length, ing, tr, noite, carro, comida: state.food * state.people };
     });
+    const diasCarro = porDia.filter((x) => x.carro > 0).length;
+    const carro = porDia.reduce((t, x) => t + x.carro, 0);
     const byStay = new Map();
     days.slice(0, nights).forEach((d) => {
       const st = stayFor(d), key = st ? st.id : "";
@@ -1005,12 +1029,17 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     });
     const hosp = [...byStay.values()].reduce((t, g) => t + g.n * g.price, 0);
     const comida = days.length * state.people * state.food;
-    const grupo = { hosp, comida, ingressos: ingConf + ingEst, transp };
-    const total = hosp + comida + grupo.ingressos + transp;
-    return { days, nights, n, porDia, byStay, grupo, total, ingConf, ingEst };
+    const grupo = { hosp, comida, ingressos: ingConf + ingEst, transp, carro };
+    const total = hosp + comida + grupo.ingressos + transp + carro;
+    return { days, nights, n, porDia, byStay, grupo, total, ingConf, ingEst, diasCarro };
   }
 
   function renderCosts() {
+    // Campos do carro alugado (só com essa opção de deslocamento).
+    $("#carroCfg").hidden = state.transport !== "alugado";
+    document.querySelectorAll("[data-carro]").forEach((el) => {
+      if (document.activeElement !== el) el.value = el.dataset.carro === "diaria" ? diariaCarro() : state.carro[el.dataset.carro];
+    });
     const c = calcularCustos();
     const pp = (v) => v / c.n;
     const dias = Math.max(1, c.days.length);
@@ -1043,7 +1072,7 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
       <div class="stack" role="img" aria-label="Composição dos gastos: ${partes.map((x) => x.nome + " " + Math.round(x.v / c.total * 100) + "%").join(", ")}">
         ${partes.map((x) => `<span style="flex-grow:${x.v};background:${x.cor}" data-tip="${esc(x.nome)}: ${moneyExact(x.v)} (${Math.round(x.v / c.total * 100)}%)"></span>`).join("")}
       </div>
-      <ul class="stack-legend">${CUSTO_CATS.map((x) => `<li>
+      <ul class="stack-legend">${CUSTO_CATS.filter((x) => x.k !== "carro" || state.transport === "alugado").map((x) => `<li>
           <i style="background:${x.cor}"></i><span class="sl-nome">${x.nome}</span>
           <span class="sl-val">${moneyExact(c.grupo[x.k])}<small>${c.total ? Math.round(c.grupo[x.k] / c.total * 100) : 0}%</small></span>
           <span class="sl-orig">${origem(x.k)}</span></li>`).join("")}</ul>` : "";
@@ -1059,6 +1088,7 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
       <tbody>
         <tr><td>Ingressos e entradas</td>${vals(c.grupo.ingressos)}</tr>
         <tr><td>Deslocamento</td>${vals(c.grupo.transp)}</tr>
+        ${state.transport === "alugado" ? `<tr><td>Carro alugado (${c.diasCarro} ${c.diasCarro === 1 ? "dia" : "dias"}${carrosDoGrupo() > 1 ? " · " + carrosDoGrupo() + " carros" : ""})</td>${vals(c.grupo.carro)}</tr>` : ""}
         <tr><td>Hospedagem (${c.nights} ${c.nights === 1 ? "noite" : "noites"})</td>${vals(c.grupo.hosp)}</tr>
         ${hospSub}
         <tr><td>Alimentação (${c.days.length} ${c.days.length === 1 ? "dia" : "dias"})</td>${vals(c.grupo.comida)}</tr>
@@ -1067,8 +1097,8 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     // Por dia (por pessoa)
     $("#costDays").innerHTML = `<table class="cost-table por-dia${sozinho ? " uma-coluna" : ""}">
       <thead><tr><th>Dia</th>${sozinho ? "<th>Valor</th>" : "<th>Por pessoa</th><th>Grupo</th>"}</tr></thead><tbody>${c.porDia.map((x) => {
-        const g = x.ing + x.tr + x.noite + x.comida;
-        return `<tr><td>Dia ${x.i + 1} · ${fmtDay(x.d)}<small>${x.n} ${x.n === 1 ? "lugar" : "lugares"}${x.noite ? " · noite " + moneyExact(x.noite) : ""}</small></td>${sozinho ? `<td>${moneyExact(g)}</td>` : `<td>${moneyExact(pp(g))}</td><td>${moneyExact(g)}</td>`}</tr>`;
+        const g = x.ing + x.tr + x.noite + x.carro + x.comida;
+        return `<tr><td>Dia ${x.i + 1} · ${fmtDay(x.d)}<small>${x.n} ${x.n === 1 ? "lugar" : "lugares"}${x.noite ? " · noite " + moneyExact(x.noite) : ""}${x.carro ? " · carro " + moneyExact(x.carro) : ""}</small></td>${sozinho ? `<td>${moneyExact(g)}</td>` : `<td>${moneyExact(pp(g))}</td><td>${moneyExact(g)}</td>`}</tr>`;
       }).join("")}</tbody></table>`;
   }
 
@@ -1540,6 +1570,12 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     $("#city").addEventListener("change", (e) => {
       if (window.TF_CITIES[e.target.value]) { state.city = e.target.value; save(); renderCitySelect(); renderAll(); }
     });
+    $("#dayCar").addEventListener("change", (e) => {
+      if (!state.activeDay) return;
+      const d = dayData(state.activeDay);
+      if (e.target.checked) delete d.semCarro; else d.semCarro = true;
+      save(); renderAll();
+    });
     $("#dayStart").addEventListener("change", (e) => {
       if (document.activeElement === e.target) return; // aplica ao sair do campo (ver "Campos de horário")
       if (!state.activeDay || !e.target.value) return;
@@ -1708,6 +1744,12 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
         save(); renderMealsCfg(); renderAll();
         return;
       }
+      if (ds.carro) {
+        const v = Math.max(ds.carro === "consumo" ? 1 : 0, +e.target.value || 0);
+        state.carro[ds.carro] = v;
+        save(); renderAll();
+        return;
+      }
       if (ds.stayprice || ds.staylabel) {
         const st = stayById(ds.stayprice || ds.staylabel);
         if (st && ds.stayprice) st.price = Math.max(0, +e.target.value || 0);
@@ -1776,7 +1818,7 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
         const items = (d.items || []).map(({ uid, id, dur, at, mode, refeicao }) => ({ uid, id, dur, at, mode, refeicao }));
         items.forEach((it) => { const p = placeById(it.id); if (p) nomes[it.id] = p.nome; });
         lugares += items.length;
-        if (items.length || d.start || d.meals) days[iso] = { items, start: d.start, meals: d.meals, returnMode: d.returnMode };
+        if (items.length || d.start || d.meals) days[iso] = { items, start: d.start, meals: d.meals, returnMode: d.returnMode, semCarro: d.semCarro };
       });
       const dados = { city: state.city, start: state.start, end: state.end, people: state.people, youngestAge: state.youngestAge,
         food: state.food, transport: state.transport, meals: state.meals, activeDay: state.start, days, nomes };

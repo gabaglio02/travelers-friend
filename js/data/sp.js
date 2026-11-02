@@ -21,6 +21,7 @@ window.TF_CITIES.sp = {
   uf: "SP",
   centro: [-23.5558, -46.6496],
   tarifaTransporte: 5.2, // metrô/ônibus (estimado)
+  carroDiaria: 200, // diária de carro alugado, por carro (estimado; cada cidade tem a sua)
   lugares: [
     // ---------- Museus ----------
     {

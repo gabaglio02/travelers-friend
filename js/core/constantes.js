@@ -52,7 +52,8 @@ export const MODES = {
   metro: { icon: "🚇", label: "Metrô" },
   trem: { icon: "🚆", label: "Trem (CPTM)" },
   onibus: { icon: "🚌", label: "Ônibus" },
-  carro: { icon: "🚗", label: "App / carro" }
+  carro: { icon: "🚗", label: "App / carro" },
+  alugado: { icon: "🚙", label: "Carro alugado" }
 };
 
 // Refeições do dia.

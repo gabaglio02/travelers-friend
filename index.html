@@ -141,6 +141,7 @@
           <input type="time" id="dayStart" value="09:00">
         </label>
         <span class="mono muted" id="dayEnd"></span>
+        <label class="check day-car" id="dayCarRow" hidden><input type="checkbox" id="dayCar"> 🚙 Com carro alugado neste dia</label>
       </div>
 
       <div class="day-strip" id="dayStrip" hidden aria-label="Resumo visual do dia"></div>
@@ -230,8 +231,20 @@
             <option value="publico">Transporte público</option>
             <option value="ativo">A pé / bicicleta quando der</option>
             <option value="app">App / carro</option>
+            <option value="alugado">Carro alugado</option>
           </select>
         </label>
+        <div class="field carro-cfg" id="carroCfg" hidden>
+          <span>Carro alugado (até 5 pessoas por carro)</span>
+          <div class="carro-campos">
+            <label>Diária por carro R$ <input type="number" min="0" step="10" data-carro="diaria" aria-label="Diária por carro"></label>
+            <label>Gasolina R$/L <input type="number" min="0" step="0.1" data-carro="combustivel" aria-label="Preço da gasolina por litro"></label>
+            <label>Consumo km/L <input type="number" min="1" step="0.5" data-carro="consumo" aria-label="Consumo do carro em km por litro"></label>
+            <label>Estacionamento/dia R$ <input type="number" min="0" step="5" data-carro="estacionamento" aria-label="Estacionamento por dia"></label>
+          </div>
+          <p class="small-text muted">Diária e estacionamento contam nos dias com carro (escolha no Roteiro, em cada dia).
+            O combustível entra em Deslocamento, pela distância de cada trecho.</p>
+        </div>
       </div>
 
       <p class="disclaimer">
