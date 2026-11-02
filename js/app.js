@@ -160,7 +160,8 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
   if (state.start < toISO(new Date())) { const d = defaultState(); state.start = d.start; state.end = d.end; state.activeDay = d.activeDay; }
   state = normalizeState(state);
 
-  const ui = { mapAll: false, kind: "", where: "", cats: new Set(), q: "", maxPrice: 1200, onlyFree: false, onlyAge: true, onlyDates: false, focusUid: null, view: "explore" };
+  const ui = { mapAll: false, kind: "", where: "", cats: new Set(), q: "", maxPrice: 1200, onlyFree: false, onlyAge: true, onlyDates: false, focusUid: null, view: "explore",
+    comerAberto: new Set() }; // listas "+ opções perto" abertas no roteiro ("dia:refeição")
 
   // Quem quiser saber de cada alteração (ex.: js/conta.js, que salva a viagem na conta).
   const saveHooks = [];
@@ -739,12 +740,24 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
         && (!p.horario || (toMin(p.horario.abre) <= e.start && closeMin(p) >= e.end)));
       // Até 3 km. Cada 0,1 de nota acima de 4,4 "vale" 300 m: um lugar ótimo um pouco mais longe passa na frente.
       const perto = abertos.map((p) => ({ p, km: p.local && p.local === ref.id ? 0 : distanceKm(ref, p) })).filter((x) => x.km <= 3)
-        .sort((a, b) => (a.km - ((a.p.nota || 4.5) - 4.4) * 3) - (b.km - ((b.p.nota || 4.5) - 4.4) * 3)).slice(0, 3);
+        .sort((a, b) => (a.km - ((a.p.nota || 4.5) - 4.4) * 3) - (b.km - ((b.p.nota || 4.5) - 4.4) * 3));
       if (!perto.length) return "";
       const antes = stopDepois ? stopDepois.row.item.uid : "";
+      const onde = (p, km) => p.local && p.local === ref.id ? "aqui dentro" : kmTxt(km);
+      const nota = (p) => p.nota ? " · ★ " + String(p.nota).replace(".", ",") : "";
+      // Tipo de cozinha: a descrição dos restaurantes coletados começa com ele ("Pizzaria. Nota 4,7…").
+      const tipo = (p) => { const t = (p.descricao || "").split(".")[0]; return t && t !== "Restaurante" && t.length <= 30 ? t + " · " : ""; };
+      const botao = (p, km, cls, txt) => `<button class="btn ghost small ${cls}" data-comer="${p.id}" data-refeicao="${e.m.key}" data-antes="${antes}"
+          title="${esc(p.descricao || "")}">${txt}</button>`;
+      // Os 3 primeiros à mostra; os outros (até 12) numa lista que abre no "+". A lista lembra se estava aberta.
+      const mais = perto.slice(3, 15), chave = state.activeDay + ":" + e.m.key;
       return `<div class="meal-sug"><span class="muted small-text">Onde comer perto:</span>
-        ${perto.map(({ p, km }) => `<button class="btn ghost small" data-comer="${p.id}" data-refeicao="${e.m.key}" data-antes="${antes}"
-          title="${esc(p.descricao || "")}">${esc(p.nome)} · ${p.local && p.local === ref.id ? "aqui dentro" : kmTxt(km)}${p.nota ? " · ★ " + String(p.nota).replace(".", ",") : ""} · ${money(p.preco)}</button>`).join("")}</div>`;
+        ${perto.slice(0, 3).map(({ p, km }) => botao(p, km, "", `${esc(p.nome)} · ${onde(p, km)}${nota(p)} · ${money(p.preco)}`)).join("")}
+        ${mais.length ? `<details class="meal-mais" data-comermais="${chave}" ${ui.comerAberto.has(chave) ? "open" : ""}>
+          <summary>+ ${mais.length} ${mais.length === 1 ? "opção" : "opções"} perto</summary>
+          <div class="meal-mais-lista">${mais.map(({ p, km }) => botao(p, km, "meal-mais-item",
+            `<b>${esc(p.nome)}</b><small>${esc(tipo(p))}${onde(p, km)}${nota(p)} · ${money(p.preco)}</small>`)).join("")}</div>
+        </details>` : ""}</div>`;
     };
     const mealHtml = (e, idx) => {
       const m = e.m;
@@ -1734,6 +1747,11 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
       if (el.type !== "time" || el.value === el.dataset.antes) return;
       setTimeout(() => el.dispatchEvent(new Event("change", { bubbles: true })), 0);
     });
+    // "toggle" não sobe pela página: escuta na captura para lembrar quais listas de restaurantes estão abertas.
+    document.addEventListener("toggle", (e) => {
+      const k = e.target.dataset && e.target.dataset.comermais;
+      if (k) e.target.open ? ui.comerAberto.add(k) : ui.comerAberto.delete(k);
+    }, true);
     document.addEventListener("change", (e) => {
       if (e.target.type === "time" && document.activeElement === e.target) return;
       const ds = e.target.dataset || {};

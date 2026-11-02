@@ -1212,6 +1212,12 @@ body.landing .social { display: none; }
 /* Sugestões de restaurante no bloco de almoço/jantar */
 .meal-sug { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
 .meal-sug .btn { white-space: normal; text-align: left; }
+/* "+ N opções perto": lista maior de restaurantes, aberta sob demanda */
+.meal-mais { flex-basis: 100%; }
+.meal-mais summary { cursor: pointer; font-size: var(--t-sm); font-weight: var(--w-bold); text-decoration: underline; width: fit-content; }
+.meal-mais-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; margin-top: 6px; }
+.meal-mais-item { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.meal-mais-item small { font-weight: var(--w-regular); color: var(--muted); }
 
 /* Exposições dentro de um lugar (card e detalhe) */
 .expo-nota { font-size: 12.5px; margin-top: 4px; }
