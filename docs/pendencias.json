@@ -344,6 +344,71 @@
           "paraEntrar": "Pesquisa própria (lista oficial da Secretaria de Esportes)."
         }
       ]
+    },
+    {
+      "titulo": "5. Fotos que faltam (lugares já no site, ainda sem foto)",
+      "itens": [
+        {
+          "oque": "Japan House",
+          "cidade": "São Paulo",
+          "motivo": "Nenhuma foto com licença livre no Wikimedia Commons.",
+          "paraEntrar": "Foto própria ou do local, com autorização (ou licença livre), sem pessoas em destaque."
+        },
+        {
+          "oque": "Mirante 9 de Julho",
+          "cidade": "São Paulo",
+          "motivo": "As fotos encontradas eram de prédios vistos do MASP, não do mirante.",
+          "paraEntrar": "Foto própria ou do local, com autorização (ou licença livre), sem pessoas em destaque."
+        },
+        {
+          "oque": "Mirante do Curucutu (Serra do Mar)",
+          "cidade": "São Paulo (Marsilac)",
+          "motivo": "Só fotos noturnas (céu estrelado), que não mostram o mirante.",
+          "paraEntrar": "Foto própria ou do local, com autorização (ou licença livre), sem pessoas em destaque."
+        },
+        {
+          "oque": "Parque Max Feffer",
+          "cidade": "Suzano",
+          "motivo": "As fotos eram da arena de shows, com público.",
+          "paraEntrar": "Foto própria ou do local, com autorização (ou licença livre), sem pessoas em destaque."
+        },
+        {
+          "oque": "Parque Pérola da Serra",
+          "cidade": "Ribeirão Pires",
+          "motivo": "Nenhuma foto encontrada.",
+          "paraEntrar": "Foto própria ou do local, com autorização (ou licença livre), sem pessoas em destaque."
+        },
+        {
+          "oque": "Kartódromo Granja Viana",
+          "cidade": "Cotia",
+          "motivo": "Fotos com pilotos em destaque ou só um terreno vazio.",
+          "paraEntrar": "Foto própria ou do local, com autorização (ou licença livre), sem pessoas em destaque."
+        },
+        {
+          "oque": "Casa de Pedra (escalada)",
+          "cidade": "São Paulo",
+          "motivo": "Não pesquisado nesta rodada.",
+          "paraEntrar": "Foto própria ou do local, com autorização (ou licença livre), sem pessoas em destaque."
+        },
+        {
+          "oque": "Rafting em Juquitiba e Rota do Frango com Polenta",
+          "cidade": "Juquitiba / São Bernardo",
+          "motivo": "Não pesquisados nesta rodada.",
+          "paraEntrar": "Foto própria ou do local, com autorização (ou licença livre), sem pessoas em destaque."
+        },
+        {
+          "oque": "Cine Joia, Galeria Pagé e JK Iguatemi",
+          "cidade": "São Paulo",
+          "motivo": "Sem foto livre da fachada (só vitrines e interiores).",
+          "paraEntrar": "Foto própria ou do local, com autorização (ou licença livre), sem pessoas em destaque."
+        },
+        {
+          "oque": "Bares, baladas e restaurantes (D-Edge, Mocotó, A Casa do Porco e outros)",
+          "cidade": "São Paulo",
+          "motivo": "Ficaram de fora de propósito: fotos de dentro quase sempre mostram pessoas.",
+          "paraEntrar": "Foto da fachada cedida pelo próprio lugar."
+        }
+      ]
     }
   ]
 }

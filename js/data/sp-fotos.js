@@ -750,3 +750,126 @@ Object.assign(window.TF_CITIES.sp.fotos, {
     "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
   }
 });
+
+// Fotos escolhidas em 2026-11-02 (lugares novos da Fase 2 e alguns que estavam sem foto). Mesmos critérios: licença livre, sem pessoas em destaque.
+Object.assign(window.TF_CITIES.sp.fotos, {
+  "aldeia-carapicuiba": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/19/Vista_Geral_Aldeia_de_Carapicu%C3%ADba.jpg/500px-Vista_Geral_Aldeia_de_Carapicu%C3%ADba.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=95618717",
+    "autor": "NathaliaFMA",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "cantareira-cabucu": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b9/Barragem_Cabu%C3%A7u_-_Primeira_grande_obra_de_concreto_do_Brasil.jpg/500px-Barragem_Cabu%C3%A7u_-_Primeira_grande_obra_de_concreto_do_Brasil.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=48632293",
+    "autor": "Usias Batista da Silva",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "cantareira-engordador": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/12/NE_028.jpg/500px-NE_028.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=48892944",
+    "autor": "Alexandra Palitoz",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "casa-anhanguera": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/44/Casa_do_Anhanguera_01.jpg/500px-Casa_do_Anhanguera_01.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=37447671",
+    "autor": "Dornicke",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "casadevidro": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/Escada_Casa_de_Vidro%2C_Lina_Bo_Bardi.jpg/500px-Escada_Casa_de_Vidro%2C_Lina_Bo_Bardi.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=51887304",
+    "autor": "Carolina Carvalho",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "c-ibirapuera-shopping": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b7/Shopping-ibirapuera.JPG/500px-Shopping-ibirapuera.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=3762670",
+    "autor": "FlaviaC",
+    "licenca": "CC BY 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by/3.0"
+  },
+  "c-morumbi-shopping": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d2/Morumbi_Shopping.jpg/500px-Morumbi_Shopping.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=25955447",
+    "autor": "Anderson Façanha",
+    "licenca": "CC BY-SA 2.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+  },
+  "c-shopping-aricanduva": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/03/Shopping_Aricanduva.JPG/500px-Shopping_Aricanduva.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=21495395",
+    "autor": "Raphael Igor",
+    "licenca": "CC BY-SA 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
+  "c-shopping-patio-paulista": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/05/Shopping_P%C3%A1tio_Paulista_-_4.jpg/500px-Shopping_P%C3%A1tio_Paulista_-_4.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=66047641",
+    "autor": "Ajmcbarreto",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "c-shopping-villa-lobos": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c5/Shopping_Villa_Lobos_-_panoramio_%281%29.jpg/500px-Shopping_Villa_Lobos_-_panoramio_%281%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=59252527",
+    "autor": "CORRETOR-CARVALHO",
+    "licenca": "CC BY-SA 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
+  "embu-arte-sacra": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/Igreja_Nossa_Senhora_do_Ros%C3%A1rio_em_Embu_das_Artes.JPG/500px-Igreja_Nossa_Senhora_do_Ros%C3%A1rio_em_Embu_das_Artes.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=8672362",
+    "autor": "DeivsonPrescovia",
+    "licenca": "Public domain",
+    "licencaUrl": null
+  },
+  "jockey": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5e/Jockey_Club_de_S%C3%A3o_Paulo_por_Rodrigo_Tetsuo_Argenton_%2808%29.jpg/500px-Jockey_Club_de_S%C3%A3o_Paulo_por_Rodrigo_Tetsuo_Argenton_%2808%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=82376969",
+    "autor": "Rodrigo Tetsuo Argenton",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "manequinho": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0d/Parque_Ibirapuera_-_Viveiro_Manequinho_Lopes_-_panoramio.jpg/500px-Parque_Ibirapuera_-_Viveiro_Manequinho_Lopes_-_panoramio.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=59214000",
+    "autor": "CORRETOR-CARVALHO",
+    "licenca": "CC BY-SA 3.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
+  "museu-castelo": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/33/Museu_do_Castelo.jpg/500px-Museu_do_Castelo.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=202612",
+    "autor": "User:OS2Warp",
+    "licenca": "Public domain",
+    "licencaUrl": null
+  },
+  "museu-funicular": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fa/Locomotiva_a_vapor_ao_fundo%2C_casario_de_abrigo_para_locomotivas_do_sistema_funicular_de_Paranapiacaba._Composi%C3%A7%C3%A3o_ferrovi%C3%A1ria_atual.JPG/500px-Locomotiva_a_vapor_ao_fundo%2C_casario_de_abrigo_para_locomotivas_do_sistema_funicular_de_Paranapiacaba._Composi%C3%A7%C3%A3o_ferrovi%C3%A1ria_atual.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=43317178",
+    "autor": "Silvio Enio Bergamini Filho",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "museu-scs": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/11/Museu_Hist%C3%B3rico_Municipal_11.jpg/500px-Museu_Hist%C3%B3rico_Municipal_11.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=58825366",
+    "autor": "Milena Severiano",
+    "licenca": "CC BY-SA 4.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  "parque-estoril": {
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/17/Parque_Estoril_02.jpg/500px-Parque_Estoril_02.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "pagina": "https://commons.wikimedia.org/w/index.php?curid=11265145",
+    "autor": "Stella Dauer from São Bernardo do Campo, Brasil",
+    "licenca": "CC BY-SA 2.0",
+    "licencaUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+  }
+});
