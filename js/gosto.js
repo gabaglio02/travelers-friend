@@ -86,17 +86,20 @@ contaPronta().then((c) => {
 
 // ---------- Questionário (janela, uma pergunta por tela) ----------
 // tela: "intro" → 0..7 (perguntas) → "fim". Respostas ficam num rascunho até o fim; fechar no meio não muda nada.
+// Sem "outra", responde e salva as preferências pessoais. Com "outra" (preferências do grupo, js/grupo.js), o mesmo
+// questionário responde por outra pessoa e entrega o resultado a outra.salvar — nada aqui toca as preferências pessoais:
+//   outra = { quem: "Ana", respostas: { notas, puladas }, intro: "<html>", botao: "Sou Ana, começar", salvar: async ({ notas, puladas }) => {} }
 let q = null;
 const NOTA_TXT = ["nada a ver comigo", "pouco", "mais ou menos", "gosto", "gosto muito", "adoro"];
 
-export function abrirQuestionario({ intro = true, aoFechar } = {}) {
+export function abrirQuestionario({ intro = true, aoFechar, outra = null } = {}) {
   if (q) return;
-  const atual = preferencias();
+  const atual = outra ? normal(outra.respostas) : preferencias();
   const d = document.createElement("dialog");
   d.className = "modal tf-quiz";
   d.setAttribute("aria-labelledby", "tfQuizTitulo");
   document.body.appendChild(d);
-  q = { d, tela: intro ? "intro" : 0, notas: { ...atual.notas }, puladas: [...atual.puladas], aoFechar, salvando: false, erro: "" };
+  q = { d, tela: intro ? "intro" : 0, notas: { ...atual.notas }, puladas: [...atual.puladas], aoFechar, outra, salvando: false, erro: "" };
   d.addEventListener("click", cliqueQuiz);
   d.addEventListener("close", () => { const fn = q && q.aoFechar; d.remove(); q = null; if (fn) fn(); });
   d.showModal();
@@ -106,7 +109,24 @@ export function abrirQuestionario({ intro = true, aoFechar } = {}) {
 function desenhar(dir = 0) {
   const { d, tela } = q;
   let corpo;
-  if (tela === "intro") {
+  const o = q.outra;
+  if (tela === "intro" && o) {
+    corpo = `
+      ${o.intro}
+      <div class="modal-actions">
+        <button type="button" class="btn" data-quiz="comecar">${esc(o.botao || "Começar")}</button>
+        <button type="button" class="btn ghost" data-quiz="agora-nao">Agora não</button>
+      </div>`;
+  } else if (tela === "fim" && o) {
+    corpo = `
+      <p class="tf-quiz-lead">Pronto, ${esc(o.quem)}! Suas respostas ficaram guardadas nesta viagem.</p>
+      ${resumoHtml({ notas: q.notas, puladas: q.puladas })}
+      ${q.erro ? `<p class="warning">${esc(q.erro)}</p>` : ""}
+      <div class="modal-actions">
+        ${q.erro ? `<button type="button" class="btn" data-quiz="salvar">Tentar de novo</button>` : `<button type="button" class="btn" data-quiz="fechar">Continuar</button>`}
+        <button type="button" class="btn ghost" data-quiz="voltar">← Voltar</button>
+      </div>`;
+  } else if (tela === "intro") {
     corpo = `
       <p class="tf-quiz-lead">Quer personalizar suas sugestões? São apenas <b>8 perguntas rápidas</b> — leva menos de 5 minutos.</p>
       <p class="muted small-text">Para cada tipo de passeio, você dá uma nota de 0 a 5. As notas só mudam a <b>ordem</b> das sugestões:
@@ -132,7 +152,7 @@ function desenhar(dir = 0) {
       <div class="tf-quiz-prog" aria-hidden="true"><span style="width:${((tela + 1) / GOSTO.length) * 100}%"></span></div>
       <p class="tf-quiz-num mono small-text">Pergunta ${tela + 1} de ${GOSTO.length}</p>
       <h4 class="tf-quiz-pergunta" id="tfQuizPergunta" tabindex="-1"><span aria-hidden="true">${g.icone}</span> ${esc(g.nome)}</h4>
-      <p class="muted small-text">Quanto isso combina com você numa viagem?</p>
+      <p class="muted small-text">Quanto isso combina com ${o ? "você, " + esc(o.quem) + "," : "você"} numa viagem?</p>
       <div class="tf-quiz-notas" role="group" aria-labelledby="tfQuizPergunta">
         ${[0, 1, 2, 3, 4, 5].map((v) => `<button type="button" data-nota="${v}" class="${nota === v ? "on" : ""}" aria-pressed="${nota === v}"
           aria-label="${v} — ${NOTA_TXT[v]}">${v}</button>`).join("")}
@@ -144,7 +164,7 @@ function desenhar(dir = 0) {
       </div>`;
   }
   d.innerHTML = `
-    <div class="modal-head"><h3 id="tfQuizTitulo">✨ Sugestões personalizadas</h3>
+    <div class="modal-head"><h3 id="tfQuizTitulo">${o ? "👥 Respostas de " + esc(o.quem) : "✨ Sugestões personalizadas"}</h3>
       <button type="button" class="icon-btn" data-quiz="fechar" aria-label="Fechar">×</button></div>
     <div class="modal-body tf-quiz-tela ${dir > 0 ? "entra-dir" : dir < 0 ? "entra-esq" : ""}">${corpo}</div>`;
   // Foco na nota já marcada ou no título da pergunta (focar o "0" faria parecer que ele já está escolhido).
@@ -197,13 +217,16 @@ function avancar() {
 }
 async function concluir() {
   q.erro = "";
-  try { await salvar({ notas: q.notas, puladas: q.puladas, ligado: true }); }
-  catch (err) { console.warn("[sugestões]", err); q.erro = "Não foi possível salvar na sua conta agora (sem conexão?)."; }
+  try {
+    if (q.outra) await q.outra.salvar(normal({ notas: q.notas, puladas: q.puladas }));
+    else await salvar({ notas: q.notas, puladas: q.puladas, ligado: true });
+  } catch (err) { console.warn("[sugestões]", err); q.erro = q.outra ? "Não foi possível guardar as respostas agora." : "Não foi possível salvar na sua conta agora (sem conexão?)."; }
   if (!q) return;
   q.tela === "fim" ? desenhar() : irPara("fim", 1);
 }
 
 // Notas por categoria (resultado do questionário e seção do perfil).
+export { normal as normalRespostas };
 export function resumoHtml(g = preferencias()) {
   return `<ul class="tf-quiz-resumo">${GOSTO.map((x) => {
     const n = g.notas[x.id], pulou = g.puladas.includes(x.id);

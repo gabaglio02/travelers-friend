@@ -9,6 +9,7 @@ import {
 } from "./core/util.js";
 import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
 import * as gosto from "./gosto.js"; // "✨ Sugestões personalizadas": questionário e pesos por categoria
+import * as grupo from "./grupo.js"; // "👥 Preferências do grupo" desta viagem e lugares que não podem faltar
 import "./social/perfil.js"; // registra #/@apelido, #/perfil e #/perfil/editar
 import "./social/identidades.js"; // registra #/identidades, #/identidades/nova e #/identidades/editar/<id>
 import "./social/mural.js"; // registra #/@apelido/album/<id> e #/lembrancas/...; álbuns e recados no perfil
@@ -137,6 +138,8 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
   function normalizeState(s) {
     s = Object.assign(defaultState(), s);
     s.carro = Object.assign(defaultState().carro, s.carro || {});
+    // Preferências do grupo desta viagem (js/grupo.js); viagens antigas começam sem ninguém.
+    s.grupo = grupo.normalGrupo(s.grupo);
     // Horários padrão das refeições.
     s.meals = Object.assign(defaultMeals(), s.meals || {});
     s.stays = s.stays || [];
@@ -612,6 +615,7 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
           ${expoNota(p)}
           ${dentroNota(p)}
           ${plannedNote(p.id)}
+          ${grupo.notaIndispensavel(p.id)}
         </div>
         <button class="pcard-add" data-add="${p.id}" title="${added ? "Adicionar outra vez ao dia selecionado" : "Adicionar ao dia selecionado"}" aria-label="Adicionar ${esc(p.nome)} ao roteiro">+</button>
       </li>`;
@@ -1214,6 +1218,7 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
         ${p.confirmar ? `<p class="small-text" style="margin:0">ℹ ${esc(p.confirmar)}</p>` : ""}
         ${p.ilustrativo ? `<p class="small-text muted" style="margin:0">⚠ Dados ilustrativos para o protótipo — confirme no site oficial.</p>` : ""}
         ${plannedNote(p.id)}
+        <div id="detailGrupo">${grupo.blocoDetalhe(p.id)}</div>
         <div class="modal-actions">
           ${days.length ? `<select id="detailDay" aria-label="Dia do roteiro">${opts}</select><button class="btn" data-adddetail="${p.id}">${plannedDays(p.id).length ? "Adicionar outra vez" : "Adicionar ao roteiro"}</button>` : ""}
         </div>
@@ -1555,6 +1560,8 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
 
   function renderAll() {
     if (!inApp()) return;
+    const ng = state.grupo.participantes.length;
+    $("#groupBtn").textContent = "👥 Grupo" + (ng ? " (" + ng + ")" : "");
     renderDays();
     renderList();
     renderTimeline();
@@ -1843,7 +1850,14 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     document.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && e.target.dataset && (e.target.dataset.durinput || e.target.dataset.mealinput || e.target.type === "time")) e.target.blur();
     });
-    $("#detail").addEventListener("click", (e) => { if (e.target === $("#detail")) $("#detail").close(); });
+    $("#detail").addEventListener("click", (e) => {
+      if (e.target === $("#detail")) return $("#detail").close();
+      // "Não pode faltar" por pessoa: troca só o bloco, sem redesenhar (e rolar) o detalhe inteiro.
+      const b = e.target.closest("[data-indisp]");
+      if (b) { grupo.alternarIndispensavel(b.dataset.indisp, b.dataset.pessoa); $("#detailGrupo").innerHTML = grupo.blocoDetalhe(b.dataset.indisp); return; }
+      if (e.target.closest("[data-grupo-abrir]")) { $("#detail").close(); grupo.abrirJanela(); }
+    });
+    $("#groupBtn").addEventListener("click", () => grupo.abrirJanela());
     // Pré-visualiza o intervalo enquanto escolhe a volta.
     $("#datePicker").addEventListener("mouseover", (e) => {
       const el = e.target.closest("[data-dpday]");
@@ -1887,6 +1901,8 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
       return { nome: city().nome + " · " + fmtShort(state.start) + " → " + fmtShort(state.end), dados, lugares };
     },
     abrirDetalhe: (id) => { if (placeById(id)) openDetail(id); },
+    // Preferências do grupo desta viagem, já calculadas (para o roteiro automático): ver dadosDoGrupo em js/grupo.js.
+    grupo: () => grupo.dadosDoGrupo(state.grupo, placeById),
     // Resumo da viagem para "Virar lembrança" (js/social/mural.js): cidade, datas e lugares do roteiro na ordem.
     lembranca() {
       const lugares = [];
@@ -1901,6 +1917,7 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
   };
 
   // ---------- Início ----------
+  grupo.iniciar({ obter: () => state.grupo, mudou: () => { save(); renderAll(); }, lugar: placeById, abrirDetalhe: (id) => { if (placeById(id)) openDetail(id); } });
   renderCitySelect();
   renderDateBtn();
   renderAge();
