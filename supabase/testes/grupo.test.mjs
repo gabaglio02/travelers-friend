@@ -105,6 +105,18 @@ check("convite mostra viagem, cidade, datas, organizador e vaga", conv.viagem ==
 check("convite não traz mais nada (roteiro, hospedagem, participantes, e-mail, @)",
   N(Object.keys(conv).sort()) === N(["cidade", "expira_em", "fim", "inicio", "ja_no_grupo", "organizador", "vaga", "viagem"])
   && !/Hotel secreto|Rua Privada|masp|Carla|Davi|segredo\.com|bruno_viaja|pcarla/.test(N(conv)), N(conv));
+// Perfil de quem organiza em "Só amigos": o nome continua aparecendo (é visível para quem não é amigo).
+await sup("update public.identidades set privacidade = jsonb_set(privacidade, '{perfil}', '\"amigos\"') where owner_id = $1", [O]);
+r = await ver(X, codAna);
+check("perfil 'Só amigos': convite mostra o nome", r.v && r.v.organizador === "Bruno", N(r.v));
+// Perfil em "Só eu": nenhum dado do perfil no convite.
+await sup("update public.identidades set privacidade = jsonb_set(privacidade, '{perfil}', '\"privado\"'), bio = 'Bio secreta', mensagem = 'Recado secreto' where owner_id = $1", [O]);
+r = await ver(X, codAna);
+check("perfil 'Só eu': convite sem o nome (o site mostra 'Alguém te convidou')", r.v && r.v.organizador === null, N(r.v));
+check("…e sem nenhum outro dado do perfil", !/Bruno|bruno_viaja|Bio secreta|Recado secreto|segredo\.com/.test(N(r.v)) && N(Object.keys(r.v).sort()) === N(Object.keys(conv).sort()), N(r.v));
+await sup("update public.identidades set privacidade = jsonb_set(privacidade, '{perfil}', '\"publico\"') where owner_id = $1", [O]);
+r = await ver(X, codAna);
+check("perfil volta a 'Público': nome volta", r.v && r.v.organizador === "Bruno");
 r = await ver(X, "0".repeat(32));
 const erroGenerico = r.erro;
 check("código errado: erro genérico", /convite_invalido/.test(r.erro || ""), r.erro);
@@ -161,6 +173,10 @@ check("outra conta não vê as conexões da viagem", /sem_permissao/.test(r.erro
 r = await um(X, "select public.minhas_conexoes_grupo()");
 check("participante vê o grupo em que entrou, com as notas dela", r.v && r.v.length === 1 && r.v[0].vaga === "Ana" && r.v[0].organizador === "Bruno" && r.v[0].notas.museus === 5);
 check("…e nada das outras vagas", !/Carla|parques|pcarla|Hotel secreto/.test(N(r.v)), N(r.v));
+await sup("update public.identidades set privacidade = jsonb_set(privacidade, '{perfil}', '\"privado\"') where owner_id = $1", [O]);
+r = await um(X, "select public.minhas_conexoes_grupo()");
+check("'Grupos de viagem' também esconde o nome de quem organiza com perfil 'Só eu'", r.v && r.v[0].organizador === null && !/Bruno/.test(N(r.v)), N(r.v));
+await sup("update public.identidades set privacidade = jsonb_set(privacidade, '{perfil}', '\"publico\"') where owner_id = $1", [O]);
 
 console.log("\nAtualizar");
 const antes = (await linha(V1, "pana")).atualizado_em;
@@ -228,6 +244,11 @@ await sup("delete from auth.users where id = $1", [Y]);
 check("conta excluída: conexão e notas dela apagadas", !(await linha(V2, "pbia")) && (await linha(V2, "pana"))?.estado === "conectado");
 await como(O, "delete from public.viagens where id = $1", [V2]);
 check("viagem apagada: todas as conexões dela apagadas", (await sup("select count(*)::int n from public.grupo_conexoes where viagem_id = $1", [V2]))[0].n === 0);
+
+console.log("\nOrganizador sem perfil");
+const V3 = await criarViagem(Z, dados(vagas("pana")));
+r = await ver(X, (await convidar(Z, V3, "pana")).v.codigo);
+check("quem organiza sem perfil: convite sem nome", r.v && r.v.organizador === null, N(r.v));
 
 console.log("\nLimite de convites");
 let ultimo;

@@ -19,6 +19,8 @@ const nomeCidade = (id) => (CITY_OPTIONS.find((c) => c.id === id) || { nome: "S�
 const datas = (c) => (c.inicio && c.fim ? `${fmtShort(c.inicio)} → ${fmtShort(c.fim)}` : "");
 // Data e hora do banco (UTC) → dia local, "09/11".
 const dataCurta = (iso) => (iso ? fmtShort(new Date(iso).toLocaleDateString("sv-SE")) : "");
+// O banco não manda o nome de quem organiza se o perfil dessa pessoa estiver em "Só eu" (organizador = null).
+const quem = (o) => o || "quem organiza a viagem";
 const ENTRAR = `<button class="btn" data-pf="login">Entrar ou criar conta</button>`;
 
 function mensagemErro(err) {
@@ -44,7 +46,7 @@ function conferencia({ titulo, organizador, notas, puladas, botao, voltar, extra
       </section>
       <section class="pf-bloco">
         <ul class="grupo-avisos">
-          <li>Estas notas serão compartilhadas com <b>${esc(organizador)}</b>, só no grupo desta viagem. Nada mais da sua conta é mostrado.</li>
+          <li>Estas notas serão compartilhadas com <b>${esc(quem(organizador))}</b>, só no grupo desta viagem. Nada mais da sua conta é mostrado.</li>
           <li>Suas preferências pessoais (✨ Sugestões personalizadas) não mudam.</li>
           <li>Se você mudar o seu questionário pessoal depois, esta viagem <b>não</b> é atualizada sozinha.</li>
           <li>Você pode atualizar ou retirar estas notas quando quiser, em <a href="#/grupos">Grupos de viagem</a>.</li>
@@ -71,7 +73,7 @@ rota("/grupo/:codigo", async ({ codigo }) => {
   try {
     const { data, error } = await conta.cliente().rpc("ver_convite", { p_codigo: codigo });
     if (error) throw error;
-    if (data.ja_no_grupo) return aviso("Você já está neste grupo", esc(`Você já entrou no grupo da viagem de ${data.organizador}, em outra vaga.`),
+    if (data.ja_no_grupo) return aviso("Você já está neste grupo", "Você já entrou no grupo desta viagem, em outra vaga.",
       `<a class="btn" href="#/grupos">Ver meus grupos de viagem</a>`);
     pagina = { codigo, convite: data, tela: "escolha" };
     desenhar();
@@ -82,12 +84,12 @@ function desenhar() {
   const p = pagina, c = p.convite;
   if (p.tela === "conferir") {
     return mostrar(conferencia({ titulo: "Confira antes de enviar", organizador: c.organizador, notas: p.notas, puladas: p.puladas,
-      botao: `Compartilhar com ${c.organizador}`, voltar: "escolha",
+      botao: c.organizador ? `Compartilhar com ${c.organizador}` : "Compartilhar com quem organiza", voltar: "escolha",
       extra: `<p class="small-text muted">${p.origem === "pessoal" ? "São as suas notas pessoais de hoje." : "Respondidas só para esta viagem."}</p>` }));
   }
   if (p.tela === "pronto") {
     return mostrar(`<div class="pf-vazio"><h2>Pronto! Você está no grupo</h2>
-      <p class="muted">${esc(c.organizador)} já pode ver as suas notas no grupo da viagem <b>${esc(c.viagem)}</b>. Para atualizar ou sair, use Grupos de viagem.</p>
+      <p class="muted">${esc(c.organizador || "Quem organiza a viagem")} já pode ver as suas notas no grupo da viagem <b>${esc(c.viagem)}</b>. Para atualizar ou sair, use Grupos de viagem.</p>
       <div class="pf-vazio-acoes"><a class="btn" href="#/grupos">Ver meus grupos de viagem</a><a class="btn ghost" href="#/planejar">Ir para o planejador</a></div></div>`);
   }
   const tem = gosto.respondeu();
@@ -99,7 +101,7 @@ function desenhar() {
         <p class="muted">${esc(nomeCidade(c.cidade))} · ${esc(datas(c))}</p>
       </div></div>
       <section class="pf-bloco">
-        <p class="tf-quiz-lead"><b>${esc(c.organizador)}</b> te convidou para o grupo desta viagem, na vaga <b>${esc(c.vaga)}</b>.</p>
+        <p class="tf-quiz-lead">${c.organizador ? `<b>${esc(c.organizador)}</b> te convidou` : "Alguém te convidou"} para o grupo desta viagem, na vaga <b>${esc(c.vaga)}</b>.</p>
         <p class="small-text muted">O grupo usa as notas de cada pessoa (de 0 a 5, em 8 tipos de passeio) para combinar o roteiro.
           Você escolhe quais notas mandar e confere tudo antes de enviar. O convite vale até ${esc(dataCurta(c.expira_em))}.</p>
         <div class="grupo-escolha">
@@ -119,7 +121,7 @@ function responderParaViagem({ inicial, organizador, aoTerminar }) {
     intro: false,
     aoFechar: () => { if (resp) aoTerminar(resp); },
     outra: { quem: "", titulo: "👥 Notas para esta viagem", respostas: inicial || { notas: {}, puladas: [] },
-      fim: `Pronto! Na próxima tela você confere as notas antes de enviar para ${organizador}.`,
+      fim: `Pronto! Na próxima tela você confere as notas antes de enviar para ${quem(organizador)}.`,
       salvar: async (r) => { resp = r; } }
   });
 }
@@ -171,7 +173,7 @@ function desenharGrupos() {
       ${grupos.length ? grupos.map((g) => `
         <section class="pf-bloco">
           <h3>${esc(g.viagem)} <small class="muted">${esc(nomeCidade(g.cidade))} · ${esc(datas(g))}</small></h3>
-          <p class="small-text">Organizado por <b>${esc(g.organizador)}</b> · sua vaga: <b>${esc(g.vaga)}</b> ·
+          <p class="small-text">${g.organizador ? `Organizado por <b>${esc(g.organizador)}</b> · sua vaga:` : "Sua vaga:"} <b>${esc(g.vaga)}</b> ·
             ${g.origem === "pessoal" ? "suas notas pessoais" : "notas respondidas para esta viagem"}, enviadas em ${esc(dataCurta(g.atualizado_em))}</p>
           <details><summary class="small-text">Ver as notas enviadas</summary>${gosto.resumoHtml({ notas: g.notas || {}, puladas: g.puladas || [] })}</details>
           <div class="grupo-escolha">
@@ -231,8 +233,8 @@ document.addEventListener("click", async (ev) => {
       aoTerminar: (r) => { editando = { id: g.id, organizador: g.organizador, notas: r.notas, puladas: r.puladas, origem: "viagem" }; desenharGrupos(); } });
   }
   if (b.dataset.gcSair && g) {
-    if (!(await confirmar({ titulo: `Sair do grupo da viagem de ${g.organizador}?`, botao: "Sair do grupo",
-      texto: `As notas que você enviou são apagadas desta viagem e ${g.organizador} deixa de vê-las. A vaga "${g.vaga}" fica livre. Suas preferências pessoais não mudam.` }))) return;
+    if (!(await confirmar({ titulo: `Sair do grupo da viagem "${g.viagem}"?`, botao: "Sair do grupo",
+      texto: `As notas que você enviou são apagadas desta viagem e ${quem(g.organizador)} deixa de vê-las. A vaga "${g.vaga}" fica livre. Suas preferências pessoais não mudam.` }))) return;
     try {
       const conta = await contaPronta();
       const { error } = await conta.cliente().rpc("sair_do_grupo", { p_conexao: g.id });

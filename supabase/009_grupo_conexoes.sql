@@ -75,9 +75,11 @@ language sql immutable set search_path = '' as $$
 $$;
 
 -- Nome de quem organiza, para o convite: só o nome do perfil principal (nada de e-mail, @ ou dados da conta).
+-- Perfil em "Só eu" (privacidade.perfil = 'privado') ou sem perfil → null, e o site mostra "Alguém te convidou".
 create or replace function public.grupo_nome_organizador(p_dono uuid) returns text
 language sql stable security definer set search_path = '' as $$
-  select coalesce((select i.nome from public.identidades i where i.owner_id = p_dono and i.tipo = 'principal'), 'Quem organiza a viagem');
+  select i.nome from public.identidades i
+  where i.owner_id = p_dono and i.tipo = 'principal' and coalesce(i.privacidade ->> 'perfil', 'publico') <> 'privado';
 $$;
 
 -- =========================================================
