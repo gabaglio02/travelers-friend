@@ -23,6 +23,19 @@ export const CATEGORIES = {
   esporte: "Esportes & estádios"
 };
 
+// Quiz opcional "Personalizar sugestões": nota de 0 a 5 em cada frase pesa as categorias dela.
+// A nota só muda a ordem dentro de cada nível dos destaques (evento do dia continua antes); nota 0 não esconde nada.
+export const GOSTO = [
+  { id: "museus", frase: "Gosto de museus e exposições", cats: ["museu", "exposicao"] },
+  { id: "pontos", frase: "Quero ver os pontos famosos e a história da cidade", cats: ["ponto"] },
+  { id: "parques", frase: "Gosto de passear em parques ao ar livre", cats: ["parque"] },
+  { id: "aventura", frase: "Topo trilhas, cachoeiras e esportes", cats: ["trilha", "esporte"] },
+  { id: "palco", frase: "Adoro shows, teatro e festivais", cats: ["show", "teatro", "festival"] },
+  { id: "comer", frase: "Comer bem é parte importante da viagem", cats: ["gastronomia"] },
+  { id: "compras", frase: "Gosto de fazer compras", cats: ["compras"] },
+  { id: "noite", frase: "Quero sair à noite, para bares e baladas", cats: ["noite"] }
+];
+
 // Classificação indicativa (padrão ClassInd).
 //  desc  → como descrevemos a classificação de um lugar
 //  faixa → como a pessoa escolhe a idade da pessoa mais nova do grupo (campo "Idade mínima")

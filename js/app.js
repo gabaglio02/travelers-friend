@@ -1,7 +1,7 @@
 /* Traveler's Friend — planejador (Explorar · Roteiro · Custos). Módulo ES; usa Leaflet (global L). */
 import {
   CITY_OPTIONS, CATEGORIES, AGE_OPTIONS, MONTHS, WEEKDAYS, WEEKDAYS_FULL,
-  STORAGE_KEY, MAX_DAYS, WALK_LIMIT_KM, PERTO, MODES, MEALS, CAT_ICON
+  STORAGE_KEY, MAX_DAYS, WALK_LIMIT_KM, PERTO, MODES, MEALS, CAT_ICON, GOSTO
 } from "./core/constantes.js";
 import {
   $, esc, money, moneyExact, toMin, toHHMM, fmtDur, parseDur, parseISO, toISO, fmtDay, fmtShort,
@@ -136,6 +136,8 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
   function normalizeState(s) {
     s = Object.assign(defaultState(), s);
     s.carro = Object.assign(defaultState().carro, s.carro || {});
+    // Quiz de gosto: notas = { frase: 0..5 } (sem resposta = sem efeito); ligado = ordenar por elas.
+    s.gosto = Object.assign({ notas: {}, ligado: true }, s.gosto || {});
     // Horários padrão das refeições.
     s.meals = Object.assign(defaultMeals(), s.meals || {});
     s.stays = s.stays || [];
@@ -463,10 +465,20 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     if (priceOn(p, iso) === 0) return p.preco > 0 ? 2 : 1;
     return 0;
   }
-  // Dentro do mesmo nível: eventos grátis antes dos pagos, depois os lugares em destaque.
+  // Dentro do mesmo nível: eventos grátis antes dos pagos, depois o gosto da pessoa (quiz), depois os lugares em destaque.
   function highlightScore(p, iso) {
-    if (!iso) return p.destaque ? 1 : 0;
-    return highlightTier(p, iso) * 100 + (priceOn(p, iso) === 0 ? 10 : 0) + (p.destaque ? 1 : 0);
+    const extra = gostoPeso(p) * 1.5 + (p.destaque ? 1 : 0);
+    if (!iso) return extra;
+    return highlightTier(p, iso) * 100 + (priceOn(p, iso) === 0 ? 10 : 0) + extra;
+  }
+
+  // Quiz de gosto: nota de -2,5 a +2,5 para a categoria do lugar (0 = sem quiz, desligado ou frase sem resposta).
+  const gostoAtivo = () => state.gosto.ligado && Object.keys(state.gosto.notas).length > 0;
+  function gostoPeso(p) {
+    if (!gostoAtivo()) return 0;
+    const f = GOSTO.find((g) => g.cats.includes(p.categoria));
+    const n = f && state.gosto.notas[f.id];
+    return n == null ? 0 : n - 2.5;
   }
 
   // ---------- Fatos de um lugar (cards, recomendações, detalhes) ----------
@@ -568,7 +580,8 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     const nEvents = activePlaces().filter(hasDates).length;
     $("#agendaInfo").textContent = agendaLabel() + " · " + nEvents + " eventos e exposições por vir"
       + (nRest && !ui.cats.has("gastronomia") ? " · " + nRest + " restaurantes no filtro Gastronomia" : "")
-      + (nCompras && !ui.cats.has("compras") ? " · " + nCompras + " shoppings e galerias em Compras" : "");
+      + (nCompras && !ui.cats.has("compras") ? " · " + nCompras + " shoppings e galerias em Compras" : "")
+      + (gostoAtivo() ? " · ordenado pelo seu gosto" : "");
     // Contagem por tipo (respeitando os outros filtros) e quantos filtros extras estão ligados.
     const kindAntes = ui.kind;
     ["", "lugar", "evento"].forEach((k) => { ui.kind = k; const n = filtered().length; const el = $("#kindCount" + ({ "": "All", lugar: "Lugar", evento: "Evento" })[k]); if (el) el.textContent = n; });
@@ -1619,6 +1632,33 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     });
   }
 
+  // Quiz "Personalizar sugestões" (Explorar): 8 frases, nota 0 a 5 em cada.
+  function renderGosto() {
+    const g = state.gosto, n = Object.keys(g.notas).length;
+    $("#gostoResumo").textContent = !n ? "(opcional)" : g.ligado ? "· ligado (" + n + " de " + GOSTO.length + " frases)" : "· desligado";
+    $("#gostoLigado").checked = g.ligado;
+    $("#gostoLigado").disabled = !n;
+    $("#gostoApagar").hidden = !n;
+    $("#gostoFrases").innerHTML = GOSTO.map((f) => `
+      <fieldset class="gosto-frase">
+        <legend>${esc(f.frase)}</legend>
+        <div class="gosto-notas">${[0, 1, 2, 3, 4, 5].map((v) =>
+          `<button type="button" data-gosto="${f.id}" data-nota="${v}" class="${g.notas[f.id] === v ? "on" : ""}" aria-pressed="${g.notas[f.id] === v}">${v}</button>`).join("")}</div>
+      </fieldset>`).join("");
+  }
+  function bindGosto() {
+    $("#gostoFrases").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-gosto]");
+      if (!b) return;
+      const notas = state.gosto.notas, v = +b.dataset.nota;
+      // Tocar de novo na nota escolhida tira a resposta.
+      if (notas[b.dataset.gosto] === v) delete notas[b.dataset.gosto]; else notas[b.dataset.gosto] = v;
+      save(); renderGosto(); renderAll();
+    });
+    $("#gostoLigado").addEventListener("change", (e) => { state.gosto.ligado = e.target.checked; save(); renderGosto(); renderAll(); });
+    $("#gostoApagar").addEventListener("click", () => { state.gosto.notas = {}; state.gosto.ligado = true; save(); renderGosto(); renderAll(); });
+  }
+
   function bindFilters() {
     $("#search").addEventListener("input", (e) => { ui.q = e.target.value; renderList(); });
     $("#maxPrice").addEventListener("input", (e) => { ui.maxPrice = +e.target.value; $("#maxPriceOut").textContent = e.target.value; renderList(); });
@@ -1821,7 +1861,7 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
       state = normalizeState(JSON.parse(JSON.stringify(dados || {})));
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) { /* ignora */ }
       ui.focusUid = null;
-      syncInputs(); renderCitySelect(); renderDateBtn(); renderAge(); renderMealsCfg(); renderStay(); renderAll();
+      syncInputs(); renderCitySelect(); renderDateBtn(); renderAge(); renderMealsCfg(); renderStay(); renderGosto(); renderAll();
       if (!silent) toast("Viagem carregada");
     },
     // Viagem "vazia"? (nada no roteiro e nenhuma hospedagem) — para decidir se vale importar para a conta.
@@ -1865,7 +1905,9 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
   renderStay();
   renderChips();
   bindSetup();
+  renderGosto();
   bindFilters();
+  bindGosto();
   bindDelegates();
   renderView();
   renderAll();
