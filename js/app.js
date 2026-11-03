@@ -17,6 +17,7 @@ import "./social/amigos.js"; // registra #/amigos
 import "./social/viagens.js"; // registra #/viagens (Minhas viagens)
 import "./social/compartilhar.js"; // botão "Compartilhar" do roteiro e #/r/<código>
 import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
+import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para o grupo de uma viagem) e #/grupos
 
 (function () {
   "use strict";
@@ -1879,6 +1880,7 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) { /* ignora */ }
       ui.focusUid = null;
       syncInputs(); renderCitySelect(); renderDateBtn(); renderAge(); renderMealsCfg(); renderStay(); renderAll();
+      grupo.aoTrocarViagem(); // notas de contas conectadas da viagem anterior saem da memória
       if (!silent) toast("Viagem carregada");
     },
     // Viagem "vazia"? (nada no roteiro e nenhuma hospedagem) — para decidir se vale importar para a conta.
@@ -1902,7 +1904,9 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     },
     abrirDetalhe: (id) => { if (placeById(id)) openDetail(id); },
     // Preferências do grupo desta viagem, já calculadas (para o roteiro automático): ver dadosDoGrupo em js/grupo.js.
-    grupo: () => grupo.dadosDoGrupo(state.grupo, placeById),
+    grupo: () => grupo.dadosDoGrupo(state.grupo, placeById, grupo.conexoesAtuais()),
+    // O mesmo, buscando antes no servidor as notas das contas conectadas ao grupo.
+    grupoAtualizado: async () => { await grupo.sincronizar(); return grupo.dadosDoGrupo(state.grupo, placeById, grupo.conexoesAtuais()); },
     // Resumo da viagem para "Virar lembrança" (js/social/mural.js): cidade, datas e lugares do roteiro na ordem.
     lembranca() {
       const lugares = [];
@@ -1917,7 +1921,8 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
   };
 
   // ---------- Início ----------
-  grupo.iniciar({ obter: () => state.grupo, mudou: () => { save(); renderAll(); }, lugar: placeById, abrirDetalhe: (id) => { if (placeById(id)) openDetail(id); } });
+  grupo.iniciar({ obter: () => state.grupo, mudou: () => { save(); renderAll(); }, redesenhar: () => renderAll(), lugar: placeById,
+    abrirDetalhe: (id) => { if (placeById(id)) openDetail(id); } });
   renderCitySelect();
   renderDateBtn();
   renderAge();

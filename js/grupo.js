@@ -1,38 +1,46 @@
 /*
- * Preferências do grupo de UMA viagem: até 5 pessoas (sem conta) respondem, cada uma por si, o mesmo questionário
- * de 8 categorias das sugestões personalizadas (js/gosto.js) e marcam lugares que "não podem faltar".
- * Ficam dentro da viagem (state.grupo): vão junto quando a viagem é salva na conta (viagens.dados), nunca se misturam
- * com outra viagem e não tocam as preferências pessoais da conta. O link de compartilhar não leva o grupo.
+ * Preferências do grupo de UMA viagem: até 5 pessoas respondem, cada uma por si, o mesmo questionário de 8 categorias
+ * das sugestões personalizadas (js/gosto.js) e marcam lugares que "não podem faltar".
+ * Duas formas de responder, que convivem no mesmo grupo:
+ *   - neste aparelho, sem conta: as notas ficam dentro da viagem (state.grupo);
+ *   - pela conta da pessoa, com um convite de uso único (supabase/009_grupo_conexoes.sql): as notas ficam SÓ no
+ *     servidor; aqui ficam apenas na memória (conexoes), nunca em state, localStorage ou viagens.dados.
+ * O grupo vai junto quando a viagem é salva na conta, nunca se mistura com outra viagem e não toca as preferências
+ * pessoais da conta. O link de compartilhar o roteiro não leva o grupo.
  *
  *   state.grupo = {
- *     participantes: [{ id: "p1a2b", nome: "Ana", notas: { museus: 5, noite: 0 }, puladas: ["compras"], respondido: "2026-11-02" | null }],
- *     indispensaveis: { "<id do lugar>": ["p1a2b", "p9x8y"] }   // quem marcou cada lugar (separado das notas)
+ *     participantes: [{ id: "p1a2b", nome: "Ana", notas: { museus: 5, noite: 0 }, puladas: ["compras"], respondido: "2026-11-02" | null,
+ *                       conectado: true }],   // conectado = a vaga está ligada a uma conta (sem as notas)
+ *     indispensaveis: { "<id do lugar>": ["p1a2b", "p9x8y"] },   // quem marcou cada lugar (separado das notas)
+ *     removidos: ["p7k2m"]   // vagas tiradas de propósito: o banco apaga as conexões delas ao salvar a viagem
  *   }
  *
  * Nada calculado é guardado: dadosDoGrupo() refaz média, distribuição, consenso e divergência a partir das respostas,
  * então nunca fica desatualizado. É por ele que o roteiro automático (Fase 3, tarefa 3) vai ler o grupo:
- * window.TF.grupo() devolve dadosDoGrupo(state.grupo).
+ * window.TF.grupo() devolve dadosDoGrupo(state.grupo, …, conexões carregadas).
  */
 import { GOSTO } from "./core/constantes.js";
-import { esc } from "./core/util.js";
+import { esc, fmtShort } from "./core/util.js";
 import { abrirQuestionario, normalRespostas } from "./gosto.js";
 
 export const MAX_PARTICIPANTES = 5;
-const NOME_MAX = 30;
-export const grupoVazio = () => ({ participantes: [], indispensaveis: {} });
+const NOME_MAX = 30, REMOVIDOS_MAX = 100;
+export const grupoVazio = () => ({ participantes: [], indispensaveis: {}, removidos: [] });
 
 // Completa/limpa o grupo de uma viagem salva (viagens antigas não têm; dados estranhos não quebram).
 export function normalGrupo(g) {
   const out = grupoVazio();
   if (!g || typeof g !== "object") return out;
+  out.removidos = [...new Set(Array.isArray(g.removidos) ? g.removidos.filter((x) => typeof x === "string") : [])].slice(-REMOVIDOS_MAX);
   const ids = new Set();
   for (const p of Array.isArray(g.participantes) ? g.participantes : []) {
-    if (!p || typeof p.id !== "string" || ids.has(p.id) || out.participantes.length >= MAX_PARTICIPANTES) continue;
+    if (!p || typeof p.id !== "string" || ids.has(p.id) || out.removidos.includes(p.id) || out.participantes.length >= MAX_PARTICIPANTES) continue;
     const nome = String(p.nome || "").trim().slice(0, NOME_MAX);
     if (!nome) continue;
     const r = normalRespostas(p);
     ids.add(p.id);
-    out.participantes.push({ id: p.id, nome, notas: r.notas, puladas: r.puladas, respondido: typeof p.respondido === "string" ? p.respondido.slice(0, 10) : null });
+    out.participantes.push({ id: p.id, nome, notas: r.notas, puladas: r.puladas, respondido: typeof p.respondido === "string" ? p.respondido.slice(0, 10) : null,
+      ...(p.conectado === true ? { conectado: true } : {}) });
   }
   for (const [lugar, quem] of Object.entries(g.indispensaveis || {})) {
     const lista = [...new Set(Array.isArray(quem) ? quem : [])].filter((id) => ids.has(id));
@@ -60,17 +68,29 @@ export function analisarCategoria(notas) {
   return { n, media, min, max, amplitude, distribuicao, situacao };
 }
 
+// Participante como entra nas contas: vaga conectada usa as notas da conta (se carregadas), as outras as do aparelho.
+//   origem: "aparelho" | "conta";  indisponivel: conta conectada cujas notas não foram carregadas (sem internet).
+function comConexao(p, conexoes) {
+  const c = conexoes && conexoes.get(p.id);
+  if (c && c.estado === "conectado") {
+    const r = normalRespostas(c);
+    return { ...p, notas: r.notas, puladas: r.puladas, respondido: (c.atualizado_em || "").slice(0, 10) || null, origem: "conta", origemNotas: c.origem };
+  }
+  if (p.conectado) return { ...p, notas: {}, puladas: [], respondido: null, origem: "conta", indisponivel: true };
+  return { ...p, origem: "aparelho" };
+}
+
 // Tudo o que o grupo respondeu, pronto para mostrar ou para o roteiro automático usar.
-//   participantes: [{ id, nome, respondeu, notas, puladas }]
-//   respondentes:  quantas pessoas terminaram o questionário
+//   participantes: [{ id, nome, respondeu, notas, puladas, origem: "aparelho" | "conta", atualizado, indisponivel? }]
+//   respondentes:  quantas pessoas responderam (no aparelho ou pela conta)
 //   categorias:    na ordem do questionário, cada uma com { id, nome, icone, cats, respostas: [{ participante, nome, nota }],
 //                  puladas: [ids], semResposta: [ids], n, media, min, max, amplitude, distribuicao[0..5], situacao }
 //   ranking:       ids das categorias da maior média para a menor (sem respostas no fim)
 //   indispensaveis: [{ lugarId, lugar (ou null se saiu do catálogo), nome, categoria, por: [{ id, nome }], contagem, todos }]
 //                  do mais marcado para o menos; "todos" = marcado por todos os participantes (com 2 ou mais)
-export function dadosDoGrupo(g, lugarPorId = () => null) {
+export function dadosDoGrupo(g, lugarPorId = () => null, conexoes = null) {
   g = normalGrupo(g);
-  const ps = g.participantes;
+  const ps = g.participantes.map((p) => comConexao(p, conexoes));
   const nomeDe = (id) => (ps.find((p) => p.id === id) || {}).nome || "";
   const categorias = GOSTO.map((c) => {
     const respostas = ps.filter((p) => p.notas[c.id] != null).map((p) => ({ participante: p.id, nome: p.nome, nota: p.notas[c.id] }));
@@ -88,15 +108,76 @@ export function dadosDoGrupo(g, lugarPorId = () => null) {
       por: quem.map((id) => ({ id, nome: nomeDe(id) })), contagem: quem.length, todos: ps.length > 1 && quem.length === ps.length };
   }).sort((a, b) => b.contagem - a.contagem || a.nome.localeCompare(b.nome));
   return {
-    participantes: ps.map((p) => ({ id: p.id, nome: p.nome, respondeu: !!p.respondido, notas: { ...p.notas }, puladas: [...p.puladas] })),
+    participantes: ps.map((p) => ({ id: p.id, nome: p.nome, respondeu: !!p.respondido, notas: { ...p.notas }, puladas: [...p.puladas],
+      origem: p.origem, atualizado: p.respondido, ...(p.indisponivel ? { indisponivel: true } : {}) })),
     respondentes: ps.filter((p) => p.respondido).length,
     categorias, ranking, indispensaveis
   };
 }
 
+// ---------- Contas conectadas (servidor) ----------
+// conexoes: Map vaga → { estado: pendente|vencido|conectado|saiu, vaga_nome, expira_em, notas, puladas, origem, atualizado_em }
+// Só da viagem "viagemSync"; trocar de viagem, sair da conta ou a vaga sair limpa daqui também.
+let conexoes = new Map(), viagemSync = null, sync = "sem-conta"; // sem-conta | carregando | ok | offline
+let linkGerado = null; // { participante, url, expira } — o código só existe na tela em que foi gerado
+const conta = () => window.TFConta || null;
+const contaAtiva = () => { const c = conta(); return !!(c && c.cliente() && c.usuario() && c.viagemAtual()); };
+export const conexoesAtuais = () => (contaAtiva() && viagemSync === conta().viagemAtual() ? conexoes : null);
+
+function limparConexoes() { conexoes = new Map(); viagemSync = null; linkGerado = null; }
+// Chamado quando outra viagem é aberta, ao entrar/sair da conta e ao abrir a janela do grupo.
+export async function sincronizar() {
+  const c = conta();
+  if (!contaAtiva()) { limparConexoes(); sync = "sem-conta"; desenhar(); return; }
+  const vid = c.viagemAtual();
+  if (viagemSync !== vid) limparConexoes();
+  sync = "carregando";
+  try {
+    const { data, error } = await c.cliente().rpc("conexoes_do_grupo", { p_viagem: vid });
+    if (error) throw error;
+    if (c.viagemAtual() !== vid) return; // trocou de viagem no meio
+    conexoes = new Map((data || []).map((x) => [x.participante, x]));
+    viagemSync = vid; sync = "ok";
+    reconciliar();
+  } catch (err) {
+    console.warn("[grupo]", err);
+    sync = "offline";
+  }
+  desenhar();
+  if (ctx) ctx.redesenhar();
+}
+
+// Acerta as vagas da viagem com o servidor:
+//  - conexão de uma vaga que sumiu desta versão da viagem (aberta antes em outro aparelho) → a vaga volta;
+//  - vaga conectada → marca "conectado" e descarta respostas antigas dadas neste aparelho (vale a da conta);
+//  - vaga que deixou de estar conectada (saiu ou foi removida) → tira a marca.
+function reconciliar() {
+  const g = grupo();
+  let mudou = false;
+  for (const [id, c] of conexoes) {
+    if (g.participantes.some((p) => p.id === id) || g.removidos.includes(id)) continue;
+    if (c.estado !== "conectado" || g.participantes.length >= MAX_PARTICIPANTES) continue;
+    g.participantes.push({ id, nome: c.vaga_nome, notas: {}, puladas: [], respondido: null });
+    mudou = true;
+  }
+  for (const p of g.participantes) {
+    const ligada = (conexoes.get(p.id) || {}).estado === "conectado";
+    if (ligada && (!p.conectado || p.respondido || Object.keys(p.notas).length || p.puladas.length)) {
+      Object.assign(p, { conectado: true, notas: {}, puladas: [], respondido: null }); mudou = true;
+    } else if (!ligada && p.conectado) { delete p.conectado; mudou = true; }
+  }
+  if (mudou) ctx.mudou();
+}
+
 // ---------- Alterações (sempre sobre o grupo da viagem aberta) ----------
-let ctx = null; // { obter: () => state.grupo, mudou: () => salvar e redesenhar, lugar: (id) => lugar, abrirDetalhe }
-export function iniciar(opcoes) { ctx = opcoes; }
+let ctx = null; // { obter: () => state.grupo, mudou: () => salvar e redesenhar, redesenhar, lugar: (id) => lugar, abrirDetalhe }
+export function iniciar(opcoes) {
+  ctx = opcoes;
+  const quandoPronta = () => { const c = conta(); if (c) { c.pronto.then(() => { c.aoMudarUsuario(() => sincronizar()); sincronizar(); }); } };
+  if (window.TFConta) quandoPronta(); else window.addEventListener("tf:conta", quandoPronta, { once: true });
+}
+// Outra viagem aberta (TF.loadState): o que estava na memória era da viagem anterior.
+export function aoTrocarViagem() { limparConexoes(); sincronizar(); }
 const grupo = () => ctx.obter();
 const novoId = () => "p" + Date.now().toString(36).slice(-4) + Math.random().toString(36).slice(2, 5);
 
@@ -118,18 +199,27 @@ export function renomearParticipante(id, nome) {
   p.nome = nome; ctx.mudou(); return true;
 }
 // Tira a pessoa, as respostas dela e as marcações de "não pode faltar" que só ela tinha.
-export function removerParticipante(id) {
+// A vaga vai para "removidos": ao salvar a viagem, o banco apaga a conexão dela mesmo se a chamada abaixo falhar.
+export async function removerParticipante(id) {
   const g = grupo();
   g.participantes = g.participantes.filter((p) => p.id !== id);
   for (const [lugar, quem] of Object.entries(g.indispensaveis)) {
     const resto = quem.filter((x) => x !== id);
     if (resto.length) g.indispensaveis[lugar] = resto; else delete g.indispensaveis[lugar];
   }
+  g.removidos = [...g.removidos.filter((x) => x !== id), id].slice(-REMOVIDOS_MAX);
+  const tinha = conexoes.delete(id);
+  if (linkGerado && linkGerado.participante === id) linkGerado = null;
   ctx.mudou();
+  if (tinha && contaAtiva()) {
+    try { await conta().cliente().rpc("cancelar_conexao_grupo", { p_viagem: conta().viagemAtual(), p_participante: id }); }
+    catch (err) { console.warn("[grupo] remover conexão:", err); }
+  }
 }
 export function guardarRespostas(id, { notas, puladas }) {
   const p = grupo().participantes.find((x) => x.id === id);
   if (!p) throw new Error("Essa pessoa saiu do grupo.");
+  if ((conexoes.get(id) || {}).estado === "conectado" || p.conectado) throw new Error("Esta vaga está ligada a uma conta: só a própria pessoa muda as respostas.");
   p.notas = { ...notas }; p.puladas = [...puladas]; p.respondido = new Date().toLocaleDateString("sv-SE");
   ctx.mudou();
 }
@@ -141,6 +231,32 @@ export function alternarIndispensavel(lugarId, pessoaId) {
   const resto = quem.includes(pessoaId) ? quem.filter((x) => x !== pessoaId) : [...quem, pessoaId];
   if (resto.length) g.indispensaveis[lugarId] = resto; else delete g.indispensaveis[lugarId];
   ctx.mudou();
+}
+
+// Convite: salva a viagem antes (o banco confere se a vaga existe nela) e pede o código.
+async function convidar(id) {
+  const c = conta();
+  aviso = "";
+  try {
+    if (c.salvarJa && !(await c.salvarJa())) throw new Error("Não foi possível salvar a viagem agora (sem conexão?).");
+    const { data, error } = await c.cliente().rpc("criar_convite_grupo", { p_viagem: c.viagemAtual(), p_participante: id });
+    if (error) throw error;
+    linkGerado = { participante: id, url: location.origin + location.pathname + "#/grupo/" + data.codigo, expira: data.expira_em };
+    await sincronizar();
+  } catch (err) {
+    const m = String(err && err.message);
+    aviso = /vaga_ocupada/.test(m) ? "Esta vaga já está ligada a uma conta." : /limite_convites/.test(m) ? "Você gerou muitos convites hoje. Tente amanhã."
+      : /vaga_inexistente|grupo_invalido/.test(m) ? "A viagem ainda não foi salva com esta pessoa. Tente de novo em alguns segundos." : m;
+    desenhar();
+  }
+}
+async function cancelarConvite(id) {
+  try {
+    const { error } = await conta().cliente().rpc("cancelar_conexao_grupo", { p_viagem: conta().viagemAtual(), p_participante: id });
+    if (error) throw error;
+    if (linkGerado && linkGerado.participante === id) linkGerado = null;
+    await sincronizar();
+  } catch (err) { aviso = String(err && err.message); desenhar(); }
 }
 
 // ---------- Pedaços usados no Explorar e no detalhe do lugar (js/app.js) ----------
@@ -176,24 +292,43 @@ export function abrirJanela(qual = "lista") {
     d.addEventListener("click", clique);
     d.addEventListener("change", mudanca);
     d.addEventListener("submit", (e) => { e.preventDefault(); adicionar(); });
-    d.addEventListener("close", () => { d.remove(); d = null; });
+    d.addEventListener("close", () => { d.remove(); d = null; linkGerado = null; });
   }
   desenhar();
   if (!d.open) d.showModal();
+  sincronizar();
+}
+// Data e hora do banco (UTC) → dia local, "09/11".
+const dataCurta = (iso) => (iso ? fmtShort(new Date(iso).toLocaleDateString("sv-SE")) : "");
+// Estado discreto de cada vaga: respondeu aqui · conta conectada · convite enviado · saiu · ainda não respondeu.
+function estadoVaga(p, proximo) {
+  const c = conexoes.get(p.id);
+  if (c && c.estado === "conectado") return ["ok", `🔗 conta conectada · ${c.origem === "viagem" ? "respondeu para esta viagem" : "notas pessoais"}, ${dataCurta(c.atualizado_em)}`];
+  if (p.conectado) return ["muted", sync === "sem-conta" ? "🔗 conta conectada · entre na sua conta para ver as notas" : "🔗 conta conectada · notas indisponíveis sem internet"];
+  if (c && c.estado === "pendente") return ["muted", `✉️ convite enviado · vale até ${dataCurta(c.expira_em)}`];
+  if (c && c.estado === "vencido") return ["muted", "✉️ convite vencido"];
+  const saiu = c && c.estado === "saiu" ? " · saiu do grupo, vaga livre" : "";
+  if (p.respondido) return ["ok", "📱 respondeu neste aparelho" + saiu];
+  return ["muted", (proximo === p ? "próxima vez de responder" : "ainda não respondeu") + saiu];
 }
 function desenhar() {
   if (!d) return;
-  const g = grupo(), dados = dadosDoGrupo(g, ctx.lugar);
+  const g = grupo(), dados = dadosDoGrupo(g, ctx.lugar, conexoesAtuais());
   const cheio = g.participantes.length >= MAX_PARTICIPANTES;
-  const proximo = g.participantes.find((p) => !p.respondido);
+  const ligada = (p) => (conexoes.get(p.id) || {}).estado === "conectado" || p.conectado;
+  const proximo = g.participantes.find((p) => !p.respondido && !ligada(p));
+  const podeConvidar = contaAtiva() && sync !== "offline";
   let corpo;
   if (tela === "resumo") {
     const cat = (id) => dados.categorias.find((c) => c.id === id);
     const SIT = { consenso: ["todos concordam", "ok"], divergencia: ["opiniões divididas", "div"], parcial: ["", ""], "uma resposta": ["", ""], "sem respostas": ["sem respostas", ""] };
+    const nomeP = (pid) => (dados.participantes.find((p) => p.id === pid) || {}).nome || "";
+    const indisp = dados.participantes.filter((p) => p.indisponivel).map((p) => p.nome);
     corpo = `
       <p class="muted small-text">${dados.respondentes} de ${dados.participantes.length} ${dados.participantes.length === 1 ? "pessoa respondeu" : "pessoas responderam"}. Média de 0 a 5; as notas de cada um ficam logo abaixo.</p>
+      ${indisp.length ? `<p class="warning small-text">Sem internet: as notas de ${esc(nomesE(indisp))} (conta conectada) não entraram nesta conta.</p>` : ""}
       <ol class="grupo-cats">${dados.ranking.map((id) => { const c = cat(id), [sit, cls] = SIT[c.situacao];
-        const cada = [...c.respostas.map((r) => `${esc(r.nome)} ${r.nota}`), ...c.puladas.map((pid) => `${esc(g.participantes.find((p) => p.id === pid).nome)} pulou`)];
+        const cada = [...c.respostas.map((r) => `${esc(r.nome)} ${r.nota}`), ...c.puladas.map((pid) => `${esc(nomeP(pid))} pulou`)];
         return `<li>
           <div class="grupo-cat-top"><span>${c.icone} ${esc(c.nome)}</span><b class="mono">${c.media == null ? "—" : String(c.media).replace(".", ",")}</b></div>
           <div class="grupo-barra" aria-hidden="true"><span style="width:${((c.media || 0) / 5) * 100}%"></span></div>
@@ -210,31 +345,47 @@ function desenhar() {
       <div class="modal-actions"><button type="button" class="btn ghost" data-grupo="lista">← Participantes</button></div>`;
   } else {
     corpo = `
-      <p class="small-text">Cada pessoa da viagem responde sozinha às mesmas 8 perguntas (até ${MAX_PARTICIPANTES} pessoas, sem precisar de conta).
-        As respostas ficam só nesta viagem e não mudam as suas sugestões pessoais.</p>
-      ${g.participantes.length ? `<ul class="grupo-lista">${g.participantes.map((p) => `<li class="${proximo === p ? "proximo" : ""}">
+      <p class="small-text">Cada pessoa da viagem responde sozinha às mesmas 8 perguntas (até ${MAX_PARTICIPANTES} pessoas): aqui mesmo, passando o aparelho,
+        ou pela própria conta, com um convite. As respostas ficam só nesta viagem e não mudam as suas sugestões pessoais.</p>
+      ${g.participantes.length ? `<ul class="grupo-lista">${g.participantes.map((p) => {
+        const c = conexoes.get(p.id), [cls, txt] = estadoVaga(p, proximo), lig = ligada(p);
+        const pendente = c && (c.estado === "pendente" || c.estado === "vencido");
+        const link = linkGerado && linkGerado.participante === p.id ? linkGerado : null;
+        return `<li class="${proximo === p ? "proximo" : ""}">
           <input class="grupo-nome" value="${esc(p.nome)}" maxlength="${NOME_MAX}" data-grupo-nome="${esc(p.id)}" aria-label="Nome de ${esc(p.nome)}">
-          <span class="small-text ${p.respondido ? "ok" : "muted"}">${p.respondido ? "✓ respondeu" : proximo === p ? "próxima vez de responder" : "ainda não respondeu"}</span>
+          <span class="small-text grupo-estado ${cls}">${txt}</span>
+          ${link ? `<div class="grupo-link">
+              <input readonly value="${esc(link.url)}" aria-label="Link do convite de ${esc(p.nome)}">
+              <div class="grupo-link-acoes"><button type="button" class="btn small" data-grupo-copiar>Copiar</button>
+                ${navigator.share ? `<button type="button" class="btn ghost small" data-grupo-enviar="${esc(p.nome)}">Enviar…</button>` : ""}</div>
+              <p class="small-text muted">Mande só para ${esc(p.nome)}. Vale até ${dataCurta(link.expira)} e para uma pessoa; não dá acesso ao roteiro.
+                O link aparece só agora — se perder, gere outro (o anterior deixa de valer).</p></div>` : ""}
           <span class="grupo-acoes">
-            <button type="button" class="btn small ${p.respondido ? "ghost" : ""}" data-grupo-responder="${esc(p.id)}">${p.respondido ? "Mudar respostas" : "Responder"}</button>
+            ${lig ? "" : `<button type="button" class="btn small ${p.respondido ? "ghost" : ""}" data-grupo-responder="${esc(p.id)}">${p.respondido ? "Mudar respostas" : "Responder aqui"}</button>`}
+            ${!lig && podeConvidar ? `<button type="button" class="link" data-grupo-convidar="${esc(p.id)}">${pendente ? "gerar novo link" : "🔗 convidar a conta"}</button>` : ""}
+            ${pendente && podeConvidar ? `<button type="button" class="link" data-grupo-cancelar="${esc(p.id)}">cancelar convite</button>` : ""}
             <button type="button" class="link" data-grupo-remover="${esc(p.id)}">remover</button>
-          </span></li>`).join("")}</ul>` : ""}
+          </span></li>`; }).join("")}</ul>` : ""}
       <form class="grupo-add" novalidate>
         <label class="field"><span>${g.participantes.length ? "Mais uma pessoa" : "Quem vai viajar?"}</span>
           <input name="nome" maxlength="${NOME_MAX}" placeholder="${cheio ? "Grupo completo" : "Nome ou apelido"}" ${cheio ? "disabled" : ""} autocomplete="off"></label>
         <button class="btn small" ${cheio ? "disabled" : ""}>Adicionar</button>
       </form>
       ${cheio ? `<p class="small-text muted">O grupo já tem ${MAX_PARTICIPANTES} pessoas, o máximo.</p>` : ""}
+      ${!contaAtiva() && g.participantes.length ? `<p class="small-text muted">Quem tem conta no Traveler's Friend pode responder pelo próprio celular: entre na sua conta para convidar.</p>` : ""}
+      ${sync === "offline" ? `<p class="small-text muted">Sem conexão com o servidor: convites e contas conectadas ficam indisponíveis por enquanto.</p>` : ""}
       ${aviso ? `<p class="warning" role="alert">${esc(aviso)}</p>` : ""}
       <div class="modal-actions">
         <button type="button" class="btn" data-grupo="resumo" ${dados.respondentes ? "" : "disabled"}>Ver resumo do grupo</button>
-        ${proximo ? `<span class="small-text muted">Falta: ${esc(g.participantes.filter((p) => !p.respondido).map((p) => p.nome).join(", "))}</span>` : ""}
+        ${proximo ? `<span class="small-text muted">Falta: ${esc(g.participantes.filter((p) => !p.respondido && !ligada(p)).map((p) => p.nome).join(", "))}</span>` : ""}
       </div>`;
   }
+  const foco = document.activeElement && d.contains(document.activeElement) ? document.activeElement.getAttribute("data-grupo-nome") : null;
   d.innerHTML = `
     <div class="modal-head"><h3 id="tfGrupoTitulo">👥 ${tela === "resumo" ? "Resumo do grupo" : "Preferências do grupo"}</h3>
       <button type="button" class="icon-btn" data-grupo="fechar" aria-label="Fechar">×</button></div>
     <div class="modal-body">${corpo}</div>`;
+  if (foco) d.querySelector(`[data-grupo-nome="${foco}"]`)?.focus();
 }
 const redesenhar = () => desenhar();
 
@@ -271,11 +422,27 @@ async function clique(e) {
   if (b.dataset.grupo === "fechar") return d.close();
   if (b.dataset.grupo) { tela = b.dataset.grupo; aviso = ""; return desenhar(); }
   if (b.dataset.grupoResponder) return responder(b.dataset.grupoResponder);
+  if (b.dataset.grupoConvidar) { b.disabled = true; return convidar(b.dataset.grupoConvidar); }
+  if (b.dataset.grupoCancelar) { b.disabled = true; return cancelarConvite(b.dataset.grupoCancelar); }
+  if (b.hasAttribute("data-grupo-copiar")) {
+    const campo = b.closest(".grupo-link").querySelector("input");
+    try { await navigator.clipboard.writeText(campo.value); b.textContent = "Copiado ✓"; }
+    catch (_) { campo.select(); b.textContent = "Selecionado: copie"; }
+    return;
+  }
+  if (b.dataset.grupoEnviar) {
+    const url = b.closest(".grupo-link").querySelector("input").value;
+    try { await navigator.share({ title: "Convite do Traveler's Friend", text: `${b.dataset.grupoEnviar}, conecte sua conta ao grupo da nossa viagem:`, url }); } catch (_) { /* cancelou */ }
+    return;
+  }
   if (b.dataset.grupoRemover) {
     const p = grupo().participantes.find((x) => x.id === b.dataset.grupoRemover);
+    const lig = p && ((conexoes.get(p.id) || {}).estado === "conectado" || p.conectado);
     const { confirmar } = await import("./social/confirmar.js");
-    if (p && await confirmar({ titulo: `Remover ${p.nome}?`, texto: `As respostas e os lugares marcados por ${p.nome} saem desta viagem.`, botao: "Remover" })) {
-      removerParticipante(p.id); desenhar();
+    if (p && await confirmar({ titulo: `Remover ${p.nome}?`, botao: "Remover",
+      texto: lig ? `A conta de ${p.nome} é desconectada desta viagem e as notas compartilhadas por ${p.nome} são apagadas. Os lugares marcados por ${p.nome} também saem.`
+        : `As respostas e os lugares marcados por ${p.nome} saem desta viagem.` })) {
+      await removerParticipante(p.id); desenhar();
     }
     return;
   }

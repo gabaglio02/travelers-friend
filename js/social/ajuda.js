@@ -46,7 +46,15 @@ const BLOCOS = [
       "(um dia marcado conta a diária mesmo sem lugares no roteiro). O combustível entra em Deslocamento, pela distância de cada trecho; " +
       "diária e estacionamento aparecem em \"Carro alugado\". Cada carro leva até 5 pessoas."],
     ["Como funciona o orçamento?",
-      "Em Custos, informe quanto o grupo pode gastar. O site compara com o total previsto e mostra quanto sobra ou quanto passa."]
+      "Em Custos, informe quanto o grupo pode gastar. O site compara com o total previsto e mostra quanto sobra ou quanto passa."],
+    ["Como funcionam as preferências do grupo?",
+      "No Roteiro, toque em \"👥 Grupo\". Até 5 pessoas dizem do que gostam (8 perguntas, notas de 0 a 5) e marcam lugares que \"não podem faltar\". " +
+      "Cada pessoa pode responder no mesmo aparelho, sem conta, ou pela própria conta: quem organiza manda um convite (um link para uma pessoa, que vale 7 dias)."],
+    ["O que acontece com as notas que eu mando para o grupo de outra pessoa?",
+      "Vai uma cópia das 8 notas, só para aquela viagem; quem organiza não vê mais nada da sua conta, e suas preferências pessoais não mudam. " +
+      "Se você mudar o seu questionário pessoal, a viagem não é atualizada sozinha: atualize ou retire as notas em Grupos de viagem (link em Editar perfil). " +
+      "As notas ficam guardadas só enquanto você estiver no grupo: se você sair, se quem organiza tirar a sua vaga, se a viagem for apagada " +
+      "ou se você excluir a conta, elas são apagadas."]
   ] },
   { titulo: "Conta e privacidade", perguntas: [
     ["Quem vê o meu perfil?",

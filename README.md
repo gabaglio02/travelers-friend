@@ -36,13 +36,15 @@ Abrindo o `index.html` direto no navegador o site também funciona, mas só com 
 - `supabase/006_perfil_so_amigos.sql`: perfil "Só amigos" mostra um cartão para pedir amizade; "Só eu" não recebe pedidos
 - `supabase/007_compartilhar_e_erros.sql`: roteiros compartilhados por link (#/r/<código>) e registro de erros do site (tabela `erros_site`)
 - `supabase/008_perguntas.sql`: caixa de perguntas da Ajuda (tabela `perguntas`, só pela função `enviar_pergunta`; ninguém lê pelo site)
+- `supabase/009_grupo_conexoes.sql`: contas conectadas ao grupo de uma viagem (tabela `grupo_conexoes`, só pelas funções; convite de uso único por 7 dias, guardado como hash; notas apagadas ao sair, ser removida, apagar a viagem ou a conta). Teste: `supabase/testes/grupo.test.mjs`
 - `supabase/testes/`: testes do SQL num Postgres local (PGlite)
 - `js/dados/perfis.js`: leitura e gravação de perfis no Supabase
 - `js/social/perfil.js`: páginas `#/@apelido`, `#/perfil` e `#/perfil/editar`
 - `js/social/ajuda.js`: página `#/ajuda` (perguntas frequentes, conteúdo fixo, e caixa de perguntas)
 - `js/aviso-politica.js`: faixa no topo avisando a última mudança na política (some ao fechar e depois da data definida no arquivo)
 - `js/gosto.js`: "✨ Sugestões personalizadas" — questionário de 8 perguntas (nota 0 a 5) que reordena o Explorar; com conta, as respostas ficam nos dados da conta (`user_metadata.preferencias_sugestoes`, sem tabela nova), sem conta, no navegador
-- `js/grupo.js`: "👥 Preferências do grupo" de uma viagem — até 5 pessoas (sem conta) respondem o mesmo questionário e marcam lugares que "não podem faltar"; fica em `state.grupo` (vai junto com a viagem salva, não vai no link de compartilhar); `window.TF.grupo()` entrega notas, médias, distribuição, consenso/divergência e indispensáveis para o roteiro automático
+- `js/grupo.js`: "👥 Preferências do grupo" de uma viagem — até 5 pessoas (sem conta) respondem o mesmo questionário e marcam lugares que "não podem faltar"; fica em `state.grupo` (vai junto com a viagem salva, não vai no link de compartilhar); `window.TF.grupo()` entrega notas, médias, distribuição, consenso/divergência e indispensáveis para o roteiro automático. Quem tem conta pode responder pelo próprio celular, por convite (009): essas notas ficam só no servidor e na memória da página, nunca na viagem salva
+- `js/social/grupo-convite.js`: `#/grupo/<código>` (aceitar o convite, conferindo as notas antes de enviar) e `#/grupos` (atualizar ou sair dos grupos em que a pessoa entrou)
 - `privacidade.html`: política de privacidade
 - `data/`: banco da agenda gerado pelo servidor (pode apagar para recomeçar)
 

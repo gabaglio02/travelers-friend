@@ -88,7 +88,8 @@ contaPronta().then((c) => {
 // tela: "intro" → 0..7 (perguntas) → "fim". Respostas ficam num rascunho até o fim; fechar no meio não muda nada.
 // Sem "outra", responde e salva as preferências pessoais. Com "outra" (preferências do grupo, js/grupo.js), o mesmo
 // questionário responde por outra pessoa e entrega o resultado a outra.salvar — nada aqui toca as preferências pessoais:
-//   outra = { quem: "Ana", respostas: { notas, puladas }, intro: "<html>", botao: "Sou Ana, começar", salvar: async ({ notas, puladas }) => {} }
+//   outra = { quem: "Ana", respostas: { notas, puladas }, intro: "<html>", botao: "Sou Ana, começar", salvar: async ({ notas, puladas }) => {},
+//             fim: "texto da tela final" (opcional), titulo: "título da janela" (opcional) }
 let q = null;
 const NOTA_TXT = ["nada a ver comigo", "pouco", "mais ou menos", "gosto", "gosto muito", "adoro"];
 
@@ -119,7 +120,7 @@ function desenhar(dir = 0) {
       </div>`;
   } else if (tela === "fim" && o) {
     corpo = `
-      <p class="tf-quiz-lead">Pronto, ${esc(o.quem)}! Suas respostas ficaram guardadas nesta viagem.</p>
+      <p class="tf-quiz-lead">${o.fim ? esc(o.fim) : `Pronto, ${esc(o.quem)}! Suas respostas ficaram guardadas nesta viagem.`}</p>
       ${resumoHtml({ notas: q.notas, puladas: q.puladas })}
       ${q.erro ? `<p class="warning">${esc(q.erro)}</p>` : ""}
       <div class="modal-actions">
@@ -152,7 +153,7 @@ function desenhar(dir = 0) {
       <div class="tf-quiz-prog" aria-hidden="true"><span style="width:${((tela + 1) / GOSTO.length) * 100}%"></span></div>
       <p class="tf-quiz-num mono small-text">Pergunta ${tela + 1} de ${GOSTO.length}</p>
       <h4 class="tf-quiz-pergunta" id="tfQuizPergunta" tabindex="-1"><span aria-hidden="true">${g.icone}</span> ${esc(g.nome)}</h4>
-      <p class="muted small-text">Quanto isso combina com ${o ? "você, " + esc(o.quem) + "," : "você"} numa viagem?</p>
+      <p class="muted small-text">Quanto isso combina com ${o && o.quem ? "você, " + esc(o.quem) + "," : "você"} numa viagem?</p>
       <div class="tf-quiz-notas" role="group" aria-labelledby="tfQuizPergunta">
         ${[0, 1, 2, 3, 4, 5].map((v) => `<button type="button" data-nota="${v}" class="${nota === v ? "on" : ""}" aria-pressed="${nota === v}"
           aria-label="${v} — ${NOTA_TXT[v]}">${v}</button>`).join("")}
@@ -164,7 +165,7 @@ function desenhar(dir = 0) {
       </div>`;
   }
   d.innerHTML = `
-    <div class="modal-head"><h3 id="tfQuizTitulo">${o ? "👥 Respostas de " + esc(o.quem) : "✨ Sugestões personalizadas"}</h3>
+    <div class="modal-head"><h3 id="tfQuizTitulo">${o ? esc(o.titulo || "👥 Respostas de " + o.quem) : "✨ Sugestões personalizadas"}</h3>
       <button type="button" class="icon-btn" data-quiz="fechar" aria-label="Fechar">×</button></div>
     <div class="modal-body tf-quiz-tela ${dir > 0 ? "entra-dir" : dir < 0 ? "entra-esq" : ""}">${corpo}</div>`;
   // Foco na nota já marcada ou no título da pergunta (focar o "0" faria parecer que ele já está escolhido).
@@ -247,7 +248,8 @@ function secaoPerfilCorpo(g) {
     ${respondeu() ? `
       ${resumoHtml(g)}
       <label class="check"><input type="checkbox" data-sug="ligar" ${g.ligado ? "checked" : ""}> Ordenar as sugestões pelo meu gosto</label>
-      <div><button type="button" class="btn ghost small" data-sug="refazer">Refazer o questionário</button></div>`
+      <div><button type="button" class="btn ghost small" data-sug="refazer">Refazer o questionário</button></div>
+      <p class="small-text muted">Entrou no grupo da viagem de alguém? <a href="#/grupos">Grupos de viagem</a>: atualizar ou retirar as notas enviadas.</p>`
     : `<p class="small-text">Você ainda não respondeu. São 8 perguntas rápidas.</p>
       <div><button type="button" class="btn small" data-sug="refazer">Responder agora</button></div>`}`;
 }

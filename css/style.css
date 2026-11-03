@@ -1345,3 +1345,12 @@ body:not(.landing):not(.v-social) .trip-setup { order: 3; flex-basis: 100%; }
 .nao-faltar-chips .chip { min-height: 36px; }
 .nao-faltar-vazio { margin: 0; }
 .nao-faltar-nota { font-size: 12px; font-weight: var(--w-bold); margin-top: 4px; }
+.grupo-estado { grid-column: 1 / -1; }
+.grupo-link { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; padding: var(--s-2); background: var(--paper-2); border-radius: var(--r-md); }
+.grupo-link input { font: inherit; font-size: var(--t-xs); padding: 6px 8px; border: 1.5px solid var(--soft-line); border-radius: var(--r-sm); min-width: 0; }
+.grupo-link-acoes { display: flex; gap: var(--s-2); }
+.grupo-link p { margin: 0; }
+.grupo-acoes { flex-wrap: wrap; }
+.grupo-escolha { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; margin-top: var(--s-3); }
+.grupo-avisos { margin: 0 0 var(--s-3); padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; font-size: var(--t-sm); }
+.grupo-conv .tf-quiz-resumo { margin-top: var(--s-2); }

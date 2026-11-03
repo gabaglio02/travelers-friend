@@ -65,6 +65,8 @@
     aoMudarUsuario: (fn) => ouvintes.push(fn),
     abrirLogin: () => abrir(sb ? "entrar" : "info"),
     viagemAtual: () => viagemId,
+    // Salva a viagem aberta agora (sem esperar os 1,5 s); true se deu certo. Usado antes de convidar alguém ao grupo.
+    salvarJa: async () => { clearTimeout(salvarTimer); await salvarAgora(); return salvando !== "erro"; },
     // Minhas viagens (js/social/viagens.js). Antes de trocar, salva a viagem aberta.
     viagens: async () => { await listarViagens(); return viagens.slice(); },
     abrirViagem: async (id) => { clearTimeout(salvarTimer); await salvarAgora(); await abrirViagem(id); },
