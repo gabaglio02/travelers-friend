@@ -41,6 +41,7 @@ Abrindo o `index.html` direto no navegador o site também funciona, mas só com 
 - `js/social/perfil.js`: páginas `#/@apelido`, `#/perfil` e `#/perfil/editar`
 - `js/social/ajuda.js`: página `#/ajuda` (perguntas frequentes, conteúdo fixo, e caixa de perguntas)
 - `js/aviso-politica.js`: faixa no topo avisando a última mudança na política (some ao fechar e depois da data definida no arquivo)
+- `js/gosto.js`: "✨ Sugestões personalizadas" — questionário de 8 perguntas (nota 0 a 5) que reordena o Explorar; com conta, as respostas ficam nos dados da conta (`user_metadata.preferencias_sugestoes`, sem tabela nova), sem conta, no navegador
 - `privacidade.html`: política de privacidade
 - `data/`: banco da agenda gerado pelo servidor (pode apagar para recomeçar)
 

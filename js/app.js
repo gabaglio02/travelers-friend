@@ -1,13 +1,14 @@
 /* Traveler's Friend — planejador (Explorar · Roteiro · Custos). Módulo ES; usa Leaflet (global L). */
 import {
   CITY_OPTIONS, CATEGORIES, AGE_OPTIONS, MONTHS, WEEKDAYS, WEEKDAYS_FULL,
-  STORAGE_KEY, MAX_DAYS, WALK_LIMIT_KM, PERTO, MODES, MEALS, CAT_ICON, GOSTO
+  STORAGE_KEY, MAX_DAYS, WALK_LIMIT_KM, PERTO, MODES, MEALS, CAT_ICON
 } from "./core/constantes.js";
 import {
   $, esc, money, moneyExact, toMin, toHHMM, fmtDur, parseDur, parseISO, toISO, fmtDay, fmtShort,
   dateRange, ageMin, bracketFor, ciIcon, ageBadge, placeLabel, distanceKm, walkMinutes
 } from "./core/util.js";
 import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
+import * as gosto from "./gosto.js"; // "✨ Sugestões personalizadas": questionário e pesos por categoria
 import "./social/perfil.js"; // registra #/@apelido, #/perfil e #/perfil/editar
 import "./social/identidades.js"; // registra #/identidades, #/identidades/nova e #/identidades/editar/<id>
 import "./social/mural.js"; // registra #/@apelido/album/<id> e #/lembrancas/...; álbuns e recados no perfil
@@ -136,8 +137,6 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
   function normalizeState(s) {
     s = Object.assign(defaultState(), s);
     s.carro = Object.assign(defaultState().carro, s.carro || {});
-    // Quiz de gosto: notas = { frase: 0..5 } (sem resposta = sem efeito); ligado = ordenar por elas.
-    s.gosto = Object.assign({ notas: {}, ligado: true }, s.gosto || {});
     // Horários padrão das refeições.
     s.meals = Object.assign(defaultMeals(), s.meals || {});
     s.stays = s.stays || [];
@@ -436,7 +435,7 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
   function filtered() {
     const q = ui.q.trim().toLowerCase();
     const days = tripDays();
-    return listaveis().filter((p) => {
+    const lista = listaveis().filter((p) => {
       if ((p.restaurante || p.secundario) && !q && !ui.cats.has(p.categoria)) return false;
       if (ui.kind === "lugar" && hasDates(p)) return false;
       if (ui.kind === "evento" && !hasDates(p)) return false;
@@ -451,6 +450,7 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
       if (ui.onlyDates && hasDates(p) && !days.some((d) => eventOn(p, d))) return false;
       return true;
     }).sort((a, b) => highlightScore(b, state.activeDay) - highlightScore(a, state.activeDay) || a.nome.localeCompare(b.nome));
+    return comGosto(lista, state.activeDay);
   }
 
   // Nível de prioridade nos destaques do dia:
@@ -465,20 +465,32 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     if (priceOn(p, iso) === 0) return p.preco > 0 ? 2 : 1;
     return 0;
   }
-  // Dentro do mesmo nível: eventos grátis antes dos pagos, depois o gosto da pessoa (quiz), depois os lugares em destaque.
+  // Dentro do mesmo nível: eventos grátis antes dos pagos, depois os lugares em destaque.
   function highlightScore(p, iso) {
-    const extra = gostoPeso(p) * 1.5 + (p.destaque ? 1 : 0);
-    if (!iso) return extra;
-    return highlightTier(p, iso) * 100 + (priceOn(p, iso) === 0 ? 10 : 0) + extra;
+    if (!iso) return p.destaque ? 1 : 0;
+    return highlightTier(p, iso) * 100 + (priceOn(p, iso) === 0 ? 10 : 0) + (p.destaque ? 1 : 0);
   }
 
-  // Quiz de gosto: nota de -2,5 a +2,5 para a categoria do lugar (0 = sem quiz, desligado ou frase sem resposta).
-  const gostoAtivo = () => state.gosto.ligado && Object.keys(state.gosto.notas).length > 0;
-  function gostoPeso(p) {
-    if (!gostoAtivo()) return 0;
-    const f = GOSTO.find((g) => g.cats.includes(p.categoria));
-    const n = f && state.gosto.notas[f.id];
-    return n == null ? 0 : n - 2.5;
+  // Sugestões personalizadas (js/gosto.js): reordena uma lista já ordenada por highlightScore.
+  // Escolhe um a um o de maior pontuação = nível do dia + nota da categoria − repetição da categoria,
+  // para a lista não virar "só trilhas" e as categorias de nota baixa continuarem aparecendo.
+  // Os descontos somam no máximo ~9,5, menos que a distância entre níveis (100) e que o bônus de evento grátis (10):
+  // evento do dia continua antes de tudo, e evento grátis antes do pago.
+  function comGosto(lista, iso) {
+    if (!gosto.ativa() || lista.length < 2) return lista;
+    const resto = lista.map((p, i) => ({ p, base: highlightScore(p, iso) - i * 1e-6, peso: gosto.peso(p.categoria) * 1.5 }));
+    const vistos = {}, out = [];
+    while (resto.length) {
+      let m = 0, melhor = -Infinity;
+      resto.forEach((r, i) => {
+        const v = r.base + r.peso - Math.min(vistos[r.p.categoria] || 0, 4) * 1.2;
+        if (v > melhor) { melhor = v; m = i; }
+      });
+      const [r] = resto.splice(m, 1);
+      vistos[r.p.categoria] = (vistos[r.p.categoria] || 0) + 1;
+      out.push(r.p);
+    }
+    return out;
   }
 
   // ---------- Fatos de um lugar (cards, recomendações, detalhes) ----------
@@ -581,12 +593,12 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     $("#agendaInfo").textContent = agendaLabel() + " · " + nEvents + " eventos e exposições por vir"
       + (nRest && !ui.cats.has("gastronomia") ? " · " + nRest + " restaurantes no filtro Gastronomia" : "")
       + (nCompras && !ui.cats.has("compras") ? " · " + nCompras + " shoppings e galerias em Compras" : "")
-      + (gostoAtivo() ? " · ordenado pelo seu gosto" : "");
+      + (gosto.ativa() ? " · ✨ ordenado pelo seu gosto" : "");
     // Contagem por tipo (respeitando os outros filtros) e quantos filtros extras estão ligados.
     const kindAntes = ui.kind;
     ["", "lugar", "evento"].forEach((k) => { ui.kind = k; const n = filtered().length; const el = $("#kindCount" + ({ "": "All", lugar: "Lugar", evento: "Evento" })[k]); if (el) el.textContent = n; });
     ui.kind = kindAntes;
-    const extras = ui.cats.size + (ui.where ? 1 : 0) + (ui.maxPrice < 1200 ? 1 : 0) + (ui.onlyFree ? 1 : 0) + (ui.onlyNight ? 1 : 0) + (ui.onlyAge ? 0 : 1) + (ui.onlyDates ? 1 : 0);
+    const extras = ui.cats.size + (ui.where ? 1 : 0) + (ui.maxPrice < 1200 ? 1 : 0) + (ui.onlyFree ? 1 : 0) + (ui.onlyNight ? 1 : 0) + (ui.onlyAge ? 0 : 1) + (ui.onlyDates ? 1 : 0) + (gosto.ativa() ? 1 : 0);
     $("#filtersActive").textContent = extras ? "· " + extras + (extras === 1 ? " ativo" : " ativos") : "";
     $("#list").innerHTML = list.length ? list.map((p) => {
       const added = plannedDays(p.id).length > 0;
@@ -884,8 +896,8 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
       }).filter(({ p, km, from }) => !anchor || (p.municipio || from.municipio
         ? legInfo(from, p, null, iso).min <= PERTO.foraMin : km <= PERTO.capitalKm)).sort((a, b) => highlightTier(b.p, iso) - highlightTier(a.p, iso) || a.km - b.km);
     } else {
-      list = cands.filter((p) => highlightTier(p, iso) >= 1 || p.destaque)
-        .sort((a, b) => highlightScore(b, iso) - highlightScore(a, iso))
+      list = comGosto(cands.filter((p) => highlightTier(p, iso) >= 1 || p.destaque)
+        .sort((a, b) => highlightScore(b, iso) - highlightScore(a, iso)), iso)
         .map((p) => ({ p, km: null, from: null }));
     }
     return { anchor, hasRefs: refs.length > 0, fromStay, list: list.slice(0, 14) };
@@ -1632,34 +1644,25 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
     });
   }
 
-  // Quiz "Personalizar sugestões" (Explorar): 8 frases, nota 0 a 5 em cada.
-  function renderGosto() {
-    const g = state.gosto, n = Object.keys(g.notas).length;
-    $("#gostoResumo").textContent = !n ? "(opcional)" : g.ligado ? "· ligado (" + n + " de " + GOSTO.length + " frases)" : "· desligado";
-    $("#gostoLigado").checked = g.ligado;
-    $("#gostoLigado").disabled = !n;
-    $("#gostoApagar").hidden = !n;
-    $("#gostoFrases").innerHTML = GOSTO.map((f) => `
-      <fieldset class="gosto-frase">
-        <legend>${esc(f.frase)}</legend>
-        <div class="gosto-notas">${[0, 1, 2, 3, 4, 5].map((v) =>
-          `<button type="button" data-gosto="${f.id}" data-nota="${v}" class="${g.notas[f.id] === v ? "on" : ""}" aria-pressed="${g.notas[f.id] === v}">${v}</button>`).join("")}</div>
-      </fieldset>`).join("");
-  }
-  function bindGosto() {
-    $("#gostoFrases").addEventListener("click", (e) => {
-      const b = e.target.closest("[data-gosto]");
-      if (!b) return;
-      const notas = state.gosto.notas, v = +b.dataset.nota;
-      // Tocar de novo na nota escolhida tira a resposta.
-      if (notas[b.dataset.gosto] === v) delete notas[b.dataset.gosto]; else notas[b.dataset.gosto] = v;
-      save(); renderGosto(); renderAll();
-    });
-    $("#gostoLigado").addEventListener("change", (e) => { state.gosto.ligado = e.target.checked; save(); renderGosto(); renderAll(); });
-    $("#gostoApagar").addEventListener("click", () => { state.gosto.notas = {}; state.gosto.ligado = true; save(); renderGosto(); renderAll(); });
+  // Entrada das sugestões personalizadas nos Filtros: sem respostas → convite; com respostas → liga/desliga e refazer.
+  function renderSugestoes() {
+    const el = $("#sugFiltro");
+    if (!el) return;
+    el.innerHTML = gosto.respondeu()
+      ? `<label class="check"><input type="checkbox" id="sugLigado" ${gosto.preferencias().ligado ? "checked" : ""}> ✨ Sugestões personalizadas</label>
+        <button type="button" class="link" data-sug-filtro="refazer">refazer o questionário</button>`
+      : `<button type="button" class="btn ghost small" data-sug-filtro="comecar">✨ Sugestões personalizadas</button>
+        <span class="muted small-text">8 perguntas rápidas para ordenar pelo seu gosto</span>`;
   }
 
   function bindFilters() {
+    renderSugestoes();
+    $("#sugFiltro").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-sug-filtro]");
+      if (b) gosto.abrirQuestionario({ intro: b.dataset.sugFiltro === "comecar" });
+    });
+    $("#sugFiltro").addEventListener("change", (e) => { if (e.target.id === "sugLigado") gosto.ligar(e.target.checked); });
+    gosto.aoMudar(() => { renderSugestoes(); renderAll(); });
     $("#search").addEventListener("input", (e) => { ui.q = e.target.value; renderList(); });
     $("#maxPrice").addEventListener("input", (e) => { ui.maxPrice = +e.target.value; $("#maxPriceOut").textContent = e.target.value; renderList(); });
     $("#onlyFree").addEventListener("change", (e) => { ui.onlyFree = e.target.checked; renderList(); });
@@ -1861,7 +1864,7 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
       state = normalizeState(JSON.parse(JSON.stringify(dados || {})));
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) { /* ignora */ }
       ui.focusUid = null;
-      syncInputs(); renderCitySelect(); renderDateBtn(); renderAge(); renderMealsCfg(); renderStay(); renderGosto(); renderAll();
+      syncInputs(); renderCitySelect(); renderDateBtn(); renderAge(); renderMealsCfg(); renderStay(); renderAll();
       if (!silent) toast("Viagem carregada");
     },
     // Viagem "vazia"? (nada no roteiro e nenhuma hospedagem) — para decidir se vale importar para a conta.
@@ -1905,9 +1908,7 @@ import "./social/ajuda.js"; // registra #/ajuda (perguntas frequentes)
   renderStay();
   renderChips();
   bindSetup();
-  renderGosto();
   bindFilters();
-  bindGosto();
   bindDelegates();
   renderView();
   renderAll();

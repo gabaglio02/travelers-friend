@@ -9,6 +9,7 @@ import {
   meusVisitados, adicionarVisitado, removerVisitado, urlImagem, enviarImagem, removerImagem, apagarIdentidade,
   APELIDO_RE, NIVEIS, SECOES, PRIVACIDADE_PADRAO
 } from "../dados/perfis.js";
+import * as gosto from "../gosto.js"; // seção "Sugestões personalizadas" e oferta após o cadastro
 
 // ---------- Opções de personalização ----------
 export const STATUS = {
@@ -289,6 +290,8 @@ function renderEditor() {
           <div><b>${esc(v.nome)}</b>${v.cidade ? ` <span class="muted">· ${esc(v.cidade)}</span>` : ""}${v.nota ? `<p>${esc(v.nota)}</p>` : ""}</div>
           <button type="button" class="link" data-pf="tirar-visitado" data-id="${esc(v.id)}">remover</button></li>`).join("")}</ol>
       </section>
+
+      ${persona ? "" : gosto.secaoPerfilHtml()}
 
       <section class="pf-bloco">
         <h3>Privacidade</h3>
@@ -577,6 +580,8 @@ async function criarPerfilDoCadastro(user) {
     });
     await marcar();
     toast(`Seu perfil @${p.apelido} está pronto!`);
+    // Logo depois, oferece (uma vez só) o questionário das sugestões personalizadas.
+    setTimeout(() => gosto.oferecerAposCadastro(), 1200);
   } catch (err) {
     if (/identidades_apelido_idx|duplicate key/i.test(String(err && err.message))) {
       await marcar();

@@ -88,17 +88,6 @@
       </div>
 
       <p class="small-text muted" id="agendaInfo" style="margin:-6px 0 10px"></p>
-      <details class="gosto" id="gosto">
-        <summary>✨ Personalizar sugestões <span id="gostoResumo">(opcional)</span></summary>
-        <div class="gosto-body">
-          <p class="small-text muted">De 0 (nada a ver comigo) a 5 (adoro). As notas só mudam a ordem: eventos do dia continuam primeiro e nada some da lista. Pode pular as frases que quiser.</p>
-          <div id="gostoFrases"></div>
-          <div class="gosto-acoes">
-            <label class="check"><input type="checkbox" id="gostoLigado"> Ordenar pelo meu gosto</label>
-            <button type="button" class="btn ghost small" id="gostoApagar">Apagar respostas</button>
-          </div>
-        </div>
-      </details>
       <div class="filters">
         <div class="seg" id="kindTabs" role="tablist" aria-label="O que mostrar">
           <button class="on" data-kind="" role="tab">Tudo <small id="kindCountAll"></small></button>
@@ -128,6 +117,7 @@
               <label class="check"><input type="checkbox" id="onlyAge" checked> Adequado à idade do grupo</label>
               <label class="check"><input type="checkbox" id="onlyDates"> Eventos só nas datas da viagem</label>
             </div>
+            <div class="filter-row sug-filtro" id="sugFiltro"></div>
           </div>
         </details>
       </div>

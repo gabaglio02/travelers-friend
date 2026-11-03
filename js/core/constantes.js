@@ -23,17 +23,18 @@ export const CATEGORIES = {
   esporte: "Esportes & estádios"
 };
 
-// Quiz opcional "Personalizar sugestões": nota de 0 a 5 em cada frase pesa as categorias dela.
+// Questionário "Sugestões personalizadas" (js/gosto.js): nota de 0 a 5 em cada pergunta pesa as categorias dela.
 // A nota só muda a ordem dentro de cada nível dos destaques (evento do dia continua antes); nota 0 não esconde nada.
+// Não mude os "id": são as chaves das respostas já salvas nas contas.
 export const GOSTO = [
-  { id: "museus", frase: "Gosto de museus e exposições", cats: ["museu", "exposicao"] },
-  { id: "pontos", frase: "Quero ver os pontos famosos e a história da cidade", cats: ["ponto"] },
-  { id: "parques", frase: "Gosto de passear em parques ao ar livre", cats: ["parque"] },
-  { id: "aventura", frase: "Topo trilhas, cachoeiras e esportes", cats: ["trilha", "esporte"] },
-  { id: "palco", frase: "Adoro shows, teatro e festivais", cats: ["show", "teatro", "festival"] },
-  { id: "comer", frase: "Comer bem é parte importante da viagem", cats: ["gastronomia"] },
-  { id: "compras", frase: "Gosto de fazer compras", cats: ["compras"] },
-  { id: "noite", frase: "Quero sair à noite, para bares e baladas", cats: ["noite"] }
+  { id: "museus", nome: "Museus, exposições e arte", icone: "🏛️", cats: ["museu", "exposicao"] },
+  { id: "pontos", nome: "Pontos turísticos, monumentos e história", icone: "📍", cats: ["ponto"] },
+  { id: "parques", nome: "Parques, natureza e atividades ao ar livre", icone: "🌳", cats: ["parque"] },
+  { id: "aventura", nome: "Trilhas, cachoeiras e esportes", icone: "🥾", cats: ["trilha", "esporte"] },
+  { id: "palco", nome: "Shows, teatros, festivais e eventos culturais", icone: "🎭", cats: ["show", "teatro", "festival"] },
+  { id: "comer", nome: "Gastronomia, restaurantes e experiências culinárias", icone: "🍽️", cats: ["gastronomia"] },
+  { id: "compras", nome: "Compras, feiras e mercados", icone: "🛍️", cats: ["compras"] },
+  { id: "noite", nome: "Vida noturna, bares e entretenimento noturno", icone: "🍸", cats: ["noite"] }
 ];
 
 // Classificação indicativa (padrão ClassInd).
