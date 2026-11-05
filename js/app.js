@@ -10,6 +10,7 @@ import {
 import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
 import * as gosto from "./gosto.js"; // "✨ Sugestões personalizadas": questionário e pesos por categoria
 import * as grupo from "./grupo.js"; // "👥 Preferências do grupo" desta viagem e lugares que não podem faltar
+import * as montar from "./montar-roteiro.js"; // "✨ Montar roteiro" (motor em js/roteiro-auto.js)
 import "./social/perfil.js"; // registra #/@apelido, #/perfil e #/perfil/editar
 import "./social/identidades.js"; // registra #/identidades, #/identidades/nova e #/identidades/editar/<id>
 import "./social/mural.js"; // registra #/@apelido/album/<id> e #/lembrancas/...; álbuns e recados no perfil
@@ -419,6 +420,47 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
     if (!item) return;
     item.dur = Math.max(5, Math.min(24 * 60, Math.round(min)));
     save(); renderAll();
+  }
+
+  // ---------- Roteiro automático (js/montar-roteiro.js) ----------
+  // Roda uma conta como se os dias fossem outros, sem tocar na viagem: state.days é trocado só durante fn.
+  function comDias(novos, fn) {
+    const antes = state.days;
+    state.days = { ...antes, ...novos };
+    try { return fn(); } finally { state.days = antes; }
+  }
+  const diaCom = (iso, items) => ({ ...(state.days[iso] || { start: "09:00" }), items });
+  function detalheDia(iso, items) { return comDias({ [iso]: diaCom(iso, items) }, () => schedule(iso)); }
+  // O que o motor precisa saber de um dia: alertas (lugares e refeições perdidas), tempo de passeio e hora em que termina.
+  function simularDia(iso, items) {
+    const s = detalheDia(iso, items);
+    const alertas = s.rows.reduce((n, r) => n + r.warnings.length, 0) + s.entries.filter((e) => e.kind === "missed").length;
+    return { alertas, passeio: s.rows.reduce((n, r) => n + r.item.dur, 0), fim: s.end };
+  }
+  function aplicarRoteiro(proposta) {
+    const dias = Object.keys(proposta);
+    // A janela é modal, mas a viagem pode ter mudado (outra aba, conta): só aplica sobre o mesmo roteiro.
+    const mesmos = dias.every((iso) => {
+      const atuais = (state.days[iso]?.items || []).map((i) => i.uid).sort().join();
+      return atuais === proposta[iso].filter((i) => !i.novo).map((i) => i.uid).sort().join();
+    });
+    if (!mesmos) return false;
+    const alvo = state, backup = JSON.parse(JSON.stringify(state.days));
+    let n = 0;
+    dias.forEach((iso) => {
+      const orig = new Map((state.days[iso]?.items || []).map((i) => [i.uid, i]));
+      dayData(iso).items = proposta[iso].map((i) => {
+        if (!i.novo) return orig.get(i.uid);
+        n++;
+        return { uid: uid(), id: i.id, dur: i.dur };
+      });
+    });
+    save(); renderAll();
+    toast(n + (n === 1 ? " lugar adicionado ao roteiro" : " lugares adicionados ao roteiro"), {
+      label: "Desfazer", ms: 20000,
+      run: () => { if (state !== alvo) return; state.days = backup; save(); renderAll(); }
+    });
+    return true;
   }
 
   // ---------- Combos ----------
@@ -1259,7 +1301,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
     el.style.opacity = "1";
     el.style.pointerEvents = "auto";
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { el.style.opacity = "0"; el.style.pointerEvents = "none"; }, action ? 6000 : 1800);
+    toastTimer = setTimeout(() => { el.style.opacity = "0"; el.style.pointerEvents = "none"; }, action ? (action.ms || 6000) : 1800);
   }
 
   // ---------- Mobile ----------
@@ -1859,6 +1901,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
       if (e.target.closest("[data-grupo-abrir]")) { $("#detail").close(); grupo.abrirJanela(); }
     });
     $("#groupBtn").addEventListener("click", () => grupo.abrirJanela());
+    $("#autoTrip").addEventListener("click", () => montar.abrir());
     // Pré-visualiza o intervalo enquanto escolhe a volta.
     $("#datePicker").addEventListener("mouseover", (e) => {
       const el = e.target.closest("[data-dpday]");
@@ -1921,6 +1964,30 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
   };
 
   // ---------- Início ----------
+  montar.iniciar({
+    dias: tripDays,
+    grupo: () => window.TF.grupoAtualizado(),
+    atuais: (dias) => Object.fromEntries(dias.map((iso) => [iso, state.days[iso]?.items || []])),
+    candidatos: listaveis,
+    combos: () => city().combos || [],
+    regras: () => ({
+      lugar: placeById, simular: simularDia, km: distanceKm,
+      origem: (iso) => stayPlace(prevStayFor(iso)) || stayPlace(stayFor(iso)),
+      acontece: happensOn, fechado: isClosed, nivel: highlightTier, preco: priceOn,
+      dataIncerta: (p) => hasDates(p) && !dataConfirmada(p),
+      semLocal: (p) => /a confirmar|secreto/i.test(p.bairro || ""),
+      idadeOk: (p) => state.youngest >= ageMin(p.idade),
+      noturno: isNight, minutos: toMin, diaSemana: (iso) => parseISO(iso).getDay()
+    }),
+    detalhe: detalheDia,
+    duracao: fmtDur,
+    custos: (dias) => ({
+      total: comDias(Object.fromEntries(Object.entries(dias).map(([iso, items]) => [iso, diaCom(iso, items)])), () => calcularCustos().total),
+      orcamento: Number(state.budget) || 0
+    }),
+    aplicar: aplicarRoteiro,
+    abrirDatas: openDatePicker
+  });
   grupo.iniciar({ obter: () => state.grupo, mudou: () => { save(); renderAll(); }, redesenhar: () => renderAll(), lugar: placeById,
     abrirDetalhe: (id) => { if (placeById(id)) openDetail(id); } });
   renderCitySelect();

@@ -111,7 +111,7 @@ button, input, select { font: inherit; color: inherit; }
   padding: 16px;
   min-width: 0;
 }
-.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 12px; }
+.panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 12px; }
 .count { font-family: var(--mono); font-size: 12px; color: var(--muted); }
 .explore { position: sticky; top: 16px; max-height: calc(100vh - 32px); display: flex; flex-direction: column; }
 .costs { position: sticky; top: 16px; }
@@ -1354,3 +1354,18 @@ body:not(.landing):not(.v-social) .trip-setup { order: 3; flex-basis: 100%; }
 .grupo-escolha { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; margin-top: var(--s-3); }
 .grupo-avisos { margin: 0 0 var(--s-3); padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; font-size: var(--t-sm); }
 .grupo-conv .tf-quiz-resumo { margin-top: var(--s-2); }
+
+/* Montar roteiro (js/montar-roteiro.js) */
+.tf-montar { width: min(600px, calc(100vw - 32px)); }
+.montar-nota { margin: 6px 0 0; }
+.montar-conflitos { display: flex; flex-direction: column; gap: var(--s-3); }
+.montar-conflito { margin: 0; padding: var(--s-2) var(--s-3); border: 1.5px solid var(--soft-line); border-radius: var(--r-md); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.montar-conflito legend { padding: 0 4px; }
+.montar-conflito p { margin: 0; }
+.montar-dia h4 { margin: 0 0 var(--s-2); font-size: var(--t-md); }
+.montar-dia ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s-2); }
+.montar-dia li { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: var(--s-2); }
+.montar-dia li.novo { border-left: 3px solid var(--accent); padding-left: 6px; }
+.montar-dia li.ja, .montar-dia li.refeicao { padding-left: 9px; }
+.montar-hora { font-size: var(--t-xs); padding-top: 2px; }
+.montar-dia + .montar-dia { border-top: 1px solid var(--paper-3); padding-top: var(--s-3); }

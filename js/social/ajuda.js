@@ -47,6 +47,10 @@ const BLOCOS = [
       "diária e estacionamento aparecem em \"Carro alugado\". Cada carro leva até 5 pessoas."],
     ["Como funciona o orçamento?",
       "Em Custos, informe quanto o grupo pode gastar. O site compara com o total previsto e mostra quanto sobra ou quanto passa."],
+    ["Como o site monta o roteiro sozinho?",
+      "No Roteiro, toque em \"✨ Montar roteiro\" e escolha os dias e o ritmo. O site usa as notas do grupo (ou as suas, se ninguém do grupo respondeu), " +
+      "coloca primeiro os lugares que não podem faltar e preenche o tempo livre. Você vê os horários e o motivo de cada escolha antes de aplicar; o que já estava no roteiro continua lá. " +
+      "Se um lugar que não pode faltar não couber, o site pergunta o que fazer em vez de tirar. Restaurantes não entram: as refeições ficam com as sugestões de \"Onde comer perto\"."],
     ["Como funcionam as preferências do grupo?",
       "No Roteiro, toque em \"👥 Grupo\". Até 5 pessoas dizem do que gostam (8 perguntas, notas de 0 a 5) e marcam lugares que \"não podem faltar\". " +
       "Cada pessoa pode responder no mesmo aparelho, sem conta, ou pela própria conta: quem organiza manda um convite (um link para uma pessoa, que vale 7 dias)."],
