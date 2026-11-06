@@ -3,8 +3,8 @@
  * Some ao fechar (lembrado neste navegador) e para de aparecer sozinha depois de AVISO_ATE.
  * Para a próxima mudança, troque VERSAO, AVISO_ATE e o texto.
  */
-const VERSAO = "2026-11-02";
-const AVISO_ATE = "2026-12-02";
+const VERSAO = "2026-11-06";
+const AVISO_ATE = "2026-12-06";
 const CHAVE = "travelerfriend:politica-vista";
 
 function jaViu() {
@@ -15,7 +15,7 @@ if (new Date().toISOString().slice(0, 10) <= AVISO_ATE && !jaViu()) {
   const faixa = document.createElement("div");
   faixa.className = "aviso-politica";
   faixa.setAttribute("role", "status");
-  faixa.innerHTML = `<p>Atualizamos a Política de Privacidade em 2/11/2026: agora existe uma caixa de perguntas na Ajuda.
+  faixa.innerHTML = `<p>Atualizamos a Política de Privacidade em 6/11/2026: agora há questionário de sugestões e preferências do grupo.
       <a href="privacidade.html#mudancas">Ver o que mudou</a></p>
     <button type="button" class="btn small" aria-label="Fechar aviso">Ok</button>`;
   faixa.querySelector("button").addEventListener("click", () => {
