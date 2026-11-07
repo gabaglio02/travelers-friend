@@ -66,7 +66,7 @@
     abrirLogin: () => abrir(sb ? "entrar" : "info"),
     viagemAtual: () => viagemId,
     // Salva a viagem aberta agora (sem esperar os 1,5 s); true se deu certo. Usado antes de convidar alguém ao grupo.
-    salvarJa: async () => { clearTimeout(salvarTimer); await salvarAgora(); return salvando !== "erro"; },
+    salvarJa: async () => { clearTimeout(salvarTimer); await salvarAgora(); return salvando !== "erro" && salvando !== "pausado"; },
     // Minhas viagens (js/social/viagens.js). Antes de trocar, salva a viagem aberta.
     viagens: async () => { await listarViagens(); return viagens.slice(); },
     abrirViagem: async (id) => { clearTimeout(salvarTimer); await salvarAgora(); await abrirViagem(id); },
@@ -125,7 +125,7 @@
   function renderBotao() {
     const b = $("#accountBtn");
     if (!b) return;
-    const estado = { salvando: "salvando…", salvo: "salvo ✓", erro: "não salvou ⚠" }[salvando] || "";
+    const estado = { salvando: "salvando…", salvo: "salvo ✓", erro: "não salvou ⚠", pausado: "não salvo: veja o aviso" }[salvando] || "";
     b.innerHTML = user
       ? `<span class="acc-ico">👤</span> ${esc(nomeDe(user))}${estado ? ` <small>${estado}</small>` : ""}`
       : `<span class="acc-ico">👤</span> Entrar`;
@@ -195,6 +195,8 @@
   }
   async function salvarAgora() {
     if (!sb || !user || !viagemId) return;
+    // Viagem aberta com cortes (limites em js/core/sanitizar.js): só grava depois que a pessoa decidir no aviso.
+    if (TF.salvamentoPausado && TF.salvamentoPausado()) { clearTimeout(salvarTimer); salvando = "pausado"; renderBotao(); return; }
     const { error } = await sb.from("viagens").update({ dados: TF.getState() }).eq("id", viagemId);
     salvando = error ? "erro" : "salvo";
     renderBotao();

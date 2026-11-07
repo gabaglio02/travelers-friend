@@ -7,7 +7,7 @@ import {
   $, esc, money, moneyExact, toMin, toHHMM, fmtDur, parseDur, parseISO, toISO, fmtDay, fmtShort,
   dateRange, ageMin, bracketFor, ciIcon, ageBadge, placeLabel, distanceKm, walkMinutes
 } from "./core/util.js";
-import { sanearViagem, sanearEvento, copiaSegura, urlSegura } from "./core/sanitizar.js";
+import { sanearViagem, sanearEvento, copiaSegura, urlSegura, LIMITES, relatorioVazio, houveCortes } from "./core/sanitizar.js";
 import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
 import * as gosto from "./gosto.js"; // "✨ Sugestões personalizadas": questionário e pesos por categoria
 import * as grupo from "./grupo.js"; // "👥 Preferências do grupo" desta viagem e lugares que não podem faltar
@@ -139,14 +139,14 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
 
   // Completa uma viagem salva com os campos que versões antigas do site não tinham.
   // Toda viagem que entra no site passa por aqui: o que veio do navegador, da conta ou de um link é dado não confiável.
-  function normalizeState(s) {
+  function normalizeState(s, relatorio = null) {
     const c = copiaSegura(s);
     if (c.stay) { // formato antigo, com uma hospedagem só
       c.stays = [...(Array.isArray(c.stays) ? c.stays : []), { id: "s1", ...c.stay, price: c.hotel }];
       c.stayDefault = c.stayDefault || "s1";
       delete c.stay;
     }
-    s = sanearViagem(c, { padrao: defaultState(), cidadeValida: (id) => Object.prototype.hasOwnProperty.call(window.TF_CITIES, id) });
+    s = sanearViagem(c, { padrao: defaultState(), cidadeValida: (id) => Object.prototype.hasOwnProperty.call(window.TF_CITIES, id), relatorio });
     // Preferências do grupo desta viagem (js/grupo.js); viagens antigas começam sem ninguém.
     s.grupo = grupo.normalGrupo(s.grupo);
     // A pessoa digita a idade real da pessoa mais nova; "youngest" guarda a faixa da ClassInd correspondente.
@@ -156,14 +156,18 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
   }
 
   let state = defaultState();
+  let cortes = null; // viagem aberta com cortes: { rel, original, baixou } (ver mostrarCortes)
+  let salvoBruto = null; // texto guardado no navegador, para a cópia original se a viagem abrir com cortes
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+    salvoBruto = localStorage.getItem(STORAGE_KEY);
+    const saved = JSON.parse(salvoBruto || "null");
     if (saved) state = Object.assign(state, copiaSegura(saved));
   } catch (_) { /* storage indisponível */ }
   // Viagem do navegador salva no passado → volta para as datas padrão.
   // (Viagens da conta não passam por aqui: uma viagem antiga pode guardar fotos e lembranças.)
   if (state.start < toISO(new Date())) { const d = defaultState(); state.start = d.start; state.end = d.end; state.activeDay = d.activeDay; }
-  state = normalizeState(state);
+  const cortesAoAbrir = relatorioVazio();
+  state = normalizeState(state, cortesAoAbrir);
 
   const ui = { mapAll: false, kind: "", where: "", cats: new Set(), q: "", maxPrice: 1200, onlyFree: false, onlyAge: true, onlyDates: false, focusUid: null, view: "explore",
     comerAberto: new Set() }; // listas "+ opções perto" abertas no roteiro ("dia:refeição")
@@ -171,6 +175,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
   // Quem quiser saber de cada alteração (ex.: js/conta.js, que salva a viagem na conta).
   const saveHooks = [];
   function save() {
+    if (cortes) { mostrarCortes(); return; } // viagem aberta com cortes: nada é gravado até a pessoa decidir
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) { /* ignora */ }
     saveHooks.forEach((fn) => { try { fn(state); } catch (err) { console.warn(err); } });
   }
@@ -377,8 +382,64 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
     return { rows, entries, ret, end: t };
   }
 
+  // ---------- Viagem acima dos limites ----------
+  // Se a viagem abriu com cortes (js/core/sanitizar.js), nada é salvo, nem no navegador nem na conta, até a pessoa
+  // decidir: baixar a cópia original (arquivo JSON, como estava antes de abrir) e/ou continuar sem o que foi cortado.
+  function protegerCortes(rel, original) { cortes = { rel, original: original || "", baixou: false }; mostrarCortes(); }
+  function textoCortes(rel) {
+    const plural = (n, um, varios) => n + " " + (n === 1 ? um : varios);
+    const partes = Object.keys(rel.itens).sort().map((iso) => plural(rel.itens[iso], "lugar", "lugares") + " a mais em " + fmtDay(iso));
+    if (rel.hospedagens) partes.push(plural(rel.hospedagens, "hospedagem", "hospedagens") + " a mais");
+    if (rel.invalidos) partes.push(plural(rel.invalidos, "item", "itens") + " em formato que o site não reconhece");
+    return partes.join(", ");
+  }
+  function mostrarCortes() {
+    let el = document.getElementById("avisoCortes");
+    if (!cortes) { if (el) el.remove(); return; }
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "avisoCortes";
+      el.setAttribute("role", "alert");
+      el.style.cssText = "position:sticky;top:0;z-index:1900;background:#fff4c2;color:#0b0b0b;border-bottom:2px solid #0b0b0b;padding:12px 16px;font-size:14px";
+      el.addEventListener("click", cliqueCortes);
+      document.body.prepend(el); // no topo, empurrando a página: não cobre o menu nem o botão da conta
+    }
+    el.innerHTML = `<div style="max-width:960px;margin:0 auto"><p style="margin:0 0 8px"><b>Esta viagem tem mais do que o site comporta:</b> ${esc(textoCortes(cortes.rel))}.
+      O site mostra até ${LIMITES.itensPorDia} lugares por dia e ${LIMITES.hospedagens} hospedagens. Para nada se perder, <b>suas alterações não estão sendo salvas</b> até você escolher.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <button type="button" class="btn small" data-cortes="baixar">${cortes.baixou ? "Baixar de novo" : "Baixar cópia original"}</button>
+        <button type="button" class="btn ghost small" data-cortes="continuar">Continuar sem o excedente</button>
+      </div></div>`;
+  }
+  async function cliqueCortes(e) {
+    const b = e.target.closest("[data-cortes]");
+    if (!b || !cortes) return;
+    if (b.dataset.cortes === "baixar") {
+      const url = URL.createObjectURL(new Blob([cortes.original], { type: "application/json" }));
+      const a = document.createElement("a");
+      a.href = url; a.download = "viagem-original-" + toISO(new Date()) + ".json";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      cortes.baixou = true; mostrarCortes();
+      return;
+    }
+    const { confirmar } = await import("./social/confirmar.js");
+    const ok = await confirmar({ titulo: "Continuar sem o excedente?", botao: "Continuar e salvar",
+      texto: (cortes.baixou ? "A cópia original ficou no arquivo que você baixou. " : "Se quiser guardar o que passou do limite, baixe a cópia original antes. ")
+        + "Ao continuar, a viagem é salva só com o que o site mostra." });
+    if (!ok || !cortes) return;
+    cortes = null; mostrarCortes(); save(); toast("Viagem salva");
+  }
+
   // ---------- Ações ----------
+  // Limite de lugares por dia: a interface recusa antes, em vez de o validador cortar depois.
+  function cabeNoDia(iso, n = 1) {
+    if (dayData(iso).items.length + n <= LIMITES.itensPorDia) return true;
+    toast("Cada dia comporta até " + LIMITES.itensPorDia + " lugares. Tire algum deste dia antes de adicionar.");
+    return false;
+  }
   function addToDay(id, iso = state.activeDay) {
+    if (!cabeNoDia(iso)) return;
     const p = placeById(id);
     dayData(iso).items.push({ uid: uid(), id, dur: p.duracao });
     save();
@@ -387,6 +448,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
   }
   // Restaurante escolhido no bloco de uma refeição: entra no lugar dela (antes do próximo item do dia).
   function comerEm(id, refeicao, antesUid) {
+    if (!cabeNoDia(state.activeDay)) return;
     const p = placeById(id), items = dayData(state.activeDay).items;
     const i = items.findIndex((x) => x.uid === antesUid);
     items.splice(i < 0 ? items.length : i, 0, { uid: uid(), id, dur: p.duracao, refeicao });
@@ -437,6 +499,10 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
       return atuais === proposta[iso].filter((i) => !i.novo).map((i) => i.uid).sort().join();
     });
     if (!mesmos) return false;
+    if (dias.some((iso) => proposta[iso].length > LIMITES.itensPorDia)) {
+      toast("Cada dia comporta até " + LIMITES.itensPorDia + " lugares: o roteiro não foi aplicado.");
+      return true;
+    }
     const alvo = state, backup = JSON.parse(JSON.stringify(state.days));
     let n = 0;
     dias.forEach((iso) => {
@@ -463,6 +529,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
     const c = city().combos[idx];
     const day = dayData(iso);
     const missing = c.ids.filter((id) => !day.items.some((i) => i.id === id));
+    if (missing.length && !cabeNoDia(iso, missing.length)) return;
     missing.forEach((id) => day.items.push({ uid: uid(), id, dur: placeById(id).duracao }));
     save();
     toast(missing.length ? "Combo “" + c.titulo + "” → " + fmtDay(iso) : "O combo já está nesse dia");
@@ -1529,6 +1596,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
   function addStay(data, targetId) {
     if (targetId) Object.assign(stayById(targetId) || {}, data);
     else {
+      if (state.stays.length >= LIMITES.hospedagens) { toast("A viagem comporta até " + LIMITES.hospedagens + " hospedagens."); return null; }
       const st = { id: newStayId(), price: state.hotel, ...data };
       state.stays.push(st);
       if (!state.stayDefault || !stayById(state.stayDefault)) state.stayDefault = st.id;
@@ -1571,7 +1639,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
       const target = typeof targetId === "string" ? targetId : null;
       const pos = { lat: +e.latlng.lat.toFixed(5), lng: +e.latlng.lng.toFixed(5) };
       const stay = addStay(target ? pos : { label: "Ponto marcado no mapa", ...pos }, target);
-      if (target) return; // já tem nome
+      if (target || !stay) return; // já tem nome, ou passou do limite de hospedagens
       // Tenta dar um nome ao ponto (rua/bairro); se falhar, fica o rótulo genérico.
       try {
         const params = new URLSearchParams({ lat: stay.lat, lon: stay.lng, format: "jsonv2", "accept-language": "pt-BR", zoom: "17" });
@@ -1622,7 +1690,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
     $("#stayForm").addEventListener("submit", (e) => { e.preventDefault(); searchStay($("#stayQuery").value); });
     $("#stayPick").addEventListener("click", () => pickStayOnMap());
     // Hospedagem criada em Custos já abre a busca de endereço.
-    $("#stayAddPrice").addEventListener("click", () => locateStay(addStay({ label: "Hospedagem " + (state.stays.length + 1) }).id));
+    $("#stayAddPrice").addEventListener("click", () => { const st = addStay({ label: "Hospedagem " + (state.stays.length + 1) }); if (st) locateStay(st.id); });
     $("#stayCosts").addEventListener("submit", (e) => {
       const f = e.target.closest("[data-stayform]");
       if (!f) return;
@@ -1910,10 +1978,15 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
   }
   window.TF = {
     getState: () => JSON.parse(JSON.stringify(state)),
+    // Viagem aberta com cortes e a pessoa ainda não decidiu (js/conta.js não grava enquanto for true).
+    salvamentoPausado: () => !!cortes,
     // Troca a viagem aberta (ex.: ao escolher outra viagem da conta) e redesenha tudo.
     loadState(dados, { silent = false } = {}) {
-      state = normalizeState(JSON.parse(JSON.stringify(dados || {})));
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) { /* ignora */ }
+      const rel = relatorioVazio();
+      state = normalizeState(JSON.parse(JSON.stringify(dados || {})), rel);
+      cortes = null;
+      if (houveCortes(rel)) protegerCortes(rel, JSON.stringify(dados || {}, null, 2));
+      else { mostrarCortes(); try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) { /* ignora */ } }
       ui.focusUid = null;
       syncInputs(); renderCitySelect(); renderDateBtn(); renderAge(); renderMealsCfg(); renderStay(); renderAll();
       grupo.aoTrocarViagem(); // notas de contas conectadas da viagem anterior saem da memória
@@ -1983,6 +2056,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
   });
   grupo.iniciar({ obter: () => state.grupo, mudou: () => { save(); renderAll(); }, redesenhar: () => renderAll(), lugar: placeById,
     abrirDetalhe: (id) => { if (placeById(id)) openDetail(id); } });
+  if (houveCortes(cortesAoAbrir)) protegerCortes(cortesAoAbrir, salvoBruto);
   renderCitySelect();
   renderDateBtn();
   renderAge();

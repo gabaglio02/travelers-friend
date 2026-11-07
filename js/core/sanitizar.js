@@ -12,7 +12,15 @@ const tem = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 const ehObjeto = (v) => !!v && typeof v === "object" && !Array.isArray(v);
 const CHAVES_PROIBIDAS = new Set(["__proto__", "prototype", "constructor"]);
 const DIA_MS = 24 * 60 * 60 * 1000;
-const ITENS_POR_DIA = 200, HOSPEDAGENS = 50, TEXTO_MAX = 200;
+const TEXTO_MAX = 200;
+// Limites de uma viagem: a interface não deixa passar deles (js/app.js). O que chegar acima é cortado aqui, e o
+// relatório (opção "relatorio" de sanearViagem) diz o que saiu, para o site avisar antes de salvar.
+export const LIMITES = Object.freeze({ itensPorDia: 200, hospedagens: 50 });
+const ITENS_POR_DIA = LIMITES.itensPorDia, HOSPEDAGENS = LIMITES.hospedagens;
+// itens: { "<dia>": quantos passaram do limite }; hospedagens: quantas passaram; invalidos: dias, itens e hospedagens
+// descartados por formato inválido.
+export const relatorioVazio = () => ({ itens: {}, hospedagens: 0, invalidos: 0 });
+export const houveCortes = (r) => !!r && (Object.keys(r.itens).length > 0 || r.hospedagens > 0 || r.invalidos > 0);
 const TRANSPORTES = ["publico", "ativo", "app", "alugado"];
 // Limite dos campos enviados no link de compartilhar (o mesmo que TF.compartilhavel() produz).
 const CAMPOS_COMPARTILHADOS = ["city", "start", "end", "people", "youngestAge", "food", "transport", "meals", "activeDay", "days", "nomes"];
@@ -79,13 +87,16 @@ function sanearRefeicoesDoDia(m) {
   });
   return out;
 }
-export function sanearDia(d) {
+export function sanearDia(d, rel = null, iso = "") {
   if (!ehObjeto(d)) return null;
   const vistos = new Set();
-  const out = {
-    start: horaValida(d.start) ? d.start : "09:00",
-    items: (Array.isArray(d.items) ? d.items : []).slice(0, ITENS_POR_DIA).map((it) => sanearItem(it, vistos)).filter(Boolean)
-  };
+  const lista = Array.isArray(d.items) ? d.items : [];
+  const items = lista.slice(0, ITENS_POR_DIA).map((it) => sanearItem(it, vistos)).filter(Boolean);
+  if (rel) {
+    if (lista.length > ITENS_POR_DIA) rel.itens[iso] = lista.length - ITENS_POR_DIA;
+    rel.invalidos += Math.min(lista.length, ITENS_POR_DIA) - items.length;
+  }
+  const out = { start: horaValida(d.start) ? d.start : "09:00", items };
   const meals = sanearRefeicoesDoDia(d.meals);
   if (Object.keys(meals).length) out.meals = meals;
   if (typeof d.returnMode === "string" && tem(MODES, d.returnMode)) out.returnMode = d.returnMode;
@@ -93,12 +104,12 @@ export function sanearDia(d) {
   if (idValido(d.stayId)) out.stayId = d.stayId;
   return out;
 }
-function sanearDias(dias) {
+function sanearDias(dias, rel) {
   const out = {};
   if (ehObjeto(dias)) Object.keys(dias).forEach((iso) => {
-    if (!dataValida(iso)) return;
-    const d = sanearDia(dias[iso]);
+    const d = dataValida(iso) ? sanearDia(dias[iso], rel, iso) : null;
     if (d) out[iso] = d;
+    else if (rel && !CHAVES_PROIBIDAS.has(iso)) rel.invalidos++;
   });
   return out;
 }
@@ -121,10 +132,11 @@ function sanearRefeicoes(m) {
   });
   return out;
 }
-function sanearHospedagens(lista) {
+function sanearHospedagens(lista, rel) {
   const ids = new Set(), out = [];
+  if (rel && Array.isArray(lista) && lista.length > HOSPEDAGENS) rel.hospedagens = lista.length - HOSPEDAGENS;
   for (const st of Array.isArray(lista) ? lista.slice(0, HOSPEDAGENS) : []) {
-    if (!ehObjeto(st) || !idValido(st.id) || ids.has(st.id)) continue;
+    if (!ehObjeto(st) || !idValido(st.id) || ids.has(st.id)) { if (rel) rel.invalidos++; continue; }
     ids.add(st.id);
     const h = { id: st.id, label: texto(st.label).trim() || "Hospedagem" };
     const preco = numero(st.price, 0, 1e7, null);
@@ -146,8 +158,9 @@ function sanearCarro(c, padrao) {
  * os outros módulos validam os seus (o grupo, por exemplo, em normalGrupo de js/grupo.js).
  * @param opcoes.padrao  valores de uma viagem nova (defaultState)
  * @param opcoes.cidadeValida(id)  a cidade existe no catálogo carregado?
+ * @param opcoes.relatorio  (opcional) objeto de relatorioVazio(), preenchido com o que foi cortado
  */
-export function sanearViagem(dados, { padrao, cidadeValida = () => true }) {
+export function sanearViagem(dados, { padrao, cidadeValida = () => true, relatorio = null }) {
   const s = copiaSegura(dados);
   const out = { ...s };
   out.city = typeof s.city === "string" && !CHAVES_PROIBIDAS.has(s.city) && cidadeValida(s.city) ? s.city : padrao.city;
@@ -162,9 +175,9 @@ export function sanearViagem(dados, { padrao, cidadeValida = () => true }) {
   out.food = numero(s.food, 0, 1e7, padrao.food);
   out.transport = TRANSPORTES.includes(s.transport) ? s.transport : padrao.transport;
   out.carro = sanearCarro(s.carro, padrao.carro);
-  out.days = sanearDias(s.days);
+  out.days = sanearDias(s.days, relatorio);
   out.meals = sanearRefeicoes(s.meals);
-  out.stays = sanearHospedagens(s.stays);
+  out.stays = sanearHospedagens(s.stays, relatorio);
   if (idValido(s.stayDefault)) out.stayDefault = s.stayDefault; else delete out.stayDefault;
   const orcamento = numero(s.budget, 0, 1e9, null);
   if (orcamento != null) out.budget = orcamento; else delete out.budget;

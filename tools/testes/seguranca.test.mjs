@@ -245,6 +245,25 @@ console.log("\n# Grupo");
   igual(g.removidos, ["p7k2m"], "lista de removidos preservada");
 }
 
+console.log("\n# Limites e relatório de cortes");
+{
+  const comRel = (d) => { const relatorio = S.relatorioVazio(); const v = S.sanearViagem(d, { ...opcoes, relatorio }); return { v, relatorio }; };
+  const itens = (n) => Array.from({ length: n }, (_, i) => ({ uid: "u" + i, id: "masp", dur: 60 }));
+  const hosp = (n) => Array.from({ length: n }, (_, i) => ({ id: "s" + i, label: "H" + i }));
+  igual([S.LIMITES.itensPorDia, S.LIMITES.hospedagens], [200, 50], "limites: 200 lugares por dia e 50 hospedagens");
+  let r = comRel({ ...padrao(), days: { "2030-03-01": { items: itens(200) } }, stays: hosp(50) });
+  certo(!S.houveCortes(r.relatorio) && r.v.days["2030-03-01"].items.length === 200 && r.v.stays.length === 50, "no limite exato: nada é cortado nem avisado");
+  r = comRel({ ...padrao(), days: { "2030-03-01": { items: itens(212) }, "2030-03-02": { items: itens(3) } }, stays: hosp(53) });
+  igual(r.relatorio, { itens: { "2030-03-01": 12 }, hospedagens: 3, invalidos: 0 }, "acima do limite: o relatório diz quanto saiu de cada dia e das hospedagens");
+  certo(S.houveCortes(r.relatorio) && r.v.days["2030-03-01"].items.length === 200 && r.v.stays.length === 50, "o resultado continua no limite");
+  r = comRel({ ...padrao(), days: { "2030-03-01": { items: [{ uid: "a", id: "masp", dur: 60 }, { uid: "b", id: "<i>" }, "x"] }, "2030-02-31": { items: [] }, "nada": {} }, stays: [{ id: "s1" }, { id: "s1" }, { id: "<b>" }] });
+  igual(r.relatorio, { itens: {}, hospedagens: 0, invalidos: 6 }, "itens, dias e hospedagens inválidos entram no relatório");
+  const viagemNormal = { ...padrao(), days: { "2030-03-01": { start: "09:00", items: [{ uid: "a1", id: "masp", dur: 90, at: "10:00" }] } }, stays: [{ id: "s1", label: "Hotel", price: 300, lat: -23.5, lng: -46.6 }], stayDefault: "s1" };
+  certo(!S.houveCortes(comRel(viagemNormal).relatorio), "viagem legítima: relatório vazio, sem aviso");
+  igual(S.sanearViagem(viagemNormal, opcoes), comRel(viagemNormal).v, "com ou sem relatório, o resultado é o mesmo");
+  certo(S.sanearCompartilhado({ ...padrao(), days: { "2030-03-01": { items: itens(205) } } }, opcoes).days["2030-03-01"].items.length === 200, "link de compartilhar continua no limite, sem relatório");
+}
+
 console.log("\n# Configuração de segurança");
 {
   const cfg = JSON.parse(fs.readFileSync(new URL("vercel.json", raiz), "utf8"));
