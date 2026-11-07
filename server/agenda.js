@@ -146,15 +146,26 @@ function json(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
+// O que as rotas públicas mostram de cada fonte: quando rodou e se deu certo.
+// A mensagem de erro (que pode trazer endereços e detalhes internos) fica só no log do servidor.
+function fontesPublicas(fontes) {
+  const out = {};
+  Object.entries(fontes || {}).forEach(([nome, f]) => {
+    out[nome] = { em: f && f.em, ok: !(f && f.erro) };
+    if (f && typeof f.eventos === "number") out[nome].eventos = f.eventos;
+  });
+  return out;
+}
+
 // opts.serverless: true na Vercel (não há como continuar trabalhando depois de responder).
 async function handle(url, res, opts = {}) {
   if (url.pathname === "/api/status") {
-    const out = { armazenamento: armazenamento.nome };
+    const out = {};
     for (const c of CIDADES) {
       const s = await store(c);
-      out[c] = { fontes: s.fontes, eventos: Object.keys(s.eventos).length, faixas: s.faixas.slice(-5) };
+      out[c] = { fontes: fontesPublicas(s.fontes), eventos: Object.keys(s.eventos).length, faixas: s.faixas.slice(-5) };
     }
-    out.erroArmazenamento = erroArmazenamento;
+    out.armazenamentoOk = !erroArmazenamento;
     return json(res, 200, out);
   }
   if (url.pathname !== "/api/eventos") return json(res, 404, { erro: "rota não encontrada" });
@@ -181,7 +192,7 @@ async function handle(url, res, opts = {}) {
   const s = await store(cidade);
   em = atualizadoEm(s, de, ate) || em;
   const eventos = Object.values(s.eventos).filter((ev) => cruza(ev, de, ate));
-  json(res, 200, { cidade, de, ate, atualizadoEm: em, atualizando, fontes: s.fontes, eventos });
+  json(res, 200, { cidade, de, ate, atualizadoEm: em, atualizando, fontes: fontesPublicas(s.fontes), eventos });
 }
 
 // Atualiza os próximos meses de todas as cidades.
@@ -195,4 +206,4 @@ function startScheduler() {
   setInterval(atualizarProximos, ttlMs()).unref();
 }
 
-module.exports = { handle, atualizarProximos, startScheduler };
+module.exports = { handle, atualizarProximos, startScheduler, fontesPublicas };

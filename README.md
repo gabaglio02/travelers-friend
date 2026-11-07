@@ -63,7 +63,7 @@ O servidor responde com os eventos que acontecem nessas datas e com `atualizadoE
 - dados com mais de `ttlHoras` (padrão 12h) → responde na hora e atualiza em segundo plano; o site pergunta de novo em 15 s;
 - além disso, os próximos 90 dias são atualizados sozinhos a cada `ttlHoras`.
 
-`GET /api/status` mostra o resultado da última coleta de cada fonte.
+`GET /api/status` mostra quando cada fonte rodou e se deu certo (`ok`). As mensagens de erro ficam só no log do servidor, não nas respostas públicas.
 
 ### Fontes
 

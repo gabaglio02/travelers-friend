@@ -93,5 +93,22 @@ for (const b of P.BLOQUEADOS) {
   certo(P.arquivoPublico(ROOT, "/" + b.toUpperCase()) === null, `servidor local: /${b.toUpperCase()} → 404 (disco sem diferença de maiúsculas)`);
 }
 
+// ---------- O que as rotas públicas da agenda revelam ----------
+const { fontesPublicas } = require(path.join(ROOT, "server", "agenda.js"));
+const fp = fontesPublicas({
+  local: { em: "2026-11-07T10:00:00Z", eventos: 37, ms: 12 },
+  feeds: { em: "2026-11-07T10:00:00Z", erro: "fetch failed: https://parceiro.interno/eventos.json?token=abc" }
+});
+certo(fp.local.ok === true && fp.local.eventos === 37 && !("ms" in fp.local), "/api/status e /api/eventos: fonte que deu certo mostra data, ok e nº de eventos");
+certo(fp.feeds.ok === false && !JSON.stringify(fp).includes("parceiro.interno") && !JSON.stringify(fp).includes("token"), "/api/status e /api/eventos: erro de fonte não mostra a mensagem crua");
+certo(JSON.stringify(fontesPublicas(undefined)) === "{}", "fontes vazias não quebram");
+
+// ---------- Cabeçalhos ----------
+const cab = Object.fromEntries(JSON.parse(fs.readFileSync(path.join(ROOT, "vercel.json"), "utf8")).headers[0].headers.map((h) => [h.key, h.value]));
+const pp = cab["Permissions-Policy"] || "";
+certo(["camera=()", "microphone=()", "geolocation=()", "payment=()"].every((x) => pp.includes(x)), "Permissions-Policy desliga câmera, microfone, localização e pagamento");
+certo(!/web-share|clipboard/.test(pp), "Permissions-Policy não bloqueia compartilhar nem copiar (usados pelo site)");
+certo(cab["X-Content-Type-Options"] === "nosniff" && !!cab["Referrer-Policy"] && /frame-ancestors 'none'/.test(cab["Content-Security-Policy"] || ""), "cabeçalhos anteriores continuam");
+
 console.log(`\n${ok} ok, ${falhou} falharam`);
 process.exit(falhou ? 1 : 0);
