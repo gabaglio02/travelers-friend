@@ -10,7 +10,7 @@ const { esc, money, moneyExact } = await import(new URL("js/core/util.js", raiz)
 // js/grupo.js importa módulos de tela; normalGrupo em si é puro, então bastam estes dois enfeites.
 globalThis.document = { addEventListener() {} };
 globalThis.window = { addEventListener() {} };
-const { normalGrupo } = await import(new URL("js/grupo.js", raiz));
+const { normalGrupo, dadosDoGrupo } = await import(new URL("js/grupo.js", raiz));
 
 let ok = 0, falhou = 0;
 const certo = (c, m, extra = "") => { c ? ok++ : falhou++; console.log((c ? "OK   " : "FALHA") + " " + m + (c ? "" : " " + extra)); };
@@ -248,6 +248,12 @@ console.log("\n# Grupo");
   certo(g.participantes.length === 1 && g.participantes[0].nome === "Ana" && g.participantes[0].notas.museus === 5, "participante legítimo fica; id manipulado sai");
   igual(g.indispensaveis, { masp: ["p1a2b"] }, "lugar legítimo fica; manipulado sai");
   igual(g.removidos, ["p7k2m"], "lista de removidos preservada");
+  const gv = normalGrupo({ participantes: [{ id: "voce", nome: "Falso" }, { id: "p1", nome: "Ana" }], indispensaveis: { masp: ["voce", "p1", "p9"] } });
+  certo(gv.participantes.length === 1 && gv.participantes[0].id === "p1", "vaga não pode usar o id reservado de quem organiza");
+  igual(gv.indispensaveis, { masp: ["voce", "p1"] }, "marcação de quem organiza fica; de vaga inexistente sai");
+  const dv = dadosDoGrupo(gv, () => null, null, { notas: { museus: 5 }, puladas: [] });
+  certo(dv.participantes[0].nome === "Você" && dv.respondentes === 1 && dv.indispensaveis[0].todos && dv.indispensaveis[0].por[0].nome === "Você", "resumo com quem organiza: entra como Você e conta em \"todos\"");
+  certo(!dadosDoGrupo({ participantes: [{ id: "p1", nome: "Ana" }], indispensaveis: { masp: ["p1"] } }).indispensaveis[0].todos, "sem a marcação de quem organiza, não é \"todos\"");
 }
 
 console.log("\n# Limites e relatório de cortes");
