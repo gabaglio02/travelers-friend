@@ -6,6 +6,7 @@
 import { esc, fmtDay, money, toHHMM } from "./core/util.js";
 import { gerarRoteiro, RITMOS } from "./roteiro-auto.js";
 import * as gosto from "./gosto.js";
+import { minhasNotas } from "./grupo.js";
 
 let ctx = null; // ver grupo de funções em js/app.js (montar.iniciar)
 export function iniciar(opcoes) { ctx = opcoes; }
@@ -26,14 +27,8 @@ function escolherGostos(grupo, incluirMinhas) {
   return { fonte: "padrao", pessoas: [] };
 }
 
-// Começa ligado se as notas pessoais estão em uso. Vaga respondida neste aparelho com notas idênticas é, quase sempre,
-// a própria pessoa: não conta duas vezes. Conta conectada com as mesmas notas é outra pessoa, e conta normalmente.
-function incluirMinhasAoAbrir(grupo) {
-  if (!gosto.ativa()) return false;
-  const minhas = gosto.preferencias().notas, chaves = Object.keys(minhas);
-  const iguais = (notas) => Object.keys(notas).length === chaves.length && chaves.every((k) => notas[k] === minhas[k]);
-  return !grupo.participantes.some((p) => p.origem === "aparelho" && p.respondeu && iguais(p.notas));
-}
+// Começa ligado pela mesma regra do resumo do grupo (minhasNotas em js/grupo.js).
+const incluirMinhasAoAbrir = (grupo) => !!minhasNotas(grupo);
 
 // Limpa na hora, sem depender do evento "close" (que pode atrasar): assim a janela sempre abre de novo.
 function limpar() { if (d) d.remove(); d = null; m = null; }

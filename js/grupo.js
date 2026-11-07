@@ -11,7 +11,8 @@
  *   state.grupo = {
  *     participantes: [{ id: "p1a2b", nome: "Ana", notas: { museus: 5, noite: 0 }, puladas: ["compras"], respondido: "2026-11-02" | null,
  *                       conectado: true }],   // conectado = a vaga está ligada a uma conta (sem as notas)
- *     indispensaveis: { "<id do lugar>": ["p1a2b", "p9x8y"] },   // quem marcou cada lugar (separado das notas)
+ *     indispensaveis: { "<id do lugar>": ["p1a2b", "voce"] },   // quem marcou cada lugar (separado das notas);
+ *                                                               // "voce" = quem organiza, que não ocupa vaga no grupo
  *     removidos: ["p7k2m"]   // vagas tiradas de propósito: o banco apaga as conexões delas ao salvar a viagem
  *   }
  *
@@ -22,11 +23,15 @@
 import { GOSTO } from "./core/constantes.js";
 import { esc, fmtShort } from "./core/util.js";
 import { idValido, idLugarValido } from "./core/sanitizar.js";
-import { abrirQuestionario, normalRespostas } from "./gosto.js";
+import { abrirQuestionario, normalRespostas, ativa as gostoAtivo, preferencias as preferenciasPessoais, respondeu as respondeuPessoal } from "./gosto.js";
 
 export const MAX_PARTICIPANTES = 5;
 const NOME_MAX = 30, REMOVIDOS_MAX = 100;
 export const grupoVazio = () => ({ participantes: [], indispensaveis: {}, removidos: [] });
+// Quem organiza a viagem: entra com as notas pessoais (js/gosto.js) e marca "não pode faltar" sem ocupar vaga.
+// O id é reservado: nenhuma vaga do grupo pode usá-lo.
+export const VOCE = "voce";
+const NOME_VOCE = "Você";
 
 // Completa/limpa o grupo de uma viagem salva (viagens antigas não têm; dados estranhos não quebram).
 export function normalGrupo(g) {
@@ -35,7 +40,7 @@ export function normalGrupo(g) {
   out.removidos = [...new Set(Array.isArray(g.removidos) ? g.removidos.filter((x) => typeof x === "string") : [])].slice(-REMOVIDOS_MAX);
   const ids = new Set();
   for (const p of Array.isArray(g.participantes) ? g.participantes : []) {
-    if (!p || !idValido(p.id) || ids.has(p.id) || out.removidos.includes(p.id) || out.participantes.length >= MAX_PARTICIPANTES) continue;
+    if (!p || !idValido(p.id) || p.id === VOCE || ids.has(p.id) || out.removidos.includes(p.id) || out.participantes.length >= MAX_PARTICIPANTES) continue;
     const nome = String(p.nome || "").trim().slice(0, NOME_MAX);
     if (!nome) continue;
     const r = normalRespostas(p);
@@ -44,7 +49,7 @@ export function normalGrupo(g) {
       ...(p.conectado === true ? { conectado: true } : {}) });
   }
   for (const [lugar, quem] of Object.entries(g.indispensaveis || {})) {
-    const lista = [...new Set(Array.isArray(quem) ? quem : [])].filter((id) => ids.has(id));
+    const lista = [...new Set(Array.isArray(quem) ? quem : [])].filter((id) => ids.has(id) || id === VOCE);
     if (lista.length && idLugarValido(lugar)) out.indispensaveis[lugar] = lista;
   }
   return out;
@@ -89,10 +94,12 @@ function comConexao(p, conexoes) {
 //   ranking:       ids das categorias da maior média para a menor (sem respostas no fim)
 //   indispensaveis: [{ lugarId, lugar (ou null se saiu do catálogo), nome, categoria, por: [{ id, nome }], contagem, todos }]
 //                  do mais marcado para o menos; "todos" = marcado por todos os participantes (com 2 ou mais)
-export function dadosDoGrupo(g, lugarPorId = () => null, conexoes = null) {
+//   voce (opcional): { notas, puladas } de quem organiza; entra como mais uma pessoa (origem "pessoal") só nesta conta.
+export function dadosDoGrupo(g, lugarPorId = () => null, conexoes = null, voce = null) {
   g = normalGrupo(g);
   const ps = g.participantes.map((p) => comConexao(p, conexoes));
-  const nomeDe = (id) => (ps.find((p) => p.id === id) || {}).nome || "";
+  if (voce) ps.unshift({ id: VOCE, nome: NOME_VOCE, notas: voce.notas, puladas: voce.puladas || [], respondido: "sim", origem: "pessoal" });
+  const nomeDe = (id) => (id === VOCE ? NOME_VOCE : (ps.find((p) => p.id === id) || {}).nome || "");
   const categorias = GOSTO.map((c) => {
     const respostas = ps.filter((p) => p.notas[c.id] != null).map((p) => ({ participante: p.id, nome: p.nome, nota: p.notas[c.id] }));
     return {
@@ -103,10 +110,12 @@ export function dadosDoGrupo(g, lugarPorId = () => null, conexoes = null) {
     };
   });
   const ranking = [...categorias].sort((a, b) => (b.media ?? -1) - (a.media ?? -1)).map((c) => c.id);
+  // "todos" conta quem organiza: mesmo sem notas, é da viagem e pode marcar.
+  const membros = ps.some((p) => p.id === VOCE) ? ps.map((p) => p.id) : [VOCE, ...ps.map((p) => p.id)];
   const indispensaveis = Object.entries(g.indispensaveis).map(([lugarId, quem]) => {
     const lugar = lugarPorId(lugarId) || null;
     return { lugarId, lugar, nome: lugar ? lugar.nome : "Lugar que não está mais no site", categoria: lugar ? lugar.categoria : null,
-      por: quem.map((id) => ({ id, nome: nomeDe(id) })), contagem: quem.length, todos: ps.length > 1 && quem.length === ps.length };
+      por: quem.map((id) => ({ id, nome: nomeDe(id) })), contagem: quem.length, todos: ps.length > 0 && membros.every((id) => quem.includes(id)) };
   }).sort((a, b) => b.contagem - a.contagem || a.nome.localeCompare(b.nome));
   return {
     participantes: ps.map((p) => ({ id: p.id, nome: p.nome, respondeu: !!p.respondido, notas: { ...p.notas }, puladas: [...p.puladas],
@@ -114,6 +123,17 @@ export function dadosDoGrupo(g, lugarPorId = () => null, conexoes = null) {
     respondentes: ps.filter((p) => p.respondido).length,
     categorias, ranking, indispensaveis
   };
+}
+
+// Notas pessoais de quem organiza, se devem contar junto com o grupo (resumo e roteiro automático); senão null.
+// Contam se as sugestões personalizadas estão ligadas. Vaga respondida neste aparelho com notas idênticas é, quase
+// sempre, a própria pessoa: não conta duas vezes. Conta conectada com as mesmas notas é outra pessoa e conta normalmente.
+export function minhasNotas(dados) {
+  if (!gostoAtivo()) return null;
+  const minhas = preferenciasPessoais(), chaves = Object.keys(minhas.notas);
+  const iguais = (notas) => Object.keys(notas).length === chaves.length && chaves.every((k) => notas[k] === minhas.notas[k]);
+  if (dados.participantes.some((p) => p.origem === "aparelho" && p.respondeu && iguais(p.notas))) return null;
+  return { notas: { ...minhas.notas }, puladas: [...minhas.puladas] };
 }
 
 // ---------- Contas conectadas (servidor) ----------
@@ -227,7 +247,7 @@ export function guardarRespostas(id, { notas, puladas }) {
 export const marcouIndispensavel = (lugarId, pessoaId) => (grupo().indispensaveis[lugarId] || []).includes(pessoaId);
 export function alternarIndispensavel(lugarId, pessoaId) {
   const g = grupo();
-  if (!g.participantes.some((p) => p.id === pessoaId)) return;
+  if (pessoaId !== VOCE && !g.participantes.some((p) => p.id === pessoaId)) return;
   const quem = g.indispensaveis[lugarId] || [];
   const resto = quem.includes(pessoaId) ? quem.filter((x) => x !== pessoaId) : [...quem, pessoaId];
   if (resto.length) g.indispensaveis[lugarId] = resto; else delete g.indispensaveis[lugarId];
@@ -266,18 +286,17 @@ const nomesE = (lista) => lista.length <= 1 ? lista.join("") : lista.slice(0, -1
 export function notaIndispensavel(lugarId) {
   const g = grupo(), quem = g.indispensaveis[lugarId] || [];
   if (!quem.length) return "";
-  const nomes = quem.map((id) => (g.participantes.find((p) => p.id === id) || {}).nome).filter(Boolean);
+  const nomes = quem.map((id) => (id === VOCE ? "você" : (g.participantes.find((p) => p.id === id) || {}).nome)).filter(Boolean);
   return `<div class="nao-faltar-nota">⭐ Não pode faltar para ${esc(nomesE(nomes))}</div>`;
 }
 // Botões por pessoa no detalhe do lugar.
 export function blocoDetalhe(lugarId) {
-  const ps = grupo().participantes;
-  if (!ps.length) return `<p class="small-text muted nao-faltar-vazio">⭐ Quer marcar este lugar como "não pode faltar"?
-    <button type="button" class="link" data-grupo-abrir>Cadastre quem vai viajar</button>.</p>`;
+  const ps = [{ id: VOCE, nome: NOME_VOCE }, ...grupo().participantes];
   return `<div class="nao-faltar" role="group" aria-label="Não pode faltar na viagem">
     <span class="small-text">⭐ Não pode faltar na viagem para:</span>
     <div class="nao-faltar-chips">${ps.map((p) => { const on = marcouIndispensavel(lugarId, p.id);
       return `<button type="button" class="chip ${on ? "on" : ""}" aria-pressed="${on}" data-indisp="${esc(lugarId)}" data-pessoa="${esc(p.id)}">${on ? "✓ " : ""}${esc(p.nome)}</button>`; }).join("")}</div>
+    ${ps.length === 1 ? `<p class="small-text muted nao-faltar-vazio">Vai com mais gente? <button type="button" class="link" data-grupo-abrir>Cadastre quem vai viajar</button>.</p>` : ""}
   </div>`;
 }
 
@@ -314,19 +333,26 @@ function estadoVaga(p, proximo) {
 }
 function desenhar() {
   if (!d) return;
-  const g = grupo(), dados = dadosDoGrupo(g, ctx.lugar, conexoesAtuais());
+  const g = grupo();
+  let dados = dadosDoGrupo(g, ctx.lugar, conexoesAtuais());
   const cheio = g.participantes.length >= MAX_PARTICIPANTES;
   const ligada = (p) => (conexoes.get(p.id) || {}).estado === "conectado" || p.conectado;
   const proximo = g.participantes.find((p) => !p.respondido && !ligada(p));
   const podeConvidar = contaAtiva() && sync !== "offline";
   let corpo;
   if (tela === "resumo") {
+    // Quem organiza entra no resumo com as notas pessoais (só nesta tela, nada é gravado na viagem).
+    const voce = minhasNotas(dados);
+    if (voce) dados = dadosDoGrupo(g, ctx.lugar, conexoesAtuais(), voce);
+    const notaVoce = voce ? `<p class="small-text muted">Você entra com as suas notas pessoais (✨ Sugestões personalizadas).</p>`
+      : !respondeuPessoal() ? `<p class="small-text muted">Você não aparece aqui porque ainda não respondeu ao questionário de ✨ Sugestões personalizadas (Explorar → Filtros).</p>` : "";
     const cat = (id) => dados.categorias.find((c) => c.id === id);
     const SIT = { consenso: ["todos concordam", "ok"], divergencia: ["opiniões divididas", "div"], parcial: ["", ""], "uma resposta": ["", ""], "sem respostas": ["sem respostas", ""] };
     const nomeP = (pid) => (dados.participantes.find((p) => p.id === pid) || {}).nome || "";
     const indisp = dados.participantes.filter((p) => p.indisponivel).map((p) => p.nome);
     corpo = `
       <p class="muted small-text">${dados.respondentes} de ${dados.participantes.length} ${dados.participantes.length === 1 ? "pessoa respondeu" : "pessoas responderam"}. Média de 0 a 5; as notas de cada um ficam logo abaixo.</p>
+      ${notaVoce}
       ${indisp.length ? `<p class="warning small-text">Sem internet: as notas de ${esc(nomesE(indisp))} (conta conectada) não entraram nesta conta.</p>` : ""}
       <ol class="grupo-cats">${dados.ranking.map((id) => { const c = cat(id), [sit, cls] = SIT[c.situacao];
         const cada = [...c.respostas.map((r) => `${esc(r.nome)} ${r.nota}`), ...c.puladas.map((pid) => `${esc(nomeP(pid))} pulou`)];
