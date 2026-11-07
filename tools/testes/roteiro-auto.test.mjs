@@ -98,6 +98,10 @@ const motivos = Object.values(r.dias).flat().flatMap((i) => i.motivos).join(" | 
 certo(/Ana e Bia gostam de museus/.test(motivos) || /Caio e Davi gostam/.test(motivos), "o motivo cita quem gosta");
 const pess = gerar({ gostos: { fonte: "pessoal", pessoas: [P("eu", "Você", { museus: 5 })] } });
 certo(/Você deu 5/.test(Object.values(pess.dias).flat().flatMap((i) => i.motivos).join("|")), "com notas pessoais, o motivo fala 'você'");
+const motivosGerados = (x) => Object.values(x.dias).flat().flatMap((i) => i.motivos).join("|");
+certo(/Você e Ana gostam de/.test(motivosGerados(gerar({ gostos: { fonte: "grupo", pessoas: [P("voce", "Você", { museus: 5 }), P("a", "Ana", { museus: 5 })] } }))), "quem organiza e o grupo com o mesmo gosto: o motivo cita os dois");
+const doisGostos = motivosGerados(gerar({ gostos: { fonte: "grupo", pessoas: [P("voce", "Você", { museus: 5, parques: 0 }), P("a", "Ana", { museus: 0, parques: 5 })] } }));
+certo(/Você gosta de/.test(doisGostos) && /Ana gosta de/.test(doisGostos), "gostos diferentes: o roteiro atende quem organiza e o grupo");
 
 // Gastronomia e distância
 certo(!tudo(gerar({ ritmo: "puxado" })).includes("gas1"), "sem notas: lugar gastronômico não vira passeio");

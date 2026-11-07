@@ -14,11 +14,25 @@ let d = null, m = null;
 const nomesE = (l) => (l.length <= 1 ? l.join("") : l.slice(0, -1).join(", ") + " e " + l[l.length - 1]);
 
 // De quem são os gostos: o grupo, se alguém respondeu; senão as notas pessoais (se ligadas); senão a ordem padrão.
-function escolherGostos(grupo) {
+// Quem organiza não ocupa vaga no grupo: as notas pessoais entram junto, só na memória (os motivos e a prévia não são salvos).
+function escolherGostos(grupo, incluirMinhas) {
   const resp = grupo.participantes.filter((p) => p.respondeu && Object.keys(p.notas).length);
-  if (resp.length) return { fonte: "grupo", pessoas: resp.map((p) => ({ id: p.id, nome: p.nome, notas: p.notas })) };
+  if (resp.length) {
+    const pessoas = resp.map((p) => ({ id: p.id, nome: p.nome, notas: p.notas }));
+    if (incluirMinhas && gosto.respondeu()) pessoas.unshift({ id: "voce", nome: "Você", notas: gosto.preferencias().notas });
+    return { fonte: "grupo", pessoas };
+  }
   if (gosto.ativa()) return { fonte: "pessoal", pessoas: [{ id: "voce", nome: "Você", notas: gosto.preferencias().notas }] };
   return { fonte: "padrao", pessoas: [] };
+}
+
+// Começa ligado se as notas pessoais estão em uso. Vaga respondida neste aparelho com notas idênticas é, quase sempre,
+// a própria pessoa: não conta duas vezes. Conta conectada com as mesmas notas é outra pessoa, e conta normalmente.
+function incluirMinhasAoAbrir(grupo) {
+  if (!gosto.ativa()) return false;
+  const minhas = gosto.preferencias().notas, chaves = Object.keys(minhas);
+  const iguais = (notas) => Object.keys(notas).length === chaves.length && chaves.every((k) => notas[k] === minhas[k]);
+  return !grupo.participantes.some((p) => p.origem === "aparelho" && p.respondeu && iguais(p.notas));
 }
 
 // Limpa na hora, sem depender do evento "close" (que pode atrasar): assim a janela sempre abre de novo.
@@ -30,7 +44,8 @@ export async function abrir() {
   limpar();
   const grupo = await ctx.grupo(); // busca antes as notas das contas conectadas
   const dias = ctx.dias();
-  m = { tela: "config", ritmo: "equilibrado", dias: new Set(dias), decisoes: {}, escolhas: {}, variacao: 0, grupo, gostos: escolherGostos(grupo), r: null, erro: "" };
+  const incluirMinhas = incluirMinhasAoAbrir(grupo);
+  m = { tela: "config", ritmo: "equilibrado", dias: new Set(dias), decisoes: {}, escolhas: {}, variacao: 0, grupo, incluirMinhas, gostos: escolherGostos(grupo, incluirMinhas), r: null, erro: "" };
   d = document.createElement("dialog");
   d.className = "modal tf-montar";
   d.setAttribute("aria-labelledby", "tfMontarTitulo");
@@ -64,10 +79,15 @@ function telaConfig() {
   const fonte = g.fonte === "grupo" ? `<b>Notas do grupo:</b> ${esc(nomesE(g.pessoas.map((p) => p.nome)))}.`
     : g.fonte === "pessoal" ? "<b>Suas notas pessoais</b> (✨ Sugestões personalizadas)."
       : "<b>Ordem padrão do site:</b> ninguém respondeu ao questionário.";
+  const outrosResponderam = grupo.participantes.some((p) => p.respondeu && Object.keys(p.notas).length);
+  const minhas = !outrosResponderam ? ""
+    : gosto.respondeu() ? `<label class="check"><input type="checkbox" data-montar-minhas ${m.incluirMinhas ? "checked" : ""}> Incluir as minhas notas neste roteiro</label>`
+      : `<p class="small-text muted">Suas notas ainda não entram porque você não respondeu ao questionário. <button type="button" class="link" data-montar="minhas-notas">Responder agora</button></p>`;
   const n = grupo.indispensaveis.length;
   const todos = ctx.dias();
   return `
     <p class="small-text">${fonte}</p>
+    ${minhas}
     ${falta.length && g.fonte === "grupo" ? `<p class="small-text muted">${esc(nomesE(falta))} ainda não ${falta.length > 1 ? "responderam e ficam" : "respondeu e fica"} de fora das notas.</p>` : ""}
     ${indisp.length ? `<p class="warning small-text">Sem internet: as notas de ${esc(nomesE(indisp))} (conta conectada) não entram.</p>` : ""}
     ${n ? `<p class="small-text">⭐ ${n} ${n === 1 ? "lugar que não pode faltar" : "lugares que não podem faltar"}.</p>` : ""}
@@ -165,6 +185,13 @@ function clique(e) {
   if (b.dataset.montarRitmo) { m.ritmo = b.dataset.montarRitmo; return desenhar(); }
   switch (b.dataset.montar) {
     case "fechar": return fechar();
+    case "minhas-notas":
+      return gosto.abrirQuestionario({ intro: false, aoFechar: () => {
+        if (!m) return;
+        m.incluirMinhas = gosto.ativa();
+        m.gostos = escolherGostos(m.grupo, m.incluirMinhas);
+        desenhar();
+      } });
     case "config": m.tela = "config"; m.decisoes = {}; m.erro = ""; return desenhar();
     case "gerar": m.variacao = 0; m.decisoes = {}; return executar();
     case "outra": m.variacao++; return executar();
@@ -179,6 +206,11 @@ function clique(e) {
   }
 }
 function mudanca(e) {
+  if (e.target.matches("[data-montar-minhas]")) {
+    m.incluirMinhas = e.target.checked;
+    m.gostos = escolherGostos(m.grupo, m.incluirMinhas);
+    return desenhar();
+  }
   const id = e.target.dataset.montarConflito;
   if (id == null) return;
   m.escolhas[id] = +e.target.value;
