@@ -1,0 +1,12 @@
+# Só o que o site e as funções precisam é enviado (e publicado) na Vercel.
+# Lista permitida: tudo na raiz fica de fora, menos o que vem com "!".
+# A mesma lista vale no servidor local (server/publico.js), e tools/testes/publicacao.test.mjs confere as duas.
+/*
+!api
+!server
+!js
+!css
+!index.html
+!privacidade.html
+!favicon.svg
+!vercel.json

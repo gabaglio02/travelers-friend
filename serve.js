@@ -23,8 +23,8 @@ const TYPES = {
   ".png": "image/png",
   ".jpg": "image/jpeg"
 };
-// Pastas que não devem ser servidas como arquivo (código e dados do servidor).
-const PRIVADAS = ["/server/", "/data/", "/.claude/", "/supabase/", "/api/", "/.env", "/.git/"];
+// Só os arquivos da lista permitida (a mesma do .vercelignore) são servidos.
+const { arquivoPublico } = require("./server/publico");
 
 http.createServer(async (req, res) => {
   CABECALHOS.forEach((h) => res.setHeader(h.key, h.value));
@@ -41,10 +41,8 @@ http.createServer(async (req, res) => {
       return res.end(JSON.stringify({ erro: "falha interna" }));
     }
   }
-  const urlPath = decodeURIComponent(url.pathname);
-  if (PRIVADAS.some((p) => urlPath.startsWith(p)) || urlPath === "/serve.js") { res.writeHead(404); return res.end("Not found"); }
-  const file = path.join(ROOT, urlPath === "/" ? "index.html" : urlPath);
-  if (!file.startsWith(ROOT)) { res.writeHead(403); return res.end(); }
+  const file = arquivoPublico(ROOT, url.pathname);
+  if (!file) { res.writeHead(404); return res.end("Not found"); }
   fs.readFile(file, (err, data) => {
     if (err) { res.writeHead(404); return res.end("Not found"); }
     res.writeHead(200, { "Content-Type": TYPES[path.extname(file)] || "application/octet-stream", "Cache-Control": "no-cache" });
