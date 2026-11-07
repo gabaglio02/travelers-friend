@@ -182,6 +182,8 @@ Resumo diário por e-mail (opcional): crie uma conta gratuita em [resend.com](ht
 
 ## Restaurantes
 
+> **Fora do site desde 07/11/2026.** `sp-restaurantes.js` e `sp-compras.js` foram tirados do `index.html` e do `.vercelignore` por serem derivados do Google Maps. Os arquivos ficam no repositório até a decisão sobre eles; a base nova será feita com fontes abertas (OpenStreetMap, Overture, Foursquare OS Places), sem usar estes dados. Enquanto isso, Gastronomia mostra só os lugares de `sp.js` e Compras mostra um aviso.
+
 Os dados brutos das coletas ficam em `tools/coletas/` (`restaurantes.json` e `rest-dentro.json` de 01/11/2026, `restaurantes-2026-11-02.json` da segunda coleta; `coleta.txt` é o script usado no Google Maps). Para refazer o arquivo sem perder nada, passe todas: `node tools/gerar-restaurantes.js <projeto> tools/coletas/restaurantes.json tools/coletas/restaurantes-2026-11-02.json tools/coletas/rest-dentro.json`.
 
 `js/data/sp-restaurantes.js` tem ~770 restaurantes bem avaliados (nota 4,5+ no Google Maps, ou 4,4 com 1.500+ avaliações) a até 3 km das atrações. É gerado por `tools/gerar-restaurantes.js` a partir de uma coleta de buscas "restaurantes bem avaliados <bairro>" no Google Maps — não edite à mão. No Explorar eles aparecem pelo filtro Gastronomia ou pela busca; no roteiro, em "Onde comer perto" (até 3 km, priorizando os mais bem avaliados).

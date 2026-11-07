@@ -654,7 +654,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
     return `<div class="facts-line">
         ${precoHtml(p, iso)}
         <span class="f-dur">${fmtDur(p.duracao)}</span>
-        ${p.nota ? `<span class="f-nota" title="Nota no Google Maps (${p.avaliacoes.toLocaleString("pt-BR")} avaliações)">★ ${String(p.nota).replace(".", ",")}</span>` : ageBadge(p.idade)}
+        ${ageBadge(p.idade)}
       </div>
       ${disp.txt ? `<div class="avail ${disp.cls}">${esc(disp.txt)}</div>` : ""}`;
   }
@@ -695,6 +695,15 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
     return ex.length ? `<div class="expo-nota">🖼 ${ex.length === 1 ? "1 exposição" : ex.length + " exposições"} em cartaz na sua viagem</div>` : "";
   }
 
+  // Restaurantes e shoppings saíram do site (eram derivados do Google Maps) até a base ser refeita com fontes abertas.
+  // Textos fixos, sem dado vindo de fora.
+  const BASES_EM_ATUALIZACAO = {
+    gastronomia: "🍽️ A lista de restaurantes está sendo refeita com fontes de dados abertas. Por enquanto aparecem só os lugares gastronômicos escolhidos pela curadoria do site.",
+    compras: "🛍️ A lista de shoppings, galerias e outlets está sendo refeita com fontes de dados abertas e volta em breve."
+  };
+  const avisoBases = () => Object.keys(BASES_EM_ATUALIZACAO).filter((c) => ui.cats.has(c))
+    .map((c) => `<li class="empty aviso-base">${BASES_EM_ATUALIZACAO[c]}</li>`).join("");
+
   function renderList() {
     const list = filtered();
     $("#resultCount").textContent = list.length + " de " + listaveis().filter((p) => !(p.restaurante || p.secundario) || ui.cats.has(p.categoria) || ui.q.trim()).length;
@@ -711,7 +720,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
     ui.kind = kindAntes;
     const extras = ui.cats.size + (ui.where ? 1 : 0) + (ui.maxPrice < 1200 ? 1 : 0) + (ui.onlyFree ? 1 : 0) + (ui.onlyNight ? 1 : 0) + (ui.onlyAge ? 0 : 1) + (ui.onlyDates ? 1 : 0) + (gosto.ativa() ? 1 : 0);
     $("#filtersActive").textContent = extras ? "· " + extras + (extras === 1 ? " ativo" : " ativos") : "";
-    $("#list").innerHTML = list.length ? list.map((p) => {
+    $("#list").innerHTML = avisoBases() + (list.length ? list.map((p) => {
       const added = plannedDays(p.id).length > 0;
       return `
       <li class="pcard ${added ? "added" : ""} ${p.ilustrativo ? "demo" : ""}" data-open="${p.id}">
@@ -727,7 +736,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
         </div>
         <button class="pcard-add" data-add="${p.id}" title="${added ? "Adicionar outra vez ao dia selecionado" : "Adicionar ao dia selecionado"}" aria-label="Adicionar ${esc(p.nome)} ao roteiro">+</button>
       </li>`;
-    }).join("") : `<li class="empty">Nada encontrado com esses filtros.</li>`;
+    }).join("") : `<li class="empty">Nada encontrado com esses filtros.</li>`);
     if (ui.mapAll && map) renderMap(recommendations().list);
   }
 
@@ -828,8 +837,12 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
     const blocos = blocosDoDia(sched);
     renderFaixa(blocos);
     renderAlertas(sched);
+    // Itens de lugares que saíram da base (restaurantes e shoppings): continuam salvos na viagem, só não aparecem no dia.
+    const fora = (dayData(state.activeDay).items || []).filter((it) => !placeById(it.id)).length;
+    const avisoFora = fora ? `<li class="empty aviso-base">⚠ ${fora === 1 ? "1 item deste dia está" : fora + " itens deste dia estão"} fora da lista de lugares
+      no momento: restaurantes e shoppings estão sendo refeitos. ${fora === 1 ? "Ele continua salvo" : "Eles continuam salvos"} na viagem.</li>` : "";
     if (!rows.length) {
-      $("#timeline").innerHTML = `<li class="empty">Dia vazio. Adicione lugares pela lista ou pelas recomendações abaixo.</li>`;
+      $("#timeline").innerHTML = avisoFora + `<li class="empty">Dia vazio. Adicione lugares pela lista ou pelas recomendações abaixo.</li>`;
       return;
     }
     const weekday = parseISO(state.activeDay).getDay();
@@ -930,7 +943,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
     const livresAntes = {}, livresEspera = {};
     blocos.filter((b) => b.tipo === "free").forEach((b) => ((b.espera ? livresEspera : livresAntes)[b.antes] ||= []).push(b));
     let n = 0;
-    $("#timeline").innerHTML = entries.map((e, idx) => (livresAntes[idx] || []).map(livreHtml).join("") + entradaHtml(e, idx)).join("")
+    $("#timeline").innerHTML = avisoFora + entries.map((e, idx) => (livresAntes[idx] || []).map(livreHtml).join("") + entradaHtml(e, idx)).join("")
       + (off.length ? `<li class="leg"><span></span><div class="leg-line">Sem ${off.map((k) => MEALS[k].label.toLowerCase()).join(" e ")} neste dia ·
       ${off.map((k) => `<button class="reset" data-mealon="${k}">voltar ${MEALS[k].label.toLowerCase()}</button>`).join(" ")}</div></li>` : "");
 

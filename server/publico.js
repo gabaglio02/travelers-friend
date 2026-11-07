@@ -5,7 +5,7 @@ const path = require("path");
 const ARQUIVOS = ["index.html", "privacidade.html", "favicon.svg"];
 const PASTAS = ["js/", "css/"];
 // Dentro das pastas públicas, o que fica de fora (as mesmas linhas sem "!" no fim do .vercelignore).
-const BLOQUEADOS = [];
+const BLOQUEADOS = ["js/data/sp-restaurantes.js", "js/data/sp-compras.js"];
 
 // rel: caminho relativo à raiz do projeto, com "/" (ex.: "js/app.js").
 // No Windows o disco não diferencia maiúsculas: "JS/DATA/X.JS" abriria o mesmo arquivo que "js/data/x.js".

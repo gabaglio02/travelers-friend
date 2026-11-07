@@ -206,6 +206,8 @@ button, input, select { font: inherit; color: inherit; }
 .tag.dim { border-color: var(--soft-line); color: var(--muted); }
 
 .empty { padding: 24px 8px; text-align: center; color: var(--muted); font-size: 14px; }
+/* Aviso de base em atualização (restaurantes e shoppings fora do site por enquanto). */
+.empty.aviso-base { padding: 10px 12px; margin-bottom: 8px; text-align: left; color: var(--ink); border: 1.5px dashed var(--soft-line); border-radius: var(--radius); }
 
 /* ---------- Dias ---------- */
 .days { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }

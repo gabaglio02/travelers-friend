@@ -10,3 +10,7 @@
 !privacidade.html
 !favicon.svg
 !vercel.json
+
+# Bases retiradas do site (derivadas do Google Maps). Continuam no repositório até a decisão sobre elas.
+/js/data/sp-restaurantes.js
+/js/data/sp-compras.js
