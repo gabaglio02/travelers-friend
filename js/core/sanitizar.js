@@ -15,9 +15,10 @@ const DIA_MS = 24 * 60 * 60 * 1000;
 const TEXTO_MAX = 200;
 // Limites de uma viagem: a interface não deixa passar deles (js/app.js). O que chegar acima é cortado aqui, e o
 // relatório (opção "relatorio" de sanearViagem) diz o que saiu, para o site avisar antes de salvar.
-export const LIMITES = Object.freeze({ itensPorDia: 200, hospedagens: 50 });
-const ITENS_POR_DIA = LIMITES.itensPorDia, HOSPEDAGENS = LIMITES.hospedagens;
-// itens: { "<dia>": quantos passaram do limite }; hospedagens: quantas passaram; invalidos: dias, itens e hospedagens
+// O que protege é o total da viagem (os dias guardados não têm limite de quantidade); o do dia é uma trava a mais.
+export const LIMITES = Object.freeze({ itensPorViagem: 500, itensPorDia: 60, hospedagens: 50 });
+const ITENS_POR_VIAGEM = LIMITES.itensPorViagem, ITENS_POR_DIA = LIMITES.itensPorDia, HOSPEDAGENS = LIMITES.hospedagens;
+// itens: { "<dia>": quantos saíram (limite do dia ou da viagem) }; hospedagens: quantas passaram; invalidos: dias, itens e hospedagens
 // descartados por formato inválido.
 export const relatorioVazio = () => ({ itens: {}, hospedagens: 0, invalidos: 0 });
 export const houveCortes = (r) => !!r && (Object.keys(r.itens).length > 0 || r.hospedagens > 0 || r.invalidos > 0);
@@ -104,12 +105,20 @@ export function sanearDia(d, rel = null, iso = "") {
   if (idValido(d.stayId)) out.stayId = d.stayId;
   return out;
 }
+// Dias em ordem de data: passando do total da viagem, saem os lugares dos últimos dias.
 function sanearDias(dias, rel) {
   const out = {};
-  if (ehObjeto(dias)) Object.keys(dias).forEach((iso) => {
+  let total = 0;
+  if (ehObjeto(dias)) Object.keys(dias).sort().forEach((iso) => {
     const d = dataValida(iso) ? sanearDia(dias[iso], rel, iso) : null;
-    if (d) out[iso] = d;
-    else if (rel && !CHAVES_PROIBIDAS.has(iso)) rel.invalidos++;
+    if (!d) { if (rel && !CHAVES_PROIBIDAS.has(iso)) rel.invalidos++; return; }
+    const cabe = Math.max(0, ITENS_POR_VIAGEM - total);
+    if (d.items.length > cabe) {
+      if (rel) rel.itens[iso] = (rel.itens[iso] || 0) + d.items.length - cabe;
+      d.items = d.items.slice(0, cabe);
+    }
+    total += d.items.length;
+    out[iso] = d;
   });
   return out;
 }

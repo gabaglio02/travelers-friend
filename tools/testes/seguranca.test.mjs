@@ -128,7 +128,7 @@ for (const lixo of [null, undefined, 5, "texto", [], true]) {
   igual(d.items, [], "items que não é lista vira lista vazia");
   const uids = S.sanearDia({ items: [{ uid: "aaa", id: "masp", dur: 60 }, { uid: "aaa", id: "ibira", dur: 60 }] }).items.map((i) => i.uid);
   certo(uids[0] === "aaa" && uids[1] !== "aaa", "uid repetido no mesmo dia ganha outro");
-  certo(S.sanearDia({ items: Array(5000).fill({ uid: "a", id: "masp", dur: 60 }) }).items.length === 200, "excesso de itens é cortado");
+  certo(S.sanearDia({ items: Array(5000).fill({ uid: "a", id: "masp", dur: 60 }) }).items.length === 60, "excesso de itens no dia é cortado (limite de 60)");
   certo(!S.dataValida("2030-02-31") && S.dataValida("2028-02-29"), "data impossível é recusada; 29/02 de ano bissexto passa");
   certo(!S.horaValida("24:00") && !S.horaValida("9:00") && S.horaValida("23:59"), "hora só no formato do campo de horário");
 }
@@ -230,11 +230,16 @@ console.log("\n# Catálogo real do site");
   const diferentes = eventos.filter((ev) => { try { assert.deepEqual(S.sanearEvento(ev), ev); return false; } catch (_) { return true; } });
   certo(eventos.length > 10 && !diferentes.length, eventos.length + " eventos do arquivo saem iguais", diferentes.slice(0, 5).map((d) => d.id + ": " + JSON.stringify(S.sanearEvento(d))?.slice(0, 200)).join(" | "));
   certo(eventos.every((p) => !p.fonte || S.urlSegura(p.fonte)), "fontes do arquivo são http(s)");
-  // Roteiro com todos os lugares: nenhum item se perde (regressão de roteiro e custos).
+  // Todos os lugares do catálogo em roteiros dentro dos limites (50 por dia, 500 por viagem): nenhum item se perde.
   const itens = lugares.map((p, i) => ({ uid: "u" + i, id: p.id, dur: p.duracao }));
-  const dias = {};
-  for (let i = 0, n = 0; i < itens.length; i += 100, n++) dias[new Date(Date.UTC(2030, 0, 1 + n)).toISOString().slice(0, 10)] = { start: "09:00", items: itens.slice(i, i + 100) };
-  igual(sanear({ ...padrao(), days: dias }).days, dias, "roteiro com todo o catálogo não perde nem muda item");
+  const perdidos = [];
+  for (let v = 0; v < itens.length; v += 500) {
+    const dias = {};
+    const daViagem = itens.slice(v, v + 500);
+    for (let i = 0, n = 0; i < daViagem.length; i += 50, n++) dias[new Date(Date.UTC(2030, 0, 1 + n)).toISOString().slice(0, 10)] = { start: "09:00", items: daViagem.slice(i, i + 50) };
+    try { assert.deepEqual(sanear({ ...padrao(), days: dias }).days, dias); } catch (_) { perdidos.push(v); }
+  }
+  certo(itens.length > 500 && !perdidos.length, "roteiros com todo o catálogo (" + itens.length + " lugares) não perdem nem mudam item", perdidos.join(","));
 }
 
 console.log("\n# Grupo");
@@ -250,18 +255,28 @@ console.log("\n# Limites e relatório de cortes");
   const comRel = (d) => { const relatorio = S.relatorioVazio(); const v = S.sanearViagem(d, { ...opcoes, relatorio }); return { v, relatorio }; };
   const itens = (n) => Array.from({ length: n }, (_, i) => ({ uid: "u" + i, id: "masp", dur: 60 }));
   const hosp = (n) => Array.from({ length: n }, (_, i) => ({ id: "s" + i, label: "H" + i }));
-  igual([S.LIMITES.itensPorDia, S.LIMITES.hospedagens], [200, 50], "limites: 200 lugares por dia e 50 hospedagens");
-  let r = comRel({ ...padrao(), days: { "2030-03-01": { items: itens(200) } }, stays: hosp(50) });
-  certo(!S.houveCortes(r.relatorio) && r.v.days["2030-03-01"].items.length === 200 && r.v.stays.length === 50, "no limite exato: nada é cortado nem avisado");
-  r = comRel({ ...padrao(), days: { "2030-03-01": { items: itens(212) }, "2030-03-02": { items: itens(3) } }, stays: hosp(53) });
-  igual(r.relatorio, { itens: { "2030-03-01": 12 }, hospedagens: 3, invalidos: 0 }, "acima do limite: o relatório diz quanto saiu de cada dia e das hospedagens");
-  certo(S.houveCortes(r.relatorio) && r.v.days["2030-03-01"].items.length === 200 && r.v.stays.length === 50, "o resultado continua no limite");
+  // 21 dias, de 2030-03-01 a 2030-03-21, com n lugares em cada um
+  const dias = (n, qtd = 21) => Object.fromEntries(Array.from({ length: qtd }, (_, i) => ["2030-03-" + String(i + 1).padStart(2, "0"), { items: itens(n) }]));
+  const total = (v) => Object.values(v.days).reduce((t, d) => t + d.items.length, 0);
+  igual([S.LIMITES.itensPorViagem, S.LIMITES.itensPorDia, S.LIMITES.hospedagens], [500, 60, 50], "limites: 500 lugares na viagem, 60 por dia e 50 hospedagens");
+  let r = comRel({ ...padrao(), days: { "2030-03-01": { items: itens(60) } }, stays: hosp(50) });
+  certo(!S.houveCortes(r.relatorio) && r.v.days["2030-03-01"].items.length === 60 && r.v.stays.length === 50, "no limite do dia: nada é cortado nem avisado");
+  r = comRel({ ...padrao(), days: { "2030-03-01": { items: itens(72) }, "2030-03-02": { items: itens(3) } }, stays: hosp(53) });
+  igual(r.relatorio, { itens: { "2030-03-01": 12 }, hospedagens: 3, invalidos: 0 }, "acima do limite do dia: o relatório diz quanto saiu de cada dia e das hospedagens");
+  certo(r.v.days["2030-03-01"].items.length === 60 && r.v.stays.length === 50, "o resultado continua no limite do dia");
+  r = comRel({ ...padrao(), days: { ...dias(20, 25) } });
+  certo(!S.houveCortes(r.relatorio) && total(r.v) === 500, "500 lugares na viagem (25 dias de 20): nada é cortado");
+  r = comRel({ ...padrao(), days: dias(30) });
+  igual(r.relatorio.itens, { "2030-03-17": 10, "2030-03-18": 30, "2030-03-19": 30, "2030-03-20": 30, "2030-03-21": 30 }, "acima do total da viagem: saem os lugares dos últimos dias");
+  certo(total(r.v) === 500 && r.v.days["2030-03-01"].items.length === 30, "o resultado fica em 500 e os primeiros dias ficam inteiros");
+  const muitosDias = Object.fromEntries(Array.from({ length: 2000 }, (_, i) => { const d = new Date(Date.UTC(2030, 0, 1 + i)); return [d.toISOString().slice(0, 10), { items: itens(60) }]; }));
+  certo(total(comRel({ ...padrao(), days: muitosDias }).v) === 500, "viagem manipulada com 2000 dias de 60 lugares: fica em 500 no total");
   r = comRel({ ...padrao(), days: { "2030-03-01": { items: [{ uid: "a", id: "masp", dur: 60 }, { uid: "b", id: "<i>" }, "x"] }, "2030-02-31": { items: [] }, "nada": {} }, stays: [{ id: "s1" }, { id: "s1" }, { id: "<b>" }] });
   igual(r.relatorio, { itens: {}, hospedagens: 0, invalidos: 6 }, "itens, dias e hospedagens inválidos entram no relatório");
   const viagemNormal = { ...padrao(), days: { "2030-03-01": { start: "09:00", items: [{ uid: "a1", id: "masp", dur: 90, at: "10:00" }] } }, stays: [{ id: "s1", label: "Hotel", price: 300, lat: -23.5, lng: -46.6 }], stayDefault: "s1" };
   certo(!S.houveCortes(comRel(viagemNormal).relatorio), "viagem legítima: relatório vazio, sem aviso");
   igual(S.sanearViagem(viagemNormal, opcoes), comRel(viagemNormal).v, "com ou sem relatório, o resultado é o mesmo");
-  certo(S.sanearCompartilhado({ ...padrao(), days: { "2030-03-01": { items: itens(205) } } }, opcoes).days["2030-03-01"].items.length === 200, "link de compartilhar continua no limite, sem relatório");
+  certo(S.sanearCompartilhado({ ...padrao(), days: { "2030-03-01": { items: itens(65) } } }, opcoes).days["2030-03-01"].items.length === 60, "link de compartilhar continua no limite, sem relatório");
 }
 
 console.log("\n# Configuração de segurança");

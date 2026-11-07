@@ -405,7 +405,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
       document.body.prepend(el); // no topo, empurrando a página: não cobre o menu nem o botão da conta
     }
     el.innerHTML = `<div style="max-width:960px;margin:0 auto"><p style="margin:0 0 8px"><b>Esta viagem tem mais do que o site comporta:</b> ${esc(textoCortes(cortes.rel))}.
-      O site mostra até ${LIMITES.itensPorDia} lugares por dia e ${LIMITES.hospedagens} hospedagens. Para nada se perder, <b>suas alterações não estão sendo salvas</b> até você escolher.</p>
+      O site mostra até ${LIMITES.itensPorViagem} lugares na viagem, ${LIMITES.itensPorDia} por dia e ${LIMITES.hospedagens} hospedagens. Para nada se perder, <b>suas alterações não estão sendo salvas</b> até você escolher.</p>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
         <button type="button" class="btn small" data-cortes="baixar">${cortes.baixou ? "Baixar de novo" : "Baixar cópia original"}</button>
         <button type="button" class="btn ghost small" data-cortes="continuar">Continuar sem o excedente</button>
@@ -432,8 +432,13 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
   }
 
   // ---------- Ações ----------
-  // Limite de lugares por dia: a interface recusa antes, em vez de o validador cortar depois.
+  // Limites de lugares (por viagem e por dia): a interface recusa antes, em vez de o validador cortar depois.
+  const lugaresNaViagem = () => Object.values(state.days).reduce((t, d) => t + ((d && d.items) || []).length, 0);
   function cabeNoDia(iso, n = 1) {
+    if (lugaresNaViagem() + n > LIMITES.itensPorViagem) {
+      toast("A viagem comporta até " + LIMITES.itensPorViagem + " lugares. Tire algum antes de adicionar.");
+      return false;
+    }
     if (dayData(iso).items.length + n <= LIMITES.itensPorDia) return true;
     toast("Cada dia comporta até " + LIMITES.itensPorDia + " lugares. Tire algum deste dia antes de adicionar.");
     return false;
@@ -499,8 +504,9 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
       return atuais === proposta[iso].filter((i) => !i.novo).map((i) => i.uid).sort().join();
     });
     if (!mesmos) return false;
-    if (dias.some((iso) => proposta[iso].length > LIMITES.itensPorDia)) {
-      toast("Cada dia comporta até " + LIMITES.itensPorDia + " lugares: o roteiro não foi aplicado.");
+    const totalDepois = lugaresNaViagem() + dias.reduce((t, iso) => t + proposta[iso].length - (state.days[iso]?.items || []).length, 0);
+    if (dias.some((iso) => proposta[iso].length > LIMITES.itensPorDia) || totalDepois > LIMITES.itensPorViagem) {
+      toast("O roteiro passaria do limite de " + LIMITES.itensPorDia + " lugares por dia ou " + LIMITES.itensPorViagem + " na viagem: não foi aplicado.");
       return true;
     }
     const alvo = state, backup = JSON.parse(JSON.stringify(state.days));
