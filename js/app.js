@@ -7,6 +7,7 @@ import {
   $, esc, money, moneyExact, toMin, toHHMM, fmtDur, parseDur, parseISO, toISO, fmtDay, fmtShort,
   dateRange, ageMin, bracketFor, ciIcon, ageBadge, placeLabel, distanceKm, walkMinutes
 } from "./core/util.js";
+import { sanearViagem, sanearEvento, copiaSegura, urlSegura } from "./core/sanitizar.js";
 import { rota, ir, iniciar as iniciarRotas } from "./core/router.js";
 import * as gosto from "./gosto.js"; // "✨ Sugestões personalizadas": questionário e pesos por categoria
 import * as grupo from "./grupo.js"; // "👥 Preferências do grupo" desta viagem e lugares que não podem faltar
@@ -137,19 +138,17 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
   }
 
   // Completa uma viagem salva com os campos que versões antigas do site não tinham.
+  // Toda viagem que entra no site passa por aqui: o que veio do navegador, da conta ou de um link é dado não confiável.
   function normalizeState(s) {
-    s = Object.assign(defaultState(), s);
-    s.carro = Object.assign(defaultState().carro, s.carro || {});
+    const c = copiaSegura(s);
+    if (c.stay) { // formato antigo, com uma hospedagem só
+      c.stays = [...(Array.isArray(c.stays) ? c.stays : []), { id: "s1", ...c.stay, price: c.hotel }];
+      c.stayDefault = c.stayDefault || "s1";
+      delete c.stay;
+    }
+    s = sanearViagem(c, { padrao: defaultState(), cidadeValida: (id) => Object.prototype.hasOwnProperty.call(window.TF_CITIES, id) });
     // Preferências do grupo desta viagem (js/grupo.js); viagens antigas começam sem ninguém.
     s.grupo = grupo.normalGrupo(s.grupo);
-    // Horários padrão das refeições.
-    s.meals = Object.assign(defaultMeals(), s.meals || {});
-    s.stays = s.stays || [];
-    if (s.stay) {
-      s.stays.push({ id: "s1", ...s.stay, price: s.hotel });
-      s.stayDefault = s.stayDefault || "s1";
-      delete s.stay;
-    }
     // A pessoa digita a idade real da pessoa mais nova; "youngest" guarda a faixa da ClassInd correspondente.
     if (s.youngestAge == null) s.youngestAge = s.youngest ?? 18;
     s.youngest = bracketFor(s.youngestAge);
@@ -159,7 +158,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
   let state = defaultState();
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-    if (saved) state = Object.assign(state, saved);
+    if (saved) state = Object.assign(state, copiaSegura(saved));
   } catch (_) { /* storage indisponível */ }
   // Viagem do navegador salva no passado → volta para as datas padrão.
   // (Viagens da conta não passam por aqui: uma viagem antiga pode guardar fotos e lembranças.)
@@ -240,13 +239,6 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
   }
 
   // ---------- Refeições ----------
-  function defaultMeals() {
-    return {
-      cafe: { on: true, at: "08:00", dur: 30 },
-      almoco: { on: true, at: "12:30", dur: 60 },
-      jantar: { on: true, at: "19:30", dur: 75 }
-    };
-  }
   const servesFood = (p) => p.categoria === "gastronomia" || !!p.comida || (p.categoria === "compras" && restDentro(p).length > 0);
   // Show tem horário de início do artista: a pessoa não muda (só o tempo que fica, se quiser).
   const horaTravada = (p) => p.categoria === "show" && !!p.inicio;
@@ -734,7 +726,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
     for (let h = ini; h <= fim; h += passo) marcas += `<span class="tick" style="left:${pct(h)}">${toHHMM(h).slice(0, 2)}h</span>`;
     const nome = { stop: "", meal: "", leg: "Deslocamento: ", free: "Tempo livre" };
     el.innerHTML = `<div class="strip-bar">${blocos.map((b) => `<span class="seg-${b.tipo}${b.alerta ? " alert" : ""}" style="left:${pct(b.start)};width:${pct(ini + b.end - b.start)}"
-        title="${toHHMM(b.start)}–${toHHMM(b.end)} · ${esc(b.tipo === "free" ? nome.free : nome[b.tipo] + b.label)}"${b.uid ? ` data-focus="${b.uid}"` : ""}></span>`).join("")}</div>
+        title="${toHHMM(b.start)}–${toHHMM(b.end)} · ${esc(b.tipo === "free" ? nome.free : nome[b.tipo] + b.label)}"${b.uid ? ` data-focus="${esc(b.uid)}"` : ""}></span>`).join("")}</div>
       <div class="strip-ticks">${marcas}</div>
       <div class="strip-legend"><span class="k-stop">Lugares</span><span class="k-meal">Refeições</span><span class="k-leg">Deslocamento</span><span class="k-free">Tempo livre</span></div>`;
   }
@@ -751,7 +743,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
     if (!sched.rows.length) { el.innerHTML = ""; return; }
     el.innerHTML = lista.length
       ? `<div class="day-alerts" role="status"><b>⚠ ${lista.length} ${lista.length === 1 ? "alerta" : "alertas"} neste dia</b>
-          <ul>${lista.map((a) => `<li>${a.uid ? `<button class="reset" data-goto="${a.uid}">${esc(a.txt)}</button>` : esc(a.txt)}</li>`).join("")}</ul></div>`
+          <ul>${lista.map((a) => `<li>${a.uid ? `<button class="reset" data-goto="${esc(a.uid)}">${esc(a.txt)}</button>` : esc(a.txt)}</li>`).join("")}</ul></div>`
       : `<div class="day-ok">✓ Sem conflitos de horário neste dia</div>`;
   }
 
@@ -791,7 +783,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
     const legHtml = (r) => !r.leg ? "" : `
         <li class="leg"><span></span><div class="leg-line">
           ${r.fromStay ? `<div class="stay-leg">🏨 Saindo de ${esc(r.fromStay)} às ${toHHMM(r.start - r.leg.min)}</div>` : ""}
-          ${modesHtml(r.leg, `data-legmode="${r.item.uid}"`)}
+          ${modesHtml(r.leg, `data-legmode="${esc(r.item.uid)}"`)}
           ${r.wait && r.wait < LIVRE_MIN && !r.fromStay ? `<br>espera de ${fmtDur(r.wait)} até abrir/começar` : ""}
         </div></li>`;
     const returnHtml = (e) => `
@@ -819,13 +811,13 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
       const nota = (p) => p.nota ? " · ★ " + String(p.nota).replace(".", ",") : "";
       // Tipo de cozinha: a descrição dos restaurantes coletados começa com ele ("Pizzaria. Nota 4,7…").
       const tipo = (p) => { const t = (p.descricao || "").split(".")[0]; return t && t !== "Restaurante" && t.length <= 30 ? t + " · " : ""; };
-      const botao = (p, km, cls, txt) => `<button class="btn ghost small ${cls}" data-comer="${p.id}" data-refeicao="${e.m.key}" data-antes="${antes}"
+      const botao = (p, km, cls, txt) => `<button class="btn ghost small ${cls}" data-comer="${p.id}" data-refeicao="${e.m.key}" data-antes="${esc(antes)}"
           title="${esc(p.descricao || "")}">${txt}</button>`;
       // Os 3 primeiros à mostra; os outros (até 12) numa lista que abre no "+". A lista lembra se estava aberta.
       const mais = perto.slice(3, 15), chave = state.activeDay + ":" + e.m.key;
       return `<div class="meal-sug"><span class="muted small-text">Onde comer perto:</span>
         ${perto.slice(0, 3).map(({ p, km }) => botao(p, km, "", `${esc(p.nome)} · ${onde(p, km)}${nota(p)} · ${money(p.preco)}`)).join("")}
-        ${mais.length ? `<details class="meal-mais" data-comermais="${chave}" ${ui.comerAberto.has(chave) ? "open" : ""}>
+        ${mais.length ? `<details class="meal-mais" data-comermais="${esc(chave)}" ${ui.comerAberto.has(chave) ? "open" : ""}>
           <summary>+ ${mais.length} ${mais.length === 1 ? "opção" : "opções"} perto</summary>
           <div class="meal-mais-lista">${mais.map(({ p, km }) => botao(p, km, "meal-mais-item",
             `<b>${esc(p.nome)}</b><small>${esc(tipo(p))}${onde(p, km)}${nota(p)} · ${money(p.preco)}</small>`)).join("")}</div>
@@ -848,7 +840,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
                 ${m.custom ? `<button class="reset" data-mealreset="${m.key}">padrão ${fmtDur(state.meals[m.key].dur)}</button>` : `<span class="muted small-text">tempo padrão</span>`}
               </span>
               <label class="start-at">às <input type="time" data-mealat="${m.key}" value="${toHHMM(m.at)}" title="Horário desejado neste dia"></label>
-              ${m.customAt ? `<button class="reset" data-mealatreset="${m.key}">padrão ${state.meals[m.key].at}</button>` : ""}
+              ${m.customAt ? `<button class="reset" data-mealatreset="${m.key}">padrão ${esc(state.meals[m.key].at)}</button>` : ""}
               ${e.note ? `<span class="muted small-text">${esc(e.note)}</span>` : ""}
             </div>
             ${e.warnings.map((w) => `<div class="warning">⚠ ${esc(w)}</div>`).join("")}
@@ -860,7 +852,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
 
     const livreHtml = (b) => `<li class="free-slot"><div class="time">${toHHMM(b.start)}</div>
         <div class="free-body"><b>Tempo livre · ${fmtDur(b.end - b.start)}</b> <span class="muted">${b.espera ? "até abrir/começar" : "até " + toHHMM(b.end)}</span>
-        ${b.perto ? `<button class="reset" data-focus="${b.perto}">ver o que dá para fazer perto</button>` : ""}</div></li>`;
+        ${b.perto ? `<button class="reset" data-focus="${esc(b.perto)}">ver o que dá para fazer perto</button>` : ""}</div></li>`;
     // Tempo livre antes de cada entrada (o de espera aparece depois do deslocamento).
     const livresAntes = {}, livresEspera = {};
     blocos.filter((b) => b.tipo === "free").forEach((b) => ((b.espera ? livresEspera : livresAntes)[b.antes] ||= []).push(b));
@@ -877,28 +869,28 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
       const leg = legHtml(r) + (livresEspera[idx] || []).map(livreHtml).join("");
       const changed = r.item.dur !== r.place.duracao;
       return leg + `
-        <li class="stop ${ui.focusUid === r.item.uid ? "focus" : ""}" data-focus="${r.item.uid}">
+        <li class="stop ${ui.focusUid === r.item.uid ? "focus" : ""}" data-focus="${esc(r.item.uid)}">
           <div class="time">${toHHMM(r.start)}<small>${toHHMM(r.end)}</small></div>
           <div class="stop-body">
             <div class="stop-top">
               <h4>${i + 1}. ${esc(r.place.nome)}</h4>
               <div class="stop-tools">
-                <button class="icon-btn" data-move="${r.item.uid}" data-dir="-1" ${i === 0 ? "disabled" : ""} title="Subir">↑</button>
-                <button class="icon-btn" data-move="${r.item.uid}" data-dir="1" ${i === rows.length - 1 ? "disabled" : ""} title="Descer">↓</button>
-                <button class="icon-btn" data-remove="${r.item.uid}" title="Remover">×</button>
+                <button class="icon-btn" data-move="${esc(r.item.uid)}" data-dir="-1" ${i === 0 ? "disabled" : ""} title="Subir">↑</button>
+                <button class="icon-btn" data-move="${esc(r.item.uid)}" data-dir="1" ${i === rows.length - 1 ? "disabled" : ""} title="Descer">↓</button>
+                <button class="icon-btn" data-remove="${esc(r.item.uid)}" title="Remover">×</button>
               </div>
             </div>
             <div class="stop-row">
               <span class="duration">
-                <button class="icon-btn" data-dur="${r.item.uid}" data-step="-15" title="-15 min">−</button>
-                <input value="${fmtDur(r.item.dur)}" data-durinput="${r.item.uid}" aria-label="Tempo no local" title="Ex.: 90, 1h30, 2:15">
-                <button class="icon-btn" data-dur="${r.item.uid}" data-step="15" title="+15 min">+</button>
-                ${changed ? `<button class="reset" data-resetdur="${r.item.uid}">padrão ${fmtDur(r.place.duracao)}</button>` : `<span class="muted small-text">tempo sugerido</span>`}
+                <button class="icon-btn" data-dur="${esc(r.item.uid)}" data-step="-15" title="-15 min">−</button>
+                <input value="${fmtDur(r.item.dur)}" data-durinput="${esc(r.item.uid)}" aria-label="Tempo no local" title="Ex.: 90, 1h30, 2:15">
+                <button class="icon-btn" data-dur="${esc(r.item.uid)}" data-step="15" title="+15 min">+</button>
+                ${changed ? `<button class="reset" data-resetdur="${esc(r.item.uid)}">padrão ${fmtDur(r.place.duracao)}</button>` : `<span class="muted small-text">tempo sugerido</span>`}
               </span>
               ${horaTravada(r.place)
-                ? `<span class="start-at">início <b>${r.place.inicio}</b> <span class="muted small-text">horário do show</span></span>`
-                : `<label class="start-at">início <input type="time" data-itemat="${r.item.uid}" value="${r.item.at || toHHMM(r.start)}" title="Escolha o horário de chegada"></label>
-              ${r.item.at ? `<button class="reset" data-itematreset="${r.item.uid}">${r.place.inicio ? "horário oficial " + r.place.inicio : "horário automático"}</button>` : ""}`}
+                ? `<span class="start-at">início <b>${esc(r.place.inicio)}</b> <span class="muted small-text">horário do show</span></span>`
+                : `<label class="start-at">início <input type="time" data-itemat="${esc(r.item.uid)}" value="${esc(r.item.at || toHHMM(r.start))}" title="Escolha o horário de chegada"></label>
+              ${r.item.at ? `<button class="reset" data-itematreset="${esc(r.item.uid)}">${r.place.inicio ? "horário oficial " + esc(r.place.inicio) : "horário automático"}</button>` : ""}`}
               <span class="tag ${r.price === 0 ? "free" : ""}">${money(r.price)}${r.price && state.people > 1 ? " × " + state.people : ""}</span>
               ${ageBadge(r.place.idade)}
             </div>
@@ -977,7 +969,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
     $("#recs").innerHTML = list.length ? list.map(({ p, km, from }) => {
       let dist = "";
       if (km !== null) {
-        const ref = anchor ? "" : ` de ${from.nome}`;
+        const ref = anchor ? "" : ` de ${esc(from.nome)}`;
         dist = km <= WALK_LIMIT_KM
           ? `${(km * 1000).toFixed(0)} m · ${walkMinutes(km)} min a pé${ref}`
           : `${km.toFixed(1).replace(".", ",")} km · ~${legInfo(from, p).min} min${ref}`;
@@ -1037,7 +1029,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
         L.marker([st.lat, st.lng], {
           icon: L.divIcon({ className: "", html: `<div class="pin pin-stay">🏨</div>`, iconSize: [28, 28], iconAnchor: [14, 14] }),
           zIndexOffset: 500
-        }).bindTooltip("Hospedagem: " + st.nome).addTo(mapLayer);
+        }).bindTooltip("Hospedagem: " + esc(st.nome)).addTo(mapLayer);
       });
       if (rota.length) { if (a) linha.unshift([a.lat, a.lng]); if (b) linha.push([b.lat, b.lng]); }
       else [a, b].filter(Boolean).forEach((st) => rota.push([st.lat, st.lng]));
@@ -1048,7 +1040,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
       L.marker([r.place.lat, r.place.lng], {
         icon: L.divIcon({ className: "", html: `<div class="pin${alerta ? " pin-alert" : ""}${foco ? " pin-focus" : ""}">${i + 1}</div>`, iconSize: [28, 28], iconAnchor: [14, 14] }),
         zIndexOffset: 1000 + i
-      }).bindTooltip(`${i + 1}. ${r.place.nome} · ${toHHMM(r.start)}`)
+      }).bindTooltip(`${i + 1}. ${esc(r.place.nome)} · ${toHHMM(r.start)}`)
         .bindPopup(popupHtml(r.place, `${i + 1}º do dia · ${toHHMM(r.start)}–${toHHMM(r.end)}${alerta ? " · ⚠ ver alerta" : ""}`))
         .addTo(mapLayer);
     });
@@ -1057,14 +1049,14 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
     const idsSug = new Set(sugeridos.map((p) => p.id));
     sugeridos.forEach((p) => {
       L.marker([p.lat, p.lng], { icon: L.divIcon({ className: "", html: `<div class="pin pin-rec" title=""></div>`, iconSize: [16, 16], iconAnchor: [8, 8] }) })
-        .bindTooltip("Sugestão: " + p.nome).bindPopup(popupHtml(p, "Sugestão perto do roteiro")).addTo(clusterLayer);
+        .bindTooltip("Sugestão: " + esc(p.nome)).bindPopup(popupHtml(p, "Sugestão perto do roteiro")).addTo(clusterLayer);
     });
     let todos = [];
     if (ui.mapAll) {
       todos = filtered().filter((p) => !naRota.has(p.id) && !idsSug.has(p.id));
       todos.forEach((p) => {
         L.marker([p.lat, p.lng], { icon: L.divIcon({ className: "", html: `<div class="pin pin-dot">${CAT_ICON[p.categoria] || ""}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] }) })
-          .bindTooltip(p.nome).bindPopup(popupHtml(p, CATEGORIES[p.categoria] + " · " + placeLabel(p))).addTo(clusterLayer);
+          .bindTooltip(esc(p.nome)).bindPopup(popupHtml(p, CATEGORIES[p.categoria] + " · " + placeLabel(p))).addTo(clusterLayer);
       });
     }
     const enquadrar = rota.length ? rota.concat(sugeridos.map((p) => [p.lat, p.lng]))
@@ -1252,10 +1244,10 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
             ${p.gratisDias?.length ? `<div class="small-text">Grátis: ${p.gratisDias.map((d) => WEEKDAYS_FULL[d]).join(", ")}</div>` : ""}</div>
           <div class="fact"><span>Classificação</span><b style="display:flex;gap:8px;align-items:center">${ageBadge(p.idade)} ${esc(AGE_OPTIONS.find((o) => o.v === ageMin(p.idade))?.desc || p.idade)}</b></div>
           <div class="fact"><span>Tempo sugerido</span><b>${fmtDur(p.duracao)}</b></div>
-          <div class="fact"><span>Horário ${selo(false, "", "estimado")}</span><b>${p.inicio ? "Início " + p.inicio : h.abre + "–" + h.fecha}</b>
+          <div class="fact"><span>Horário ${selo(false, "", "estimado")}</span><b>${esc(p.inicio ? "Início " + p.inicio : h.abre + "–" + h.fecha)}</b>
             ${h.fechado.length ? `<div class="small-text muted">Fecha: ${h.fechado.map((d) => WEEKDAYS_FULL[d]).join(", ")}</div>` : ""}</div>
           ${hasDates(p) ? `<div class="fact" style="grid-column:1/-1"><span>${p.periodo ? "Período" : "Datas"} ${selo(dataConfirmada(p), "com fonte", "a confirmar")}</span><b>${datesLabel(p, true)}</b></div>` : ""}
-          ${p.fonte ? `<div class="fact" style="grid-column:1/-1"><span>Fonte da data</span><b><a href="${esc(p.fonte)}" target="_blank" rel="noopener">${esc(new URL(p.fonte).hostname.replace(/^www./, ""))}</a></b></div>` : ""}
+          ${urlSegura(p.fonte) ? `<div class="fact" style="grid-column:1/-1"><span>Fonte da data</span><b><a href="${esc(urlSegura(p.fonte))}" target="_blank" rel="noopener">${esc(new URL(p.fonte).hostname.replace(/^www./, ""))}</a></b></div>` : ""}
           <div class="fact" style="grid-column:1/-1"><span>Como chegar</span><b>${esc(p.comoChegar)}</b></div>
         </div>
         ${p.confirmar ? `<p class="small-text" style="margin:0">ℹ ${esc(p.confirmar)}</p>` : ""}
@@ -1330,8 +1322,9 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
 
   function mergeEvents(lista) {
     const lugares = city().lugares;
-    lista.forEach((ev) => {
-      if (!ev || !ev.id) return;
+    lista.forEach((bruto) => {
+      const ev = sanearEvento(bruto); // formato errado: fica de fora, sem derrubar a lista
+      if (!ev) return;
       const i = lugares.findIndex((p) => p.id === ev.id);
       if (i >= 0) lugares[i] = ev; else lugares.push(ev);
     });
@@ -1456,9 +1449,9 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
       const c = state.meals[k];
       return `<div class="meal-cfg-row">
         <label class="name check"><input type="checkbox" data-mealcfg="${k}" data-field="on" ${c.on ? "checked" : ""}> ${m.icon} ${m.label}</label>
-        <label>às <input type="time" data-mealcfg="${k}" data-field="at" value="${c.at}"></label>
-        <label>por <input type="number" min="5" max="240" step="5" data-mealcfg="${k}" data-field="dur" value="${c.dur}"> min</label>
-        ${c.dur < m.min ? `<div class="warning">⚠ ${c.dur} min talvez seja pouco tempo para ${m.label.toLowerCase()}.</div>` : ""}
+        <label>às <input type="time" data-mealcfg="${k}" data-field="at" value="${esc(c.at)}"></label>
+        <label>por <input type="number" min="5" max="240" step="5" data-mealcfg="${k}" data-field="dur" value="${esc(c.dur)}"> min</label>
+        ${c.dur < m.min ? `<div class="warning">⚠ ${esc(c.dur)} min talvez seja pouco tempo para ${m.label.toLowerCase()}.</div>` : ""}
       </div>`;
     }).join("");
   }
@@ -1486,9 +1479,9 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
         <span class="stay-name">🏨 ${esc(st.label)}${st.id === state.stayDefault ? ` <span class="tag">padrão</span>` : ""}</span>
         <span class="small-text muted">${st.lat == null ? "sem endereço" : "endereço no mapa"} · ${moneyExact(stayPrice(st))}/noite</span>
         <span class="stay-actions">
-          ${st.lat == null ? `<button type="button" class="reset" data-staypick="${st.id}">📍 marcar no mapa</button>` : ""}
-          ${st.id !== state.stayDefault ? `<button type="button" class="reset" data-staydefault="${st.id}">tornar padrão</button>` : ""}
-          <button type="button" class="reset" data-stayremove="${st.id}">remover</button>
+          ${st.lat == null ? `<button type="button" class="reset" data-staypick="${esc(st.id)}">📍 marcar no mapa</button>` : ""}
+          ${st.id !== state.stayDefault ? `<button type="button" class="reset" data-staydefault="${esc(st.id)}">tornar padrão</button>` : ""}
+          <button type="button" class="reset" data-stayremove="${esc(st.id)}">remover</button>
         </span>
       </li>`).join("");
     // Escolha da hospedagem do dia aberto no roteiro.
@@ -1500,7 +1493,7 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
       const n = tripDays().indexOf(iso) + 1;
       $("#dayStayLabel").textContent = "Na noite do Dia " + n + " (" + fmtDay(iso) + "), ficar em:";
       $("#dayStay").innerHTML = `<option value="">Padrão${def ? " — " + esc(def.label) : ""}</option>` +
-        stays.map((st) => `<option value="${st.id}" ${st.id === own ? "selected" : ""}>${esc(st.label)}</option>`).join("");
+        stays.map((st) => `<option value="${esc(st.id)}" ${st.id === own ? "selected" : ""}>${esc(st.label)}</option>`).join("");
     }
     $("#stayResults").innerHTML = stayAlvo ? "" : hitsHtml();
     renderStayCosts();
@@ -1510,20 +1503,20 @@ import "./social/grupo-convite.js"; // registra #/grupo/<código> (convite para 
     $("#stayCosts").innerHTML = state.stays.map((st) => `
       <div class="stay-cost-item">
         <div class="stay-cost">
-          <input type="text" data-staylabel="${st.id}" value="${esc(st.label)}" aria-label="Nome da hospedagem">
-          <label>R$ <input type="number" min="0" step="10" data-stayprice="${st.id}" value="${stayPrice(st)}" aria-label="Valor por noite"></label>
+          <input type="text" data-staylabel="${esc(st.id)}" value="${esc(st.label)}" aria-label="Nome da hospedagem">
+          <label>R$ <input type="number" min="0" step="10" data-stayprice="${esc(st.id)}" value="${esc(stayPrice(st))}" aria-label="Valor por noite"></label>
         </div>
         <div class="stay-addr small-text">
           ${st.lat == null ? `<span class="warning">📍 Sem endereço: fica fora dos trajetos do roteiro.</span>` : `<span class="muted">📍 Endereço no mapa</span>`}
-          <button type="button" class="reset" data-staylocate="${st.id}">${st.lat == null ? "buscar endereço" : "trocar endereço"}</button>
+          <button type="button" class="reset" data-staylocate="${esc(st.id)}">${st.lat == null ? "buscar endereço" : "trocar endereço"}</button>
         </div>
         ${stayAlvo === st.id ? `
-          <form class="stay-form" data-stayform="${st.id}">
+          <form class="stay-form" data-stayform="${esc(st.id)}">
             <input type="search" value="${esc(stayQ)}" placeholder="Endereço, hotel ou bairro" aria-label="Endereço de ${esc(st.label)}">
             <button type="submit" class="btn small">Buscar</button>
             <button type="button" class="btn ghost small" data-staycancel>Cancelar</button>
           </form>
-          <ul class="stay-results" data-stayresults="${st.id}">${hitsHtml()}</ul>` : ""}
+          <ul class="stay-results" data-stayresults="${esc(st.id)}">${hitsHtml()}</ul>` : ""}
       </div>`).join("");
   }
   // Abre (ou fecha) a busca de endereço de uma hospedagem no painel de Custos.

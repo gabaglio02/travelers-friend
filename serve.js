@@ -11,6 +11,8 @@ const agenda = require("./server/agenda");
 const configPublica = require("./server/config-publica");
 
 const ROOT = __dirname;
+// Os mesmos cabeçalhos de segurança da Vercel: o teste local vale para o site publicado.
+const CABECALHOS = require("./vercel.json").headers[0].headers;
 const PORT = process.env.PORT || 5173;
 const TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -25,6 +27,7 @@ const TYPES = {
 const PRIVADAS = ["/server/", "/data/", "/.claude/", "/supabase/", "/api/", "/.env", "/.git/"];
 
 http.createServer(async (req, res) => {
+  CABECALHOS.forEach((h) => res.setHeader(h.key, h.value));
   const url = new URL(req.url, "http://localhost");
   if (url.pathname === "/api/config") {
     res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });

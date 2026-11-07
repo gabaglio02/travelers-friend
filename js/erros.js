@@ -23,8 +23,9 @@
         headers: { "Content-Type": "application/json", apikey: cfg.supabaseAnonKey, Authorization: "Bearer " + cfg.supabaseAnonKey },
         body: JSON.stringify({
           p_mensagem: mensagem, p_onde: onde || null, p_pilha: pilha ? String(pilha).slice(0, 3000) : null,
-          // Só a rota, sem códigos: #/r/<código> e #/@apelido viram genéricos.
-          p_pagina: (location.hash || "#/").replace(/^#\/r\/.+/, "#/r/…").replace(/^#\/@[^/]+/, "#/@…").slice(0, 200),
+          // Só a rota, sem códigos nem tokens: nada que dê acesso a alguma coisa vai para o registro.
+          p_pagina: /(access_token|refresh_token|error_description|[#&]type)=/.test(location.hash) ? "#(retorno de login)"
+            : (location.hash || "#/").replace(/^#\/(r|grupo)\/.+/, "#/$1/…").replace(/^#\/@[^/]+/, "#/@…").slice(0, 200),
           p_navegador: navigator.userAgent.slice(0, 300)
         })
       }).catch(() => {});

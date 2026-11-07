@@ -21,6 +21,7 @@
  */
 import { GOSTO } from "./core/constantes.js";
 import { esc, fmtShort } from "./core/util.js";
+import { idValido, idLugarValido } from "./core/sanitizar.js";
 import { abrirQuestionario, normalRespostas } from "./gosto.js";
 
 export const MAX_PARTICIPANTES = 5;
@@ -34,7 +35,7 @@ export function normalGrupo(g) {
   out.removidos = [...new Set(Array.isArray(g.removidos) ? g.removidos.filter((x) => typeof x === "string") : [])].slice(-REMOVIDOS_MAX);
   const ids = new Set();
   for (const p of Array.isArray(g.participantes) ? g.participantes : []) {
-    if (!p || typeof p.id !== "string" || ids.has(p.id) || out.removidos.includes(p.id) || out.participantes.length >= MAX_PARTICIPANTES) continue;
+    if (!p || !idValido(p.id) || ids.has(p.id) || out.removidos.includes(p.id) || out.participantes.length >= MAX_PARTICIPANTES) continue;
     const nome = String(p.nome || "").trim().slice(0, NOME_MAX);
     if (!nome) continue;
     const r = normalRespostas(p);
@@ -44,7 +45,7 @@ export function normalGrupo(g) {
   }
   for (const [lugar, quem] of Object.entries(g.indispensaveis || {})) {
     const lista = [...new Set(Array.isArray(quem) ? quem : [])].filter((id) => ids.has(id));
-    if (lista.length) out.indispensaveis[lugar] = lista;
+    if (lista.length && idLugarValido(lugar)) out.indispensaveis[lugar] = lista;
   }
   return out;
 }

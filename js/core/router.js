@@ -26,7 +26,9 @@ const ehRetornoDeLogin = (h) => /(^|[#&])(access_token|refresh_token|error|error
 function resolver() {
   const hash = location.hash;
   if (ehRetornoDeLogin(hash)) return;
-  const caminho = decodeURIComponent(hash.replace(/^#/, "")) || "/";
+  let caminho;
+  try { caminho = decodeURIComponent(hash.replace(/^#/, "")) || "/"; }
+  catch (_) { return ir("/"); } // link com "%" malformado: não derruba a página
   for (const r of rotas) {
     const m = caminho.match(r.re);
     if (m) {

@@ -6,6 +6,7 @@
  */
 import { rota, ir } from "../core/router.js";
 import { esc, parseISO, toISO, fmtDay, fmtDur } from "../core/util.js";
+import { sanearCompartilhado, moverDatas, dataValida } from "../core/sanitizar.js";
 import { CITY_OPTIONS } from "../core/constantes.js";
 import { contaPronta } from "../dados/perfis.js";
 import { mostrar, carregando, aviso, traduzir } from "./perfil.js";
@@ -74,15 +75,8 @@ document.addEventListener("click", (e) => {
 });
 
 // ---------- Abrir um roteiro recebido ----------
-// Muda as datas da viagem para começar em "novoInicio", mantendo a ordem dos dias.
-function moverDatas(dados, novoInicio) {
-  const delta = Math.round((parseISO(novoInicio) - parseISO(dados.start)) / DIA);
-  const mover = (iso) => { const d = parseISO(iso); d.setDate(d.getDate() + delta); return toISO(d); };
-  const days = {};
-  Object.entries(dados.days || {}).forEach(([iso, dia]) => { days[mover(iso)] = dia; });
-  return { ...dados, start: mover(dados.start), end: mover(dados.end), activeDay: mover(dados.start), days };
-}
-
+// O conteúdo do link é de outra pessoa: passa pela validação antes de aparecer na tela ou virar viagem.
+const cidadeValida = (id) => Object.prototype.hasOwnProperty.call(window.TF_CITIES, id);
 let recebido = null;
 rota("/r/:id", async ({ id }) => {
   carregando();
@@ -93,7 +87,10 @@ rota("/r/:id", async ({ id }) => {
     if (error) throw error;
     if (!data) return aviso("Roteiro não encontrado", "O link pode estar incompleto ou o roteiro foi apagado junto com a conta de quem compartilhou.",
       `<a class="btn" href="#/planejar">Planejar minha viagem</a>`);
-    recebido = data;
+    const dados = sanearCompartilhado(data.dados, { padrao: window.TF.newState(), cidadeValida });
+    if (!dados) return aviso("Roteiro inválido", "Este link não tem um roteiro no formato esperado. Peça um novo a quem compartilhou.",
+      `<a class="btn" href="#/planejar">Planejar minha viagem</a>`);
+    recebido = { ...data, dados };
     render();
   } catch (err) { aviso("Não foi possível abrir o roteiro", esc(traduzir(err))); }
 });
@@ -111,10 +108,10 @@ function render() {
       <div class="pf-form-head">
         <div><p class="muted small-text">${r.autor_nome ? esc(r.autor_nome) + " compartilhou um roteiro com você" : "Roteiro compartilhado"}</p>
           <h1>${esc(r.nome)}</h1>
-          <p class="muted">${esc(nomeCidade(d.city))} · ${fmtDay(d.start)} → ${fmtDay(d.end)} · ${total} ${total === 1 ? "dia" : "dias"} · ${d.people || 1} ${d.people === 1 ? "pessoa" : "pessoas"}</p></div>
+          <p class="muted">${esc(nomeCidade(d.city))} · ${fmtDay(d.start)} → ${fmtDay(d.end)} · ${total} ${total === 1 ? "dia" : "dias"} · ${esc(d.people || 1)} ${d.people === 1 ? "pessoa" : "pessoas"}</p></div>
       </div>
       <form class="pf-bloco rot-copiar" id="rotCopiar">
-        <label class="field"><span>Quando você vai?</span><input type="date" name="ida" value="${ida}" min="${hoje}" required></label>
+        <label class="field"><span>Quando você vai?</span><input type="date" name="ida" value="${esc(ida)}" min="${esc(hoje)}" required></label>
         <button class="btn" type="submit">Copiar para minhas viagens</button>
         <p class="muted small-text">Os dias mudam junto com a data de ida. Shows e eventos com data marcada podem não acontecer nas novas datas — o planejador avisa.</p>
       </form>
@@ -132,6 +129,7 @@ document.addEventListener("submit", async (e) => {
   if (e.target.id !== "rotCopiar" || !recebido) return;
   e.preventDefault();
   const botao = e.target.querySelector("button[type=submit]");
+  if (!dataValida(e.target.elements.ida.value)) return toast("Escolha a data de ida.");
   const dados = moverDatas(recebido.dados, e.target.elements.ida.value);
   const conta = await contaPronta();
   botao.disabled = true;

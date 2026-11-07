@@ -3,8 +3,9 @@ import { AGE_OPTIONS, WEEKDAYS, MAX_DAYS } from "./constantes.js";
 
 export const $ = (sel) => document.querySelector(sel);
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-export const money = (v) => v === 0 ? "Grátis" : "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-export const moneyExact = (v) => "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// Number(): texto.toLocaleString() devolveria o próprio texto, e estes valores entram no HTML sem esc().
+export const money = (v) => { const n = Number(v); return n === 0 ? "Grátis" : "R$ " + n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }); };
+export const moneyExact = (v) => "R$ " + Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export const toMin = (hhmm) => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; };
 export const toHHMM = (min) => {
