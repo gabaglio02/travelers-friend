@@ -94,7 +94,7 @@ no Supabase (tabela `agenda_cache`) em vez da pasta `data/`.
 3. **Banco:** no painel do Supabase, *SQL Editor* → cole e rode [`supabase/schema.sql`](supabase/schema.sql) , depois [`supabase/002_perfis.sql`](supabase/002_perfis.sql) , [`supabase/003_limite_identidades.sql`](supabase/003_limite_identidades.sql) [`supabase/004_mural.sql`](supabase/004_mural.sql), [`supabase/005_contas_18.sql`](supabase/005_contas_18.sql) [`supabase/006_perfil_so_amigos.sql`](supabase/006_perfil_so_amigos.sql) e [`supabase/007_compartilhar_e_erros.sql`](supabase/007_compartilhar_e_erros.sql) (só acrescentam/ajustam; é seguro rodar de novo).
 4. **Login:** no Supabase, *Authentication → URL Configuration*: em **Site URL** coloque o endereço da Vercel
    (ex.: `https://travelers-friend.vercel.app`) e adicione-o também em **Redirect URLs** (e `http://localhost:5173` para testar).
-5. **Cron (opcional):** crie a variável `CRON_SECRET` na Vercel com um texto aleatório; o `/api/cron` passa a aceitar só a Vercel.
+5. **Cron (obrigatório):** crie a variável `CRON_SECRET` na Vercel com um texto aleatório de 16 caracteres ou mais. Sem ela o `/api/cron` recusa tudo (401) e a agenda não é atualizada pela rotina diária; com ela, só a Vercel consegue disparar (GET com `Authorization: Bearer <CRON_SECRET>`). Teste: `node tools/testes/cron.test.mjs`.
 6. *Redeploy* na Vercel. Cada envio para a branch `main` publica o site de novo.
 
 Notas:
